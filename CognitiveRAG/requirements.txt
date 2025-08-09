@@ -1,0 +1,32 @@
+# Core FastAPI server
+fastapi
+uvicorn
+python-multipart
+langchain-ollama
+langchain-chroma
+
+# Environment management
+python-dotenv
+
+# RAG Core: LangChain and dependencies
+langchain>=0.1.20
+langchain-community>=0.0.38
+langchain-openai>=0.1.6
+chromadb>=0.4.24
+openai>=1.24.0,<2.0.0
+tiktoken
+
+# Retrieval
+rank_bm25
+duckduckgo-search
+
+# Topic Modeling and Knowledge Graph
+bertopic>=0.16.0
+networkx
+
+# Utilities
+scikit-learn
+numpy
+nltk
+pandas
+requests

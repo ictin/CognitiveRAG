@@ -1,0 +1,80 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>259d7bd7-c9cd-4a91-86f3-86630898ae23</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>main.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <Name>CognitiveRAG</Name>
+    <RootNamespace>CognitiveRAG</RootNamespace>
+    <InterpreterId>MSBuild|cognitive_rag|$(MSBuildProjectFullPath)</InterpreterId>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <CommandLineArguments>
+    </CommandLineArguments>
+    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
+    <IsWindowsApplication>False</IsWindowsApplication>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="agents.py" />
+    <Compile Include="config.py" />
+    <Compile Include="generated_files\cognitive_rag_main.py" />
+    <Compile Include="generated_files\cognitive_rag_server.py" />
+    <Compile Include="generated_files\cognitive_rag_system.py" />
+    <Compile Include="generated_files\evaluation_suite.py" />
+    <Compile Include="generated_files\knowledge_corpus_builder.py" />
+    <Compile Include="generated_files\main.py" />
+    <Compile Include="generated_files\rag_qa.py" />
+    <Compile Include="generated_files\script.py" />
+    <Compile Include="generated_files\thematic_analyzer.py" />
+    <Compile Include="generated_files\topic_graph.py" />
+    <Compile Include="knowledge_base.py" />
+    <Compile Include="llm_provider.py" />
+    <Compile Include="main.py" />
+    <Compile Include="main_server.py" />
+    <Compile Include="retriever.py" />
+    <Compile Include="utils.py" />
+    <Compile Include="__init__.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="docs\" />
+    <Folder Include="generated_files\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Interpreter Include="cognitive_rag\">
+      <Id>cognitive_rag</Id>
+      <Version>3.11</Version>
+      <Description>cognitive_rag (Python 3.11 (64-bit))</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+      <Architecture>X64</Architecture>
+    </Interpreter>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Dockerfile" />
+    <Content Include="docs\gemini_report.txt" />
+    <Content Include="docs\ultimate-cognitive-rag-system-report.md" />
+    <Content Include="requirements.txt" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+  <!-- Uncomment the CoreCompile target to enable the Build command in
+       Visual Studio and specify your pre- and post-build commands in
+       the BeforeBuild and AfterBuild targets below. -->
+  <!--<Target Name="CoreCompile" />-->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+</Project>
