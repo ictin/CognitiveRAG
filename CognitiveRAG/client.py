@@ -40,3 +40,31 @@ def append_message(session_id: str, message_id: str, sender: str, text: str, cre
     resp = requests.post(f"{base_url}/session_append_message", json=payload, timeout=timeout)
     resp.raise_for_status()
     return resp.json()
+
+
+def append_message_part(session_id: str, message_id: str, part_index: int, text: str, meta_json: Optional[dict] = None, base_url: str = DEFAULT_BASE, timeout: int = 10) -> Dict[str, Any]:
+    payload = {
+        'session_id': session_id,
+        'message_id': message_id,
+        'part_index': part_index,
+        'text': text,
+    }
+    if meta_json is not None:
+        payload['meta_json'] = meta_json
+    resp = requests.post(f"{base_url}/session_append_message_part", json=payload, timeout=timeout)
+    resp.raise_for_status()
+    return resp.json()
+
+
+def upsert_context_item(item_id: str, session_id: str, type: str, payload_json: dict, created_at: Optional[str] = None, base_url: str = DEFAULT_BASE, timeout: int = 10) -> Dict[str, Any]:
+    payload = {
+        'item_id': item_id,
+        'session_id': session_id,
+        'type': type,
+        'payload_json': payload_json,
+    }
+    if created_at is not None:
+        payload['created_at'] = created_at
+    resp = requests.post(f"{base_url}/session_upsert_context_item", json=payload, timeout=timeout)
+    resp.raise_for_status()
+    return resp.json()

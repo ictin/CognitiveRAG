@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import List
 from .knowledge_base import kb
 import os
+import json
 from contextlib import asynccontextmanager
 import signal
 import sys
@@ -202,6 +203,67 @@ async def session_append_message(payload: dict):
     with open(raw_path, 'w', encoding='utf-8') as f:
         json.dump(msgs, f)
     return {'status': 'inserted' if not found else 'updated'}
+
+
+@app.post('/session_upsert_context_item')
+async def session_upsert_context_item(payload: dict):
+    """Upsert a context item by item_id (idempotent).
+
+    Expects JSON: {item_id, session_id, type, payload_json, created_at?}
+    """
+    item_id = payload.get('item_id')
+    session_id = payload.get('session_id')
+    type_ = payload.get('type')
+    payload_json = payload.get('payload_json')
+    created_at = payload.get('created_at')
+
+    if not item_id or not session_id or type_ is None or payload_json is None:
+        raise HTTPException(status_code=400, detail='Missing required fields')
+
+    # Try ContextItemStore upsert if available
+    try:
+        from CognitiveRAG.session_memory.context_items import ContextItemStore
+        cstore = ContextItemStore()
+        try:
+            cstore.upsert_item(item_id, session_id, type_, json.dumps(payload_json), created_at)
+            # upsert_item is implemented as insert-or-update; we can't know created vs updated easily — return 'inserted' for now
+            return {'status': 'inserted'}
+        except Exception:
+            # fallback to manual insert/update
+            try:
+                existing = cstore.get_item(item_id)
+                if existing:
+                    cstore.upsert_item(item_id, session_id, type_, json.dumps(payload_json), created_at)
+                    return {'status': 'updated'}
+                else:
+                    cstore.upsert_item(item_id, session_id, type_, json.dumps(payload_json), created_at)
+                    return {'status': 'inserted'}
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    # Fallback: write to data/session_memory/context_item_<item_id>.json
+    workdir = os.path.join(os.getcwd(), 'data', 'session_memory')
+    os.makedirs(workdir, exist_ok=True)
+    raw_path = os.path.join(workdir, f'context_item_{item_id}.json')
+    item = None
+    if os.path.exists(raw_path):
+        try:
+            with open(raw_path, 'r', encoding='utf-8') as f:
+                item = json.load(f)
+        except Exception:
+            item = None
+    if item is None:
+        item = {'item_id': item_id, 'session_id': session_id, 'type': type_, 'payload_json': payload_json, 'created_at': created_at}
+        with open(raw_path, 'w', encoding='utf-8') as f:
+            json.dump(item, f)
+        return {'status': 'inserted'}
+    else:
+        item.update({'session_id': session_id, 'type': type_, 'payload_json': payload_json, 'created_at': created_at})
+        with open(raw_path, 'w', encoding='utf-8') as f:
+            json.dump(item, f)
+        return {'status': 'updated'}
 
     try:
         patterns = promote_session_summaries(request.session_id, dry_run=False)
