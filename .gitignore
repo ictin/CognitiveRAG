@@ -361,3 +361,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Local runtime / vector DB state
+data/*.sqlite3
+data/chroma/
+data/source_documents/
+CognitiveRAG/session_memory/
+*.bin
