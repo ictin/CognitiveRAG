@@ -135,7 +135,19 @@ def describe_session_item(ref: Dict[str, Any], db_prefix: Optional[str] = None) 
                 'references_large_file': False,
             }
     if item_type == 'large_file':
-        store = LargeFileStore(db_path=(db_prefix + '/large_files.sqlite3') if db_prefix else None)
+        # prefer legacy filename 'files.sqlite3' if present otherwise use 'large_files.sqlite3'
+        lf_db = None
+        if db_prefix:
+            import os
+            cand1 = os.path.join(db_prefix, 'files.sqlite3')
+            cand2 = os.path.join(db_prefix, 'large_files.sqlite3')
+            if os.path.exists(cand1):
+                lf_db = cand1
+            elif os.path.exists(cand2):
+                lf_db = cand2
+            else:
+                lf_db = cand2
+        store = LargeFileStore(db_path=(lf_db) if lf_db else None)
         rec = store.get_file(primary_id)
         if rec:
             # metadata_json stored as JSON string; leave as raw string for now (tests only check presence)
