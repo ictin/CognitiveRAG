@@ -365,5 +365,4 @@ FodyWeavers.xsd
 data/*.sqlite3
 data/chroma/
 data/source_documents/
-CognitiveRAG/session_memory/
 *.bin
