@@ -377,3 +377,5 @@ __pycache__/
 # Local server/runtime artifacts
 server*.log
 server*.pid
+
+.venv
