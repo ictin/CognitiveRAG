@@ -32,7 +32,19 @@ def search_session_memory(session_id: str, query: str, db_prefix: Optional[str] 
             if len(results) >= top_k:
                 return results
 
-    parts_store = MessagePartsStore(db_path=(db_prefix + '/message_parts.sqlite3') if db_prefix else None)
+    # prefer legacy filename 'parts.sqlite3' if present (tests may create that), otherwise use 'message_parts.sqlite3'
+    parts_db = None
+    if db_prefix:
+        import os
+        cand1 = os.path.join(db_prefix, 'parts.sqlite3')
+        cand2 = os.path.join(db_prefix, 'message_parts.sqlite3')
+        if os.path.exists(cand1):
+            parts_db = cand1
+        elif os.path.exists(cand2):
+            parts_db = cand2
+        else:
+            parts_db = cand2
+    parts_store = MessagePartsStore(db_path=parts_db if parts_db else None)
     parts = []
     try:
         parts = parts_store.get_parts(session_id, '')
