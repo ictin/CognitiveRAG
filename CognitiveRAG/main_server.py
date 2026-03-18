@@ -3,7 +3,6 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from pydantic import BaseModel
 from typing import List
 from .knowledge_base import kb
-from .agents import Orchestrator
 import os
 from contextlib import asynccontextmanager
 import signal
@@ -41,6 +40,7 @@ class IngestResponse(BaseModel):
 
 class QueryRequest(BaseModel):
     query: str
+    session_id: str | None = None
 
 class QueryResponse(BaseModel):
     answer: str
@@ -87,11 +87,21 @@ async def process_query(request: QueryRequest):
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
     try:
+        from .agents import Orchestrator
         orchestrator = Orchestrator()
-        final_state = orchestrator.run(request.query)
-        sources = sorted(list({doc.metadata.get('source', 'N/A') for doc in final_state['context']}))
+        # pass session_id through to orchestrator.run; await the async run
+        final_state = await orchestrator.run(request.query, session_id=request.session_id)
+        # final_state is a QueryResponse model or dict-like; attempt to extract answer and context
+        try:
+            answer = final_state.answer if hasattr(final_state, 'answer') else final_state['answer']
+            context_items = final_state.trace.retrieval_sources if hasattr(final_state, 'trace') else final_state.get('context', [])
+            sources = sorted(list({(item.get('source') if isinstance(item, dict) else getattr(item, 'metadata', {}).get('source', 'N/A')) for item in context_items}))
+        except Exception:
+            # best-effort extraction fallback
+            answer = final_state['answer'] if isinstance(final_state, dict) else getattr(final_state, 'answer', '')
+            sources = []
         return QueryResponse(
-            answer=final_state['answer'],
+            answer=answer,
             sources=sources
         )
     except Exception as e:
@@ -110,3 +120,31 @@ def root():
     Root endpoint
     """
     return {"message": "Cognitive RAG System", "status": "running", "version": "1.0.0"}
+
+
+class PromoteRequest(BaseModel):
+    session_id: str
+
+
+class PromoteResponse(BaseModel):
+    promoted_count: int
+    promoted_pattern_ids: list[str]
+
+
+@app.post('/promote_session', response_model=PromoteResponse)
+async def promote_session(request: PromoteRequest):
+    """Operator endpoint: promote session summaries into durable reasoning memory.
+
+    This is deliberately explicit and additive. It does not remove or modify raw session memory.
+    """
+    try:
+        from CognitiveRAG.session_memory.promotion_bridge import promote_session_summaries
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Promotion bridge not available: {e}")
+
+    try:
+        patterns = promote_session_summaries(request.session_id, dry_run=False)
+        ids = [p.pattern_id for p in patterns]
+        return PromoteResponse(promoted_count=len(ids), promoted_pattern_ids=ids)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Promotion failed: {e}")
