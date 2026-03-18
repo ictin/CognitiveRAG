@@ -167,7 +167,19 @@ def expand_session_item(ref: Dict[str, Any], db_prefix: Optional[str] = None) ->
         return out
 
     if item_type == 'message':
-        parts = MessagePartsStore(db_path=(db_prefix + '/message_parts.sqlite3') if db_prefix else None)
+        # prefer legacy filename 'parts.sqlite3' if present otherwise use 'message_parts.sqlite3'
+        parts_db = None
+        if db_prefix:
+            import os
+            cand1 = os.path.join(db_prefix, 'parts.sqlite3')
+            cand2 = os.path.join(db_prefix, 'message_parts.sqlite3')
+            if os.path.exists(cand1):
+                parts_db = cand1
+            elif os.path.exists(cand2):
+                parts_db = cand2
+            else:
+                parts_db = cand2
+        parts = MessagePartsStore(db_path=parts_db if parts_db else None)
         pts = parts.get_parts(session_id, primary_id)
         for p in pts:
             out.append(_make_ref('message_part', session_id, primary_id, str(p['part_index']), p.get('text','')[:256], {}))
