@@ -142,6 +142,67 @@ async def promote_session(request: PromoteRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Promotion bridge not available: {e}")
 
+
+@app.post('/session_append_message')
+async def session_append_message(payload: dict):
+    """Minimal ingest endpoint: idempotent upsert of a session message.
+
+    Expects JSON: {session_id, message_id, sender, text, created_at?}
+    """
+    session_id = payload.get('session_id')
+    message_id = payload.get('message_id')
+    sender = payload.get('sender')
+    text = payload.get('text')
+    created_at = payload.get('created_at')
+
+    if not session_id or not message_id or not sender or text is None:
+        raise HTTPException(status_code=400, detail='Missing required fields')
+
+    # Try to use ConversationStore upsert if available
+    try:
+        from CognitiveRAG.session_memory.conversation_store import ConversationStore
+        store = ConversationStore()
+        # upsert_message expected API: upsert_message(session_id, message_id, sender, text, created_at=None)
+        try:
+            created = store.upsert_message(session_id, message_id, sender, text, created_at)
+            status = 'inserted' if created else 'updated'
+            return {'status': status}
+        except Exception:
+            # fallback to older API names
+            try:
+                store.add_message(session_id, {'message_id': message_id, 'sender': sender, 'text': text, 'created_at': created_at})
+                return {'status': 'inserted'}
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    # Fallback: write to data/session_memory/raw_<session_id>.json . Upsert by message_id
+    workdir = os.path.join(os.getcwd(), 'data', 'session_memory')
+    os.makedirs(workdir, exist_ok=True)
+    raw_path = os.path.join(workdir, f'raw_{session_id}.json')
+    msgs = []
+    if os.path.exists(raw_path):
+        try:
+            with open(raw_path, 'r', encoding='utf-8') as f:
+                msgs = json.load(f)
+        except Exception:
+            msgs = []
+    # find existing
+    found = False
+    for m in msgs:
+        if str(m.get('message_id')) == str(message_id):
+            m['sender'] = sender
+            m['text'] = text
+            m['created_at'] = created_at
+            found = True
+            break
+    if not found:
+        msgs.append({'message_id': message_id, 'sender': sender, 'text': text, 'created_at': created_at})
+    with open(raw_path, 'w', encoding='utf-8') as f:
+        json.dump(msgs, f)
+    return {'status': 'inserted' if not found else 'updated'}
+
     try:
         patterns = promote_session_summaries(request.session_id, dry_run=False)
         ids = [p.pattern_id for p in patterns]
