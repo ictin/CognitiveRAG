@@ -199,11 +199,22 @@ def expand_session_item(ref: Dict[str, Any], db_prefix: Optional[str] = None) ->
         return out
 
     if item_type == 'large_file':
-        # return metadata only
-        store = LargeFileStore(db_path=(db_prefix + '/large_files.sqlite3') if db_prefix else None)
-        rec = store.get(primary_id)
+        # return metadata only; prefer legacy files.sqlite3 filename
+        lf_db = None
+        if db_prefix:
+            import os
+            cand1 = os.path.join(db_prefix, 'files.sqlite3')
+            cand2 = os.path.join(db_prefix, 'large_files.sqlite3')
+            if os.path.exists(cand1):
+                lf_db = cand1
+            elif os.path.exists(cand2):
+                lf_db = cand2
+            else:
+                lf_db = cand2
+        store = LargeFileStore(db_path=(lf_db) if lf_db else None)
+        rec = store.get_file(primary_id)
         if rec:
-            out.append(_make_ref('large_file_meta', session_id, primary_id, None, rec.get('file_path',''), rec.get('metadata', {})))
+            out.append(_make_ref('large_file_meta', session_id, primary_id, None, rec.get('file_path',''), {'raw': rec.get('metadata_json')}))
         return out
 
     return out
