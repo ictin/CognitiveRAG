@@ -71,6 +71,10 @@ def upsert_context_item(item_id: str, session_id: str, type: str, payload_json: 
 
 
 def mirror_write_interaction(session_id: str, message_id: str, sender: str, text: str, part_text: str, context_item_id: str, context_payload: dict, base_url: str = DEFAULT_BASE, timeout: int = 10) -> Dict[str, Dict[str, Any]]:
+    """Mirror-write adapter: perform one message, one part, and one context upsert.
+    Parameters are simple primitives so OpenClaw callers can invoke this in one call.
+    Returns a dict with responses for 'message', 'part', and 'context'.
+    """
     """Perform a single mirror-write interaction:
     - append_message
     - append_message_part (part_index=0)
