@@ -205,6 +205,62 @@ async def session_append_message(payload: dict):
     return {'status': 'inserted' if not found else 'updated'}
 
 
+@app.post('/session_append_message_part')
+async def session_append_message_part(payload: dict):
+    """Ingest a message part (idempotent upsert).
+
+    Expects JSON: {session_id, message_id, part_index, text, meta_json?}
+    """
+    session_id = payload.get('session_id')
+    message_id = payload.get('message_id')
+    part_index = payload.get('part_index')
+    text = payload.get('text')
+    meta_json = payload.get('meta_json')
+
+    if not session_id or not message_id or part_index is None or text is None:
+        raise HTTPException(status_code=400, detail='Missing required fields')
+
+    # Try MessagePartsStore upsert if available
+    try:
+        from CognitiveRAG.session_memory.message_parts_store import MessagePartsStore
+        mstore = MessagePartsStore()
+        try:
+            created = mstore.upsert_part(session_id, message_id, int(part_index), text, json.dumps(meta_json) if meta_json is not None else None)
+            status = 'inserted' if created else 'updated'
+            return {'status': status}
+        except Exception:
+            try:
+                mstore.add_part(session_id, message_id, int(part_index), text, json.dumps(meta_json) if meta_json is not None else None)
+                return {'status': 'inserted'}
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    # Fallback: write to data/session_memory/parts_<session_id>_<message_id>.json
+    workdir = os.path.join(os.getcwd(), 'data', 'session_memory')
+    os.makedirs(workdir, exist_ok=True)
+    raw_path = os.path.join(workdir, f'parts_{session_id}_{message_id}.json')
+    parts = []
+    if os.path.exists(raw_path):
+        try:
+            with open(raw_path, 'r', encoding='utf-8') as f:
+                parts = json.load(f)
+        except Exception:
+            parts = []
+    found = False
+    for p in parts:
+        if int(p.get('part_index')) == int(part_index):
+            p['text'] = text
+            p['meta_json'] = meta_json
+            found = True
+            break
+    if not found:
+        parts.append({'part_index': int(part_index), 'text': text, 'meta_json': meta_json})
+    with open(raw_path, 'w', encoding='utf-8') as f:
+        json.dump(parts, f)
+    return {'status': 'inserted' if not found else 'updated'}
+
 @app.post('/session_upsert_context_item')
 async def session_upsert_context_item(payload: dict):
     """Upsert a context item by item_id (idempotent).
