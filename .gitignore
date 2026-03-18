@@ -366,3 +366,14 @@ data/*.sqlite3
 data/chroma/
 data/source_documents/
 *.bin
+
+# Python/runtime junk
+.venv/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Local server/runtime artifacts
+server*.log
+server*.pid
