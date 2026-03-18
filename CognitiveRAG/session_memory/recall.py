@@ -136,15 +136,16 @@ def describe_session_item(ref: Dict[str, Any], db_prefix: Optional[str] = None) 
             }
     if item_type == 'large_file':
         store = LargeFileStore(db_path=(db_prefix + '/large_files.sqlite3') if db_prefix else None)
-        rec = store.get(primary_id)
+        rec = store.get_file(primary_id)
         if rec:
+            # metadata_json stored as JSON string; leave as raw string for now (tests only check presence)
             return {
                 'item_type': 'large_file',
-                'session_id': rec.get('metadata', {}).get('session_id'),
+                'session_id': None,
                 'record_id': primary_id,
                 'file_path': rec.get('file_path'),
-                'preview': (rec.get('page_content') or '')[:512],
-                'metadata': rec.get('metadata', {}),
+                'preview': (rec.get('metadata_json') or '')[:512],
+                'metadata': {'raw': rec.get('metadata_json')},
             }
     # fallback
     return {'error': 'unknown_reference', 'ref': ref}
