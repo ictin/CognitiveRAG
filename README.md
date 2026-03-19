@@ -304,3 +304,23 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Built with ?? for the AI research community**
+
+
+## OpenClaw integration note (write shim)
+
+For OpenClaw integrations that want a single event-shaped write call, use the "mirror_agent_event" shim in CognitiveRAG.client.
+Minimal example event payload:
+
+    event = {
+        'session_id': 's1',
+        'turn_id': 't1',
+        'user_text': 'Please store this',
+        'assistant_text': 'Stored',
+        'part_text': 'chunk-0',          # optional
+        'context_item_id': 'ctx-1',      # optional
+        'context_payload': {'k':'v'}     # optional
+    }
+
+Call: `from CognitiveRAG import client as cl; cl.mirror_agent_event(event)`
+
+This is the intended, minimal OpenClaw-facing write contract (no retries/auth).
