@@ -144,3 +144,40 @@ def mirror_turn(session_id: str, turn_id: str, user_text: str, assistant_text: s
     # combine responses
     out = {'user': res_user, 'assistant': res['message'], 'part': res['part'], 'context': res['context']}
     return out
+
+
+def mirror_agent_event(event: dict, base_url: str = DEFAULT_BASE, timeout: int = 10) -> Dict[str, Any]:
+    """Shim for OpenClaw-style agent events.
+
+    Expected event keys (example):
+      {
+        'session_id': 's1',
+        'turn_id': 't1',
+        'user_text': 'Hello',
+        'assistant_text': 'Hi',
+        'part_text': 'chunk-0',           # optional
+        'context_payload': {'k':'v'},     # optional
+        'context_item_id': 'ctx-1'        # optional
+      }
+
+    This maps the event to mirror_turn(...) and returns the mirror_turn result.
+    """
+    session_id = event.get('session_id')
+    turn_id = event.get('turn_id') or event.get('message_id') or 'turn'
+    user_text = event.get('user_text','')
+    assistant_text = event.get('assistant_text','')
+    part_text = event.get('part_text')
+    ctx_id = event.get('context_item_id')
+    ctx_payload = event.get('context_payload')
+
+    return mirror_turn(
+        session_id=session_id,
+        turn_id=turn_id,
+        user_text=user_text,
+        assistant_text=assistant_text,
+        part_text=part_text,
+        context_item_id=ctx_id,
+        context_payload=ctx_payload,
+        base_url=base_url,
+        timeout=timeout,
+    )
