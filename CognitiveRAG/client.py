@@ -90,3 +90,48 @@ def mirror_write_interaction(session_id: str, message_id: str, sender: str, text
         'part': res_part,
         'context': res_context,
     }
+
+
+def mirror_turn(session_id: str, turn_id: str, user_text: str, assistant_text: str, part_text: Optional[str] = None, context_item_id: Optional[str] = None, context_payload: Optional[dict] = None, base_url: str = DEFAULT_BASE, timeout: int = 10) -> Dict[str, Dict[str, Any]]:
+    """Higher-level helper: mirror a single user->assistant turn.
+
+    This packages two messages (user then assistant), optional part for the
+    assistant message, and an optional context item. It delegates to the
+    existing lower-level mirror_write_interaction path for the assistant
+    message and uses append_message for the user message.
+
+    Parameters:
+    - session_id, turn_id: identifiers. turn_id is used to derive message_ids.
+    - user_text, assistant_text: message contents.
+    - part_text: optional assistant part text (sent as part_index=0)
+    - context_item_id/context_payload: optional context upsert for the assistant
+
+    Returns a dict with keys 'user', 'assistant' and optional 'context'.
+    """
+    user_msg_id = f"{turn_id}-user"
+    assistant_msg_id = f"{turn_id}-assistant"
+
+    # write user message
+    res_user = append_message(session_id, user_msg_id, 'user', user_text, base_url=base_url, timeout=timeout)
+
+    # write assistant message + optional part + optional context
+    if part_text is None and context_item_id is None:
+        # simple assistant message without parts/context
+        res_assistant = append_message(session_id, assistant_msg_id, 'assistant', assistant_text, base_url=base_url, timeout=timeout)
+        return {'user': res_user, 'assistant': res_assistant}
+
+    # use mirror_write_interaction to handle assistant message, part, and context
+    res = mirror_write_interaction(
+        session_id=session_id,
+        message_id=assistant_msg_id,
+        sender='assistant',
+        text=assistant_text,
+        part_text=(part_text or ''),
+        context_item_id=(context_item_id or f"{assistant_msg_id}-ctx"),
+        context_payload=(context_payload or {}),
+        base_url=base_url,
+        timeout=timeout,
+    )
+    # combine responses
+    out = {'user': res_user, 'assistant': res['message'], 'part': res['part'], 'context': res['context']}
+    return out
