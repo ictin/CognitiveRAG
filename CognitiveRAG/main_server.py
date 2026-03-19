@@ -2,7 +2,16 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from pydantic import BaseModel
 from typing import List
-from .knowledge_base import kb
+import os
+
+# Allow tests to skip heavy knowledge-base initialization (BERTopic, etc.) by
+# setting the COGNITIVERAG_SKIP_KB environment variable. This keeps normal
+# runtime behavior unchanged while allowing lightweight test runs in CI or
+# constrained environments.
+if os.getenv('COGNITIVERAG_SKIP_KB'):
+    kb = None
+else:
+    from .knowledge_base import kb
 import os
 import json
 from contextlib import asynccontextmanager
