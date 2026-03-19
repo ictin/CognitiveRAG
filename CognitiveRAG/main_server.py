@@ -149,9 +149,11 @@ async def promote_session(request: PromoteRequest):
     """
     try:
         from CognitiveRAG.session_memory.promotion_bridge import promote_session_summaries
+        patterns = promote_session_summaries(request.session_id, dry_run=False)
+        ids = [p.pattern_id for p in patterns]
+        return PromoteResponse(promoted_count=len(ids), promoted_pattern_ids=ids)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Promotion bridge not available: {e}")
-
+        raise HTTPException(status_code=500, detail=f"Promotion failed: {e}")
 
 @app.post('/session_append_message')
 async def session_append_message(payload: dict):
