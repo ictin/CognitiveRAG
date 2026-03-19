@@ -74,6 +74,15 @@ def mirror_write_interaction(session_id: str, message_id: str, sender: str, text
     """Mirror-write adapter: perform one message, one part, and one context upsert.
     Parameters are simple primitives so OpenClaw callers can invoke this in one call.
     Returns a dict with responses for 'message', 'part', and 'context'.
+
+    Example:
+        from CognitiveRAG import client as cl
+        res = cl.mirror_write_interaction(
+            session_id='s1', message_id='m1', sender='assistant',
+            text='Answer', part_text='chunk-0', context_item_id='ctx1',
+            context_payload={'k':'v'}
+        )
+        # res['message'], res['part'], res['context'] available
     """
     """Perform a single mirror-write interaction:
     - append_message
