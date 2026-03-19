@@ -28,9 +28,13 @@ class MessagePartsStore:
     def add_part(self, session_id: str, message_id: str, part_index: int, text: str, meta_json: str = None):
         with self._connect() as conn:
             conn.execute(
-                'INSERT INTO message_parts(session_id, message_id, part_index, text, meta_json) VALUES (?, ?, ?, ?, ?)',
+                'INSERT INTO message_parts(session_id, message_id, part_index, text, meta_json) VALUES (?, ?, ?, ?, ?) ON CONFLICT(session_id, message_id, part_index) DO UPDATE SET text=excluded.text, meta_json=excluded.meta_json',
                 (session_id, message_id, part_index, text, meta_json)
             )
+        return True
+
+    def upsert_part(self, session_id: str, message_id: str, part_index: int, text: str, meta_json: str = None):
+        return self.add_part(session_id, message_id, part_index, text, meta_json)
 
     def get_parts(self, session_id: str, message_id: str):
         with self._connect() as conn:
