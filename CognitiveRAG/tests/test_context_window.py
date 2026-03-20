@@ -1,6 +1,7 @@
 import os
 import json
 import shutil
+from fastapi.testclient import TestClient
 from CognitiveRAG.session_memory.context_window import compact_session, assemble_context, WORKDIR
 
 
@@ -49,3 +50,25 @@ def test_assemble_context_returns_fresh_tail_and_summaries(tmp_path):
     ctx2 = assemble_context(session_id, fresh_tail_count=5, budget=1000)
     assert len(ctx2["fresh_tail"]) == 5
     assert len(ctx2["summaries"]) >= 1
+
+
+def test_session_assemble_context_endpoint(tmp_path):
+    session_id = "sess3"
+    shutil.rmtree(WORKDIR, ignore_errors=True)
+    os.makedirs(WORKDIR, exist_ok=True)
+    make_raw(session_id, count=30)
+    compact_session(session_id, older_than_index=20)
+
+    from CognitiveRAG.main_server import app
+    client = TestClient(app)
+
+    resp = client.post('/session_assemble_context', json={
+        'session_id': session_id,
+        'fresh_tail_count': 4,
+        'budget': 1000,
+    })
+    assert resp.status_code == 200
+    body = resp.json()
+    assert 'fresh_tail' in body and 'summaries' in body
+    assert len(body['fresh_tail']) == 4
+    assert len(body['summaries']) >= 1

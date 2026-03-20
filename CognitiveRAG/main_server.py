@@ -141,6 +141,17 @@ class PromoteResponse(BaseModel):
     promoted_pattern_ids: list[str]
 
 
+class AssembleContextRequest(BaseModel):
+    session_id: str
+    fresh_tail_count: int = 20
+    budget: int = 4096
+
+
+class AssembleContextResponse(BaseModel):
+    fresh_tail: list[dict]
+    summaries: list[dict]
+
+
 @app.post('/promote_session', response_model=PromoteResponse)
 async def promote_session(request: PromoteRequest):
     """Operator endpoint: promote session summaries into durable reasoning memory.
@@ -154,6 +165,24 @@ async def promote_session(request: PromoteRequest):
         return PromoteResponse(promoted_count=len(ids), promoted_pattern_ids=ids)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Promotion failed: {e}")
+
+@app.post('/session_assemble_context', response_model=AssembleContextResponse)
+async def session_assemble_context(request: AssembleContextRequest):
+    """Assemble session context from fresh tail + summaries using context_window."""
+    try:
+        from CognitiveRAG.session_memory.context_window import assemble_context
+        out = assemble_context(
+            request.session_id,
+            fresh_tail_count=int(request.fresh_tail_count),
+            budget=int(request.budget),
+        )
+        return AssembleContextResponse(
+            fresh_tail=list(out.get('fresh_tail') or []),
+            summaries=list(out.get('summaries') or []),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Context assembly failed: {e}")
+
 
 @app.post('/session_append_message')
 async def session_append_message(payload: dict):
