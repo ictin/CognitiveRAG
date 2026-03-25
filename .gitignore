@@ -379,3 +379,8 @@ server*.log
 server*.pid
 
 .venv
+
+# runtime session memory artifacts
+data/session_memory/*.sqlite3
+data/session_memory/raw_*.json
+data/session_memory/summaries_*.json
