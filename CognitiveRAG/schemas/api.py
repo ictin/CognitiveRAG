@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 from CognitiveRAG.schemas.agent import OrchestrationTrace
-from CognitiveRAG.schemas.memory import EpisodicEvent, ProfileFact, ReasoningPattern, TaskRecord
+from CognitiveRAG.schemas.memory import EpisodicEvent, ProfileFact, ReasoningPattern, TaskRecord, MemoryContextBlock
 
 
 class QueryRequest(BaseModel):
@@ -15,6 +15,7 @@ class QueryRequest(BaseModel):
 class QueryResponse(BaseModel):
     answer: str
     trace: OrchestrationTrace | None = None
+    context_block: MemoryContextBlock | None = None
 
 
 class IngestPathRequest(BaseModel):

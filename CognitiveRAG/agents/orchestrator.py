@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from CognitiveRAG.agents.critic import CriticAgent
@@ -10,6 +10,7 @@ from CognitiveRAG.schemas.agent import OrchestrationTrace
 from CognitiveRAG.schemas.api import QueryResponse
 from CognitiveRAG.schemas.memory import EpisodicEvent
 from CognitiveRAG.schemas.memory import ReasoningPattern
+from CognitiveRAG.schemas.memory import build_context_block, ArtifactExact, DerivedSummary
 
 
 class Orchestrator:
@@ -64,7 +65,7 @@ class Orchestrator:
         self.episodic_store.upsert(
             EpisodicEvent(
                 event_id=f"evt_{uuid4().hex}",
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 event_type="query",
                 goal=query,
                 result=answer_draft.answer,
@@ -87,6 +88,30 @@ class Orchestrator:
             # Non-fatal: promotion should not block response
             pass
 
+        exact_items = []
+        derived_items = []
+        for chunk in retrieval.chunks:
+            provenance = {
+                "chunk_id": chunk.chunk_id,
+                "source_type": chunk.source_type,
+                "score": chunk.score,
+                "rank": getattr(chunk, "rank", None),
+                "final_score": getattr(chunk, "final_score", None),
+                "ranking_reason": getattr(chunk, "ranking_reason", None),
+            }
+            if getattr(chunk, "exactness", "derived") == "exact" or getattr(chunk, "summarizable", True) is False:
+                exact_items.append(ArtifactExact(item_id=chunk.chunk_id, source=chunk.source_type, provenance=provenance, content=chunk.text, metadata=dict(chunk.metadata or {})))
+            else:
+                derived_items.append(DerivedSummary(item_id=chunk.chunk_id, source=chunk.source_type, provenance=provenance, content=chunk.text, summary=chunk.text[:256], metadata=dict(chunk.metadata or {})))
+
+        context_block = build_context_block(
+            block_id=f"ctx_{uuid4().hex}",
+            project=plan.objective,
+            exact_items=exact_items,
+            derived_items=derived_items,
+            provenance={"query": query, "retrieval_mode": retrieval_mode, "augmentation_decision": getattr(retrieval, "augmentation_decision", None)},
+        )
+
         return QueryResponse(
             answer=answer_draft.answer,
             trace=OrchestrationTrace(
@@ -103,6 +128,7 @@ class Orchestrator:
                 } for chunk in retrieval.chunks],
                 augmentation_decision=getattr(retrieval, "augmentation_decision", None),
             ),
+            context_block=context_block,
         )
 
     def promote_reasoning(self, problem_signature: str, reasoning_steps: list[str], solution_summary: str, confidence: float = 0.0, provenance: list | None = None) -> None:

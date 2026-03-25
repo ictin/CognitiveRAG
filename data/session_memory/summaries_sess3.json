@@ -1,0 +1,9 @@
+[
+  {
+    "session_id": "sess3",
+    "chunk_index": 0,
+    "summary": "message 0\nmessage 1\nmessage 2\nmessage 3\nmessage 4\nmessage 5\nmessage 6\nmessage 7\nmessage 8\nmessage 9\nmessage 10\nmessage 11\nmessage 12\nmessage 13\nmessage 14\nmessage 15\nmessage 16\nmessage 17\nmessage 18\nm",
+    "source_count": 20,
+    "created_by": "context_window.v1"
+  }
+]

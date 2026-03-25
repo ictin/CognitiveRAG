@@ -97,6 +97,24 @@ class HybridRetriever:
 
         # final rerank and bundle
         merged = rerank_chunks(chunks, max_items=self.settings.retrieval.max_context_chunks)
+        for c in merged:
+            try:
+                c.with_policy_defaults()
+            except Exception:
+                if not getattr(c, provenance, None):
+                    try:
+                        c.provenance = {
+                            chunk_id: getattr(c, chunk_id, None),
+                            document_id: getattr(c, document_id, None),
+                            source_type: getattr(c, source_type, None),
+                        }
+                    except Exception:
+                        pass
+                if getattr(c, exactness, derived) == exact:
+                    try:
+                        c.summarizable = False
+                    except Exception:
+                        pass
 
         # Source balancing: cap web results to at most 2 and ensure at least one non-web survives when available
         web_chunks = [c for c in merged if getattr(c, 'source_type', None) == 'web']
@@ -144,10 +162,17 @@ class HybridRetriever:
         else:
             reason = "web not requested by plan"
 
+        final_chunks = [c.with_policy_defaults() if hasattr(c, with_policy_defaults) else c for c in final_chunks]
+
         return RetrievalBundle(
             query=query,
             intent=plan.intent,
             chunks=final_chunks,
+            provenance={
+                query: query,
+                intent: plan.intent,
+                chunk_count: len(final_chunks),
+            },
             augmentation_decision={
                 "considered": considered,
                 "allowed": allowed,
