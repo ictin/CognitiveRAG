@@ -9,6 +9,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily, RetrievalLane
 from CognitiveRAG.crag.cognition.controller import CognitiveController
+from CognitiveRAG.crag.cognition.discovery import DiscoveryExecutor, discovery_items_to_candidates
 from CognitiveRAG.crag.context_selection.candidate_builder import build_candidates_with_route
 from CognitiveRAG.crag.context_selection.lane_pruning import prune_lane_local
 from CognitiveRAG.crag.context_selection.policies import get_policy
@@ -170,6 +171,13 @@ def assemble_context(
         intent_family=detected_intent,
     )
     pruned = prune_lane_local(candidates)
+
+    discovery_executor = DiscoveryExecutor()
+    discovery_result = discovery_executor.run(plan=discovery_plan, candidate_pool=pruned)
+    discovery_candidates = discovery_items_to_candidates(discovery_result.injected_discoveries)
+    if discovery_candidates:
+        pruned = pruned + discovery_candidates
+
     selected_pairs, dropped, explanation = select_context(
         candidates=pruned,
         policy=policy,
@@ -215,4 +223,5 @@ def assemble_context(
             "reason": route_plan.reason,
         },
         "discovery_plan": discovery_plan.model_dump(mode="json"),
+        "discovery": discovery_result.model_dump(mode="json"),
     }

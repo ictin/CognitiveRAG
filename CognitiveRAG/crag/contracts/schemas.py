@@ -188,3 +188,56 @@ class DiscoveryPlan(BaseModel):
         self.role_conditioned_probes = self.role_conditioned_probes[:8]
         self.notes = self.notes[:8]
         return self
+
+
+class DiscoveryEvidenceRef(BaseModel):
+    evidence_id: str
+    branch_id: str
+    lane: RetrievalLane
+    memory_type: MemoryType
+    text: str
+    tokens: int = 0
+    score: float = 0.0
+    provenance: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ContradictionRecord(BaseModel):
+    left_evidence_id: str
+    right_evidence_id: str
+    reason: str
+    strength: float = 0.0
+
+
+class DiscoveryBranchRecord(BaseModel):
+    branch_id: str
+    query: str
+    status: str
+    score: float = 0.0
+    evidence_ids: List[str] = Field(default_factory=list)
+    reason: str | None = None
+
+
+class DiscoveryLedgerSnapshot(BaseModel):
+    explored_branches: List[DiscoveryBranchRecord] = Field(default_factory=list)
+    rejected_branches: List[DiscoveryBranchRecord] = Field(default_factory=list)
+    evidence_bundles: Dict[str, List[str]] = Field(default_factory=dict)
+    contradictions: List[ContradictionRecord] = Field(default_factory=list)
+    unresolved_questions: List[str] = Field(default_factory=list)
+
+
+class InjectedDiscovery(BaseModel):
+    discovery_id: str
+    text: str
+    tokens: int
+    score: float
+    source_evidence_ids: List[str] = Field(default_factory=list)
+    provenance: Dict[str, Any] = Field(default_factory=dict)
+
+
+class DiscoveryResult(BaseModel):
+    bounded: bool = True
+    budget_tokens: int
+    used_tokens: int
+    injected_discoveries: List[InjectedDiscovery] = Field(default_factory=list)
+    contradictions: List[ContradictionRecord] = Field(default_factory=list)
+    ledger: DiscoveryLedgerSnapshot = Field(default_factory=DiscoveryLedgerSnapshot)
