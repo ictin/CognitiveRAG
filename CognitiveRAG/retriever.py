@@ -312,12 +312,24 @@ class HybridRetriever:
         return wrapped_results
 
 # New small helper: assemble session context using context-window foundation
-def assemble_session_context(session_id: str, fresh_tail_count: int = 20, budget: int = 4096):
+def assemble_session_context(
+    session_id: str,
+    fresh_tail_count: int = 20,
+    budget: int = 4096,
+    query: str | None = None,
+    intent_family: str | None = None,
+):
     """Return assembled context for a session: fresh_tail + summaries.
     This is a minimal runtime-exposable wrapper around CognitiveRAG.session_memory.context_window."""
     try:
         from CognitiveRAG.session_memory.context_window import assemble_context
-        return assemble_context(session_id, fresh_tail_count=fresh_tail_count, budget=budget)
+        return assemble_context(
+            session_id,
+            fresh_tail_count=fresh_tail_count,
+            budget=budget,
+            query=query,
+            intent_family=intent_family,
+        )
     except Exception as e:
         print(f"Warning: could not assemble session context: {e}")
         return {"fresh_tail": [], "summaries": []}

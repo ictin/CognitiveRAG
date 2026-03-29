@@ -145,11 +145,14 @@ class AssembleContextRequest(BaseModel):
     session_id: str
     fresh_tail_count: int = 20
     budget: int = 4096
+    query: str | None = None
+    intent_family: str | None = None
 
 
 class AssembleContextResponse(BaseModel):
     fresh_tail: list[dict]
     summaries: list[dict]
+    explanation: dict | None = None
 
 
 @app.post('/promote_session', response_model=PromoteResponse)
@@ -175,10 +178,13 @@ async def session_assemble_context(request: AssembleContextRequest):
             request.session_id,
             fresh_tail_count=int(request.fresh_tail_count),
             budget=int(request.budget),
+            query=request.query,
+            intent_family=request.intent_family,
         )
         return AssembleContextResponse(
             fresh_tail=list(out.get('fresh_tail') or []),
             summaries=list(out.get('summaries') or []),
+            explanation=dict(out.get('explanation') or {}),
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Context assembly failed: {e}")
