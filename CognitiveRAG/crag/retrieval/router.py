@@ -5,7 +5,7 @@ from typing import Dict, Iterable, List
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily, RetrievalLane
 from CognitiveRAG.crag.retrieval.models import LaneHit
-from CognitiveRAG.crag.retrieval import corpus_lane, episodic_lane, large_file_lane, lexical_lane, promoted_lane, semantic_lane
+from CognitiveRAG.crag.retrieval import corpus_lane, episodic_lane, large_file_lane, lexical_lane, promoted_lane, semantic_lane, web_lane
 
 
 @dataclass
@@ -23,6 +23,9 @@ class LaneRouter:
 
     def route(self, *, query: str, intent_family: IntentFamily) -> RoutePlan:
         q = (query or "").lower()
+        web_sensitive = any(
+            token in q for token in ("latest", "current", "today", "yesterday", "recent", "news", "update", "verify")
+        )
 
         # Intent-first routing with query refinements.
         if intent_family == IntentFamily.EXACT_RECALL:
@@ -41,10 +44,14 @@ class LaneRouter:
 
         if intent_family == IntentFamily.CORPUS_OVERVIEW:
             lanes = [RetrievalLane.CORPUS, RetrievalLane.LARGE_FILE, RetrievalLane.LEXICAL, RetrievalLane.EPISODIC]
+            if web_sensitive:
+                lanes.append(RetrievalLane.WEB)
             return RoutePlan(intent_family=intent_family, lanes=lanes, reason="corpus_overview_prefers_corpus_lanes")
 
         if intent_family == IntentFamily.PLANNING:
             lanes = [RetrievalLane.PROMOTED, RetrievalLane.EPISODIC, RetrievalLane.SEMANTIC]
+            if web_sensitive:
+                lanes.append(RetrievalLane.WEB)
             return RoutePlan(intent_family=intent_family, lanes=lanes, reason="planning_prefers_promoted_and_recent")
 
         # INVESTIGATIVE mixed mode.
@@ -56,6 +63,8 @@ class LaneRouter:
             RetrievalLane.CORPUS,
             RetrievalLane.LARGE_FILE,
         ]
+        if web_sensitive:
+            lanes.append(RetrievalLane.WEB)
         return RoutePlan(intent_family=intent_family, lanes=lanes, reason="investigative_mixed_lane_pool")
 
 
@@ -97,6 +106,12 @@ LANE_HANDLERS = {
     RetrievalLane.LARGE_FILE: lambda **kw: large_file_lane.retrieve(
         workdir=kw["workdir"],
         query=kw["query"],
+        top_k=kw.get("top_k", 6),
+    ),
+    RetrievalLane.WEB: lambda **kw: web_lane.retrieve(
+        workdir=kw["workdir"],
+        query=kw["query"],
+        intent_family=kw["intent_family"],
         top_k=kw.get("top_k", 6),
     ),
 }

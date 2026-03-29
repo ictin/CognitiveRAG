@@ -36,6 +36,8 @@ class MemoryType(str, Enum):
     PROMOTED_FACT = "promoted_fact"
     CORPUS_CHUNK = "corpus_chunk"
     LARGE_FILE_EXCERPT = "large_file_excerpt"
+    WEB_EVIDENCE = "web_evidence"
+    WEB_PROMOTED_FACT = "web_promoted_fact"
     ARCHITECTURE_NOTE = "architecture_note"
     MIRROR_NOTE = "mirror_note"
 
