@@ -14,26 +14,52 @@ def _load_reasoning(workdir: str, limit: int = 10):
     if not os.path.exists(db_path):
         return []
     with sqlite3.connect(db_path) as conn:
-        return conn.execute(
-            "SELECT pattern_id, solution_summary, confidence, provenance_json FROM reasoning_patterns ORDER BY rowid DESC LIMIT ?",
-            (int(limit),),
-        ).fetchall()
+        try:
+            return conn.execute(
+                "SELECT pattern_id, solution_summary, confidence, provenance_json, memory_subtype, normalized_text, freshness_state "
+                "FROM reasoning_patterns ORDER BY rowid DESC LIMIT ?",
+                (int(limit),),
+            ).fetchall()
+        except sqlite3.OperationalError:
+            rows = conn.execute(
+                "SELECT pattern_id, solution_summary, confidence, provenance_json FROM reasoning_patterns ORDER BY rowid DESC LIMIT ?",
+                (int(limit),),
+            ).fetchall()
+            return [(*row, None, None, None) for row in rows]
 
 
 def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: int = 6) -> List[LaneHit]:
     hits: List[LaneHit] = []
     rows = _load_reasoning(workdir, limit=max(8, top_k))
 
-    for pattern_id, summary, confidence, provenance_json in rows:
+    qtokens = set((query or "").lower().split())
+    for pattern_id, summary, confidence, provenance_json, memory_subtype, normalized_text, freshness_state in rows:
         try:
             provenance = {"reasoning_provenance": json.loads(provenance_json) if provenance_json else []}
         except Exception:
             provenance = {"reasoning_provenance": []}
-        text = summary or ""
+        if memory_subtype:
+            provenance["memory_subtype"] = memory_subtype
+        if freshness_state:
+            provenance["freshness_state"] = freshness_state
+        if normalized_text:
+            provenance["normalized_text"] = normalized_text
+        text = (summary or "").strip()
+        if memory_subtype:
+            text = f"[{memory_subtype}] {text}"
+
         lexical = 0.2 if query else 0.0
+        if qtokens:
+            hay = f"{text} {normalized_text or ''} {memory_subtype or ''}".lower()
+            overlap = sum(1 for tok in qtokens if tok in hay)
+            lexical += min(0.6, overlap * 0.08)
         semantic = 0.25 if query else 0.0
         if intent_family in {IntentFamily.MEMORY_SUMMARY, IntentFamily.PLANNING}:
             semantic += 0.2
+        if memory_subtype and intent_family == IntentFamily.MEMORY_SUMMARY and "profile" in memory_subtype:
+            semantic += 0.12
+        if memory_subtype and intent_family == IntentFamily.EXACT_RECALL and "workflow" in memory_subtype:
+            semantic += 0.1
         hits.append(
             LaneHit(
                 id=f"promoted:{pattern_id}",
@@ -48,7 +74,7 @@ def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: in
                 trust_score=max(0.0, min(1.0, float(confidence or 0.5))),
                 novelty_score=0.45,
                 contradiction_risk=0.0,
-                cluster_id="promoted",
+                cluster_id=memory_subtype or "promoted",
                 must_include=False,
                 compressible=True,
             ).with_token_estimate()

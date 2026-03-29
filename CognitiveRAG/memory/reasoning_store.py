@@ -25,23 +25,39 @@ class ReasoningStore:
                     reasoning_steps_json TEXT NOT NULL,
                     solution_summary TEXT NOT NULL,
                     confidence REAL NOT NULL,
-                    provenance_json TEXT
+                    provenance_json TEXT,
+                    memory_subtype TEXT,
+                    normalized_text TEXT,
+                    freshness_state TEXT
                 )
                 """
             )
+            cols = {row[1] for row in conn.execute("PRAGMA table_info(reasoning_patterns)").fetchall()}
+            if "memory_subtype" not in cols:
+                conn.execute("ALTER TABLE reasoning_patterns ADD COLUMN memory_subtype TEXT")
+            if "normalized_text" not in cols:
+                conn.execute("ALTER TABLE reasoning_patterns ADD COLUMN normalized_text TEXT")
+            if "freshness_state" not in cols:
+                conn.execute("ALTER TABLE reasoning_patterns ADD COLUMN freshness_state TEXT")
 
     def upsert(self, pattern: ReasoningPattern) -> None:
         with self._connect() as conn:
             conn.execute(
                 """
-                INSERT INTO reasoning_patterns(pattern_id, problem_signature, reasoning_steps_json, solution_summary, confidence, provenance_json)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO reasoning_patterns(
+                    pattern_id, problem_signature, reasoning_steps_json, solution_summary, confidence, provenance_json,
+                    memory_subtype, normalized_text, freshness_state
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(pattern_id) DO UPDATE SET
                     problem_signature=excluded.problem_signature,
                     reasoning_steps_json=excluded.reasoning_steps_json,
                     solution_summary=excluded.solution_summary,
                     confidence=excluded.confidence,
-                    provenance_json=excluded.provenance_json
+                    provenance_json=excluded.provenance_json,
+                    memory_subtype=excluded.memory_subtype,
+                    normalized_text=excluded.normalized_text,
+                    freshness_state=excluded.freshness_state
                 """,
                 (
                     pattern.pattern_id,
@@ -50,6 +66,9 @@ class ReasoningStore:
                     pattern.solution_summary,
                     pattern.confidence,
                     json.dumps(pattern.provenance or []),
+                    getattr(pattern, "memory_subtype", None),
+                    getattr(pattern, "normalized_text", None),
+                    getattr(pattern, "freshness_state", None),
                 ),
             )
 
@@ -57,7 +76,10 @@ class ReasoningStore:
         """Return the most recent reasoning pattern as a RetrievedChunk-compatible dict."""
         with self._connect() as conn:
             try:
-                row = conn.execute("SELECT pattern_id, solution_summary, provenance_json FROM reasoning_patterns ORDER BY rowid DESC LIMIT 1").fetchone()
+                row = conn.execute(
+                    "SELECT pattern_id, solution_summary, provenance_json, memory_subtype, normalized_text, freshness_state "
+                    "FROM reasoning_patterns ORDER BY rowid DESC LIMIT 1"
+                ).fetchone()
             except sqlite3.OperationalError:
                 row = conn.execute("SELECT pattern_id, solution_summary FROM reasoning_patterns ORDER BY rowid DESC LIMIT 1").fetchone()
                 if not row:
@@ -73,12 +95,18 @@ class ReasoningStore:
                 }
             if not row:
                 return {}
-            pattern_id, solution_summary, provenance_json = row
+            pattern_id, solution_summary, provenance_json, memory_subtype, normalized_text, freshness_state = row
             meta = {}
             try:
                 meta['provenance'] = json.loads(provenance_json) if provenance_json else []
             except Exception:
                 meta['provenance'] = []
+            if memory_subtype:
+                meta['memory_subtype'] = memory_subtype
+            if normalized_text:
+                meta['normalized_text'] = normalized_text
+            if freshness_state:
+                meta['freshness_state'] = freshness_state
             return {
                 "chunk_id": pattern_id,
                 "document_id": None,
@@ -94,17 +122,33 @@ class ReasoningStore:
         results: list[tuple[float, dict]] = []
         with self._connect() as conn:
             try:
-                rows = conn.execute("SELECT pattern_id, problem_signature, solution_summary, provenance_json FROM reasoning_patterns").fetchall()
+                rows = conn.execute(
+                    "SELECT pattern_id, problem_signature, solution_summary, provenance_json, "
+                    "memory_subtype, normalized_text, freshness_state FROM reasoning_patterns"
+                ).fetchall()
                 extracted = []
-                for pattern_id, problem_signature, solution_summary, provenance_json in rows:
-                    extracted.append((pattern_id, problem_signature, solution_summary, provenance_json))
+                for pattern_id, problem_signature, solution_summary, provenance_json, memory_subtype, normalized_text, freshness_state in rows:
+                    extracted.append(
+                        (pattern_id, problem_signature, solution_summary, provenance_json, memory_subtype, normalized_text, freshness_state)
+                    )
             except sqlite3.OperationalError:
                 # Older DB schema without provenance_json; fall back gracefully
                 rows = conn.execute("SELECT pattern_id, problem_signature, solution_summary FROM reasoning_patterns").fetchall()
-                extracted = [(pattern_id, problem_signature, solution_summary, None) for (pattern_id, problem_signature, solution_summary) in rows]
+                extracted = [
+                    (pattern_id, problem_signature, solution_summary, None, None, None, None)
+                    for (pattern_id, problem_signature, solution_summary) in rows
+                ]
 
-            for pattern_id, problem_signature, solution_summary, provenance_json in extracted:
-                tokens = set((problem_signature + ' ' + solution_summary).lower().split())
+            for pattern_id, problem_signature, solution_summary, provenance_json, memory_subtype, normalized_text, freshness_state in extracted:
+                lexical_base = " ".join(
+                    [
+                        str(problem_signature or ""),
+                        str(solution_summary or ""),
+                        str(normalized_text or ""),
+                        str(memory_subtype or ""),
+                    ]
+                )
+                tokens = set(lexical_base.lower().split())
                 score = len(qtokens & tokens)
                 if score > 0:
                     meta = {}
@@ -112,6 +156,12 @@ class ReasoningStore:
                         meta['provenance'] = json.loads(provenance_json) if provenance_json else []
                     except Exception:
                         meta['provenance'] = []
+                    if memory_subtype:
+                        meta['memory_subtype'] = memory_subtype
+                    if normalized_text:
+                        meta['normalized_text'] = normalized_text
+                    if freshness_state:
+                        meta['freshness_state'] = freshness_state
                     results.append((float(score), {
                         "chunk_id": pattern_id,
                         "document_id": None,

@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
+import hashlib
 from pydantic import BaseModel, Field
+from pydantic import model_validator
 
 
 class MemoryItem(BaseModel):
@@ -89,12 +91,35 @@ class ReasoningPattern(MemoryItem):
     item_type: str = "reasoning_pattern"
     summarizable: bool = True
     exactness: str = "derived"
+    item_id: str = ""
     pattern_id: str | None = None
     problem_signature: str | None = None
     reasoning_steps: list[str] = Field(default_factory=list)
     solution_summary: str = ""
     confidence: float = 0.0
     provenance: list[str] = Field(default_factory=list)
+    memory_subtype: str = "generic"
+    normalized_text: str | None = None
+    freshness_state: str = "unknown"
+
+    @model_validator(mode="after")
+    def _ensure_ids(self):
+        pattern_id = (self.pattern_id or "").strip()
+        item_id = (self.item_id or "").strip()
+        if not pattern_id and item_id:
+            pattern_id = item_id
+        if not item_id and pattern_id:
+            item_id = pattern_id
+        if not pattern_id:
+            seed = f"{self.problem_signature or ''}|{self.solution_summary or ''}|{self.memory_subtype or ''}"
+            pattern_id = f"rp:{hashlib.sha1(seed.encode('utf-8')).hexdigest()[:16]}"
+        if not item_id:
+            item_id = pattern_id
+        self.pattern_id = pattern_id
+        self.item_id = item_id
+        if not self.normalized_text:
+            self.normalized_text = self.solution_summary.strip().lower()
+        return self
 
 
 class MemoryContextBlock(BaseModel):

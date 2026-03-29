@@ -1,10 +1,10 @@
 from __future__ import annotations
 import os
 import json
-import hashlib
 from typing import List, Dict, Any
 from pathlib import Path
 
+from CognitiveRAG.crag.promotion.bridge import promote_summaries_to_patterns
 from CognitiveRAG.schemas.memory import ReasoningPattern
 
 
@@ -17,10 +17,6 @@ def _load_fallback_summaries(session_id: str) -> List[Dict[str, Any]]:
         return []
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
-
-
-def _sha1_16(text: str) -> str:
-    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:16]
 
 
 def promote_session_summaries(session_id: str, reasoning_store=None, dry_run: bool = False) -> List[ReasoningPattern]:
@@ -49,29 +45,18 @@ def promote_session_summaries(session_id: str, reasoning_store=None, dry_run: bo
     if not summaries:
         return []
 
-    patterns: List[ReasoningPattern] = []
+    normalized = []
     for s in summaries:
-        summary_text = s.get("summary") if isinstance(s, dict) else getattr(s, "summary", None)
-        if not summary_text:
-            continue
-        chunk_index = s.get("chunk_index") if isinstance(s, dict) else getattr(s, "chunk_index", None)
-        pid = f"sessprom:{session_id}:{_sha1_16(summary_text)}"
-        provenance_entry = {
-            "session_id": session_id,
-            "summary_chunk_index": int(chunk_index) if chunk_index is not None else None,
-            "source": "context_window.v1",
-        }
-        # ReasoningPattern.provenance expects list[str]; store JSON string per item for compatibility
-        prov_item = json.dumps(provenance_entry)
-        rp = ReasoningPattern(
-            pattern_id=pid,
-            problem_signature=f"session:{session_id}",
-            reasoning_steps=[],
-            solution_summary=(summary_text[:2000] if len(summary_text) > 2000 else summary_text),
-            confidence=0.5,
-            provenance=[prov_item],
-        )
-        patterns.append(rp)
+        if isinstance(s, dict):
+            normalized.append(s)
+        else:
+            normalized.append(
+                {
+                    "chunk_index": getattr(s, "chunk_index", None),
+                    "summary": getattr(s, "summary", None),
+                }
+            )
+    patterns = promote_summaries_to_patterns(session_id, normalized)
 
     if dry_run:
         return patterns
@@ -81,8 +66,12 @@ def promote_session_summaries(session_id: str, reasoning_store=None, dry_run: bo
     if rs is None:
         try:
             from CognitiveRAG.memory.reasoning_store import ReasoningStore
-            # default DB path: data/session_memory/reasoning.sqlite3
-            dbp = Path(WORKDIR) / "reasoning.sqlite3"
+            try:
+                from CognitiveRAG.core.settings import settings as _settings
+
+                dbp = Path(getattr(_settings.store, "reasoning_db_path", Path(WORKDIR) / "reasoning.sqlite3"))
+            except Exception:
+                dbp = Path(WORKDIR) / "reasoning.sqlite3"
             rs = ReasoningStore(dbp)
         except Exception:
             rs = None
