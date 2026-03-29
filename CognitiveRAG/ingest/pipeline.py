@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from CognitiveRAG.core.settings import Settings
-from CognitiveRAG.ingest.chunking import chunk_text
+from CognitiveRAG.crag.corpus.ingest import build_chunk_payloads
 from CognitiveRAG.ingest.loaders import load_path
 
 
@@ -31,38 +31,15 @@ class IngestionPipeline:
             content_hash=loaded.content_hash,
         )
 
-        chunks = chunk_text(
+        chunk_payloads = build_chunk_payloads(
             document_id=loaded.document_id,
-            text=loaded.content,
+            source_path=loaded.source_path,
+            content=loaded.content,
+            content_hash=loaded.content_hash,
             chunk_size=self.settings.retrieval.chunk_size,
             chunk_overlap=self.settings.retrieval.chunk_overlap,
             base_metadata=loaded.metadata,
         )
-
-        # Build payloads and enrich metadata BEFORE persisting to metadata store and vector store.
-        chunk_payloads = [
-            {
-                "chunk_id": chunk.chunk_id,
-                "document_id": chunk.document_id,
-                "text": chunk.text,
-                "metadata": dict(chunk.metadata or {}),
-            }
-            for chunk in chunks
-        ]
-
-        # Enrich metadata with required fields for future policy-based filtering.
-        from datetime import datetime
-        for p in chunk_payloads:
-            m = p.setdefault("metadata", {})
-            m.setdefault("source_type", "document")
-            m.setdefault("project", loaded.metadata.get("project", "cognitiverag"))
-            tr = loaded.metadata.get("test_run_id")
-            m.setdefault("test_run_id", tr if tr is not None else "")
-            m.setdefault("document_kind", m.get("document_kind", "chunk"))
-            m.setdefault("content_hash", loaded.content_hash)
-            now = datetime.utcnow().isoformat() + "Z"
-            m.setdefault("created_at", now)
-            m["updated_at"] = now
 
         # Persist enriched metadata to metadata store (SQLite)
         self.metadata_store.replace_chunks(loaded.document_id, [
