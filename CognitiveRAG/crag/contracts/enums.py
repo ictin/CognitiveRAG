@@ -11,6 +11,8 @@ class IntentFamily(str, Enum):
 
 
 class RetrievalLane(str, Enum):
+    LEXICAL = "lexical"
+    SEMANTIC = "semantic"
     SYSTEM = "system"
     USER_TURN = "user_turn"
     FRESH_TAIL = "fresh_tail"
@@ -19,6 +21,9 @@ class RetrievalLane(str, Enum):
     PROMOTED = "promoted"
     CORPUS = "corpus"
     LARGE_FILE = "large_file"
+    REASONING = "reasoning"
+    DISCOVERY = "discovery"
+    WEB = "web"
     ARCHITECTURE = "architecture"
     FALLBACK_MIRROR = "fallback_mirror"
 

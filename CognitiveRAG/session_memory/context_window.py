@@ -8,7 +8,7 @@ import os
 from typing import Any, Callable, Dict, List, Optional
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily, RetrievalLane
-from CognitiveRAG.crag.context_selection.candidate_builder import build_candidates
+from CognitiveRAG.crag.context_selection.candidate_builder import build_candidates_with_route
 from CognitiveRAG.crag.context_selection.lane_pruning import prune_lane_local
 from CognitiveRAG.crag.context_selection.policies import get_policy
 from CognitiveRAG.crag.context_selection.selector import select_context
@@ -45,6 +45,8 @@ def _detect_intent_family(query: str | None) -> IntentFamily:
         return IntentFamily.MEMORY_SUMMARY
     if "what did we say" in q or "earlier" in q or "quote" in q:
         return IntentFamily.EXACT_RECALL
+    if "investigate" in q or "investigation" in q:
+        return IntentFamily.INVESTIGATIVE
     if "memory organized" in q or "architecture" in q:
         return IntentFamily.ARCHITECTURE_EXPLANATION
     if "what do you remember" in q or "what do you know about me" in q:
@@ -151,7 +153,7 @@ def assemble_context(
     )
 
     # Phase B + C + D + E + F + G + H
-    candidates = build_candidates(
+    route_plan, candidates = build_candidates_with_route(
         session_id=session_id,
         query=query or "",
         fresh_tail=fresh_tail,
@@ -200,4 +202,9 @@ def assemble_context(
         ],
         "dropped_blocks": [{"id": c.id, "reason": reason, "lane": c.lane.value} for c, reason in dropped],
         "explanation": explanation.model_dump(),
+        "retrieval_route": {
+            "intent_family": route_plan.intent_family.value,
+            "lanes": [lane.value for lane in route_plan.lanes],
+            "reason": route_plan.reason,
+        },
     }

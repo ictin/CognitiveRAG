@@ -13,12 +13,15 @@ def _base_policy(intent: IntentFamily) -> ContextSelectionPolicy:
             RetrievalLane.FRESH_TAIL.value: 2,
         },
         lane_maxima={
+            RetrievalLane.LEXICAL.value: 8,
+            RetrievalLane.SEMANTIC.value: 8,
             RetrievalLane.FRESH_TAIL.value: 10,
             RetrievalLane.EPISODIC.value: 8,
             RetrievalLane.SESSION_SUMMARY.value: 8,
             RetrievalLane.PROMOTED.value: 4,
             RetrievalLane.CORPUS.value: 8,
             RetrievalLane.LARGE_FILE.value: 6,
+            RetrievalLane.REASONING.value: 4,
             RetrievalLane.ARCHITECTURE.value: 4,
             RetrievalLane.FALLBACK_MIRROR.value: 4,
         },
@@ -48,6 +51,8 @@ def get_policy(intent_family: IntentFamily | str) -> ContextSelectionPolicy:
         )
         policy.lane_minima[RetrievalLane.EPISODIC.value] = 2
         policy.lane_maxima[RetrievalLane.CORPUS.value] = 3
+        policy.lane_maxima[RetrievalLane.LEXICAL.value] = 4
+        policy.lane_maxima[RetrievalLane.SEMANTIC.value] = 4
 
     elif intent == IntentFamily.MEMORY_SUMMARY:
         policy.per_intent_weights = IntentWeights(
@@ -62,6 +67,7 @@ def get_policy(intent_family: IntentFamily | str) -> ContextSelectionPolicy:
         )
         policy.lane_minima[RetrievalLane.SESSION_SUMMARY.value] = 2
         policy.lane_maxima[RetrievalLane.EPISODIC.value] = 3
+        policy.lane_maxima[RetrievalLane.LEXICAL.value] = 3
 
     elif intent == IntentFamily.ARCHITECTURE_EXPLANATION:
         policy.per_intent_weights = IntentWeights(
@@ -89,6 +95,7 @@ def get_policy(intent_family: IntentFamily | str) -> ContextSelectionPolicy:
         )
         policy.lane_minima[RetrievalLane.CORPUS.value] = 1
         policy.lane_maxima[RetrievalLane.EPISODIC.value] = 2
+        policy.lane_maxima[RetrievalLane.LEXICAL.value] = 3
 
     elif intent == IntentFamily.PLANNING:
         policy.per_intent_weights = IntentWeights(
