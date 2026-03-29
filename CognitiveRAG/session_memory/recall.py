@@ -7,6 +7,19 @@ from .context_items import ContextItemStore
 from .large_file_store import LargeFileStore
 
 
+def _resolve_parts_db(db_prefix: Optional[str]) -> Optional[str]:
+    if not db_prefix:
+        return None
+    import os
+    cand1 = os.path.join(db_prefix, 'parts.sqlite3')
+    cand2 = os.path.join(db_prefix, 'message_parts.sqlite3')
+    if os.path.exists(cand1):
+        return cand1
+    if os.path.exists(cand2):
+        return cand2
+    return cand2
+
+
 def _make_ref(item_type: str, session_id: Optional[str], primary_id: str, secondary_id: Optional[str], preview: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
     return {
         'item_type': item_type,
@@ -33,29 +46,42 @@ def search_session_memory(session_id: str, query: str, db_prefix: Optional[str] 
                 return results
 
     # prefer legacy filename 'parts.sqlite3' if present (tests may create that), otherwise use 'message_parts.sqlite3'
-    parts_db = None
-    if db_prefix:
-        import os
-        cand1 = os.path.join(db_prefix, 'parts.sqlite3')
-        cand2 = os.path.join(db_prefix, 'message_parts.sqlite3')
-        if os.path.exists(cand1):
-            parts_db = cand1
-        elif os.path.exists(cand2):
-            parts_db = cand2
-        else:
-            parts_db = cand2
+    parts_db = _resolve_parts_db(db_prefix)
     parts_store = MessagePartsStore(db_path=parts_db if parts_db else None)
-    parts = []
     try:
-        parts = parts_store.get_parts(session_id, '')
+        for p in parts_store.get_parts_for_session(session_id):
+            haystacks = [
+                p.get("text") or "",
+                p.get("tool_name") or "",
+                p.get("tool_call_id") or "",
+                p.get("part_type") or "",
+                p.get("status") or "",
+            ]
+            file_refs = p.get("file_refs") or []
+            if isinstance(file_refs, list):
+                haystacks.extend(str(fr) for fr in file_refs)
+            if query.lower() in " ".join(haystacks).lower():
+                results.append(
+                    _make_ref(
+                        "message_part",
+                        session_id,
+                        p.get("message_id"),
+                        str(p.get("part_index")),
+                        (p.get("text") or "")[:256],
+                        {
+                            "part_type": p.get("part_type"),
+                            "status": p.get("status"),
+                            "retry_of_part_index": p.get("retry_of_part_index"),
+                            "tool_name": p.get("tool_name"),
+                            "tool_call_id": p.get("tool_call_id"),
+                            "file_refs": p.get("file_refs") or [],
+                        },
+                    )
+                )
+                if len(results) >= top_k:
+                    return results
     except Exception:
-        # get_parts requires message_id; iterate naive by trying to match known messages
-        for m in conv_store.get_messages(session_id):
-            for p in parts_store.get_parts(session_id, m['message_id']):
-                if query.lower() in (p.get('text') or '').lower():
-                    results.append(_make_ref('message_part', session_id, m['message_id'], str(p.get('part_index')), p.get('text','')[:256], {}))
-                    if len(results) >= top_k:
-                        return results
+        pass
 
     node_store = SummaryNodeStore(db_path=(db_prefix + '/summary_nodes.sqlite3') if db_prefix else None)
     try:
@@ -111,7 +137,7 @@ def describe_session_item(ref: Dict[str, Any], db_prefix: Optional[str] = None) 
                     'references_large_file': False,
                 }
     if item_type == 'message_part':
-        parts = MessagePartsStore(db_path=(db_prefix + '/message_parts.sqlite3') if db_prefix else None)
+        parts = MessagePartsStore(db_path=_resolve_parts_db(db_prefix) if db_prefix else None)
         pts = parts.get_parts(session_id, primary_id)
         for p in pts:
             if str(p['part_index']) == (secondary_id or '0'):
@@ -120,8 +146,19 @@ def describe_session_item(ref: Dict[str, Any], db_prefix: Optional[str] = None) 
                     'session_id': session_id,
                     'message_id': primary_id,
                     'part_index': p['part_index'],
+                    'part_type': p.get('part_type'),
+                    'status': p.get('status'),
+                    'retry_of_part_index': p.get('retry_of_part_index'),
+                    'tool_name': p.get('tool_name'),
+                    'tool_call_id': p.get('tool_call_id'),
+                    'file_refs': p.get('file_refs') or [],
+                    'provenance': {
+                        'session_id': session_id,
+                        'message_id': primary_id,
+                        'part_index': p['part_index'],
+                    },
                     'preview': (p.get('text') or '')[:512],
-                    'references_large_file': False,
+                    'references_large_file': bool(p.get('file_refs')),
                 }
     if item_type == 'summary_node':
         nodes = SummaryNodeStore(db_path=(db_prefix + '/summary_nodes.sqlite3') if db_prefix else None)
@@ -181,21 +218,82 @@ def expand_session_item(ref: Dict[str, Any], db_prefix: Optional[str] = None) ->
 
     if item_type == 'message':
         # prefer legacy filename 'parts.sqlite3' if present otherwise use 'message_parts.sqlite3'
-        parts_db = None
-        if db_prefix:
-            import os
-            cand1 = os.path.join(db_prefix, 'parts.sqlite3')
-            cand2 = os.path.join(db_prefix, 'message_parts.sqlite3')
-            if os.path.exists(cand1):
-                parts_db = cand1
-            elif os.path.exists(cand2):
-                parts_db = cand2
-            else:
-                parts_db = cand2
+        parts_db = _resolve_parts_db(db_prefix)
         parts = MessagePartsStore(db_path=parts_db if parts_db else None)
         pts = parts.get_parts(session_id, primary_id)
         for p in pts:
-            out.append(_make_ref('message_part', session_id, primary_id, str(p['part_index']), p.get('text','')[:256], {}))
+            out.append(
+                _make_ref(
+                    'message_part',
+                    session_id,
+                    primary_id,
+                    str(p['part_index']),
+                    p.get('text','')[:256],
+                    {
+                        'part_type': p.get('part_type'),
+                        'status': p.get('status'),
+                        'retry_of_part_index': p.get('retry_of_part_index'),
+                        'tool_name': p.get('tool_name'),
+                        'tool_call_id': p.get('tool_call_id'),
+                        'file_refs': p.get('file_refs') or [],
+                        'provenance': {
+                            'session_id': session_id,
+                            'message_id': primary_id,
+                            'part_index': p['part_index'],
+                        },
+                    }
+                )
+            )
+        return out
+
+    if item_type == 'message_part':
+        parts = MessagePartsStore(db_path=_resolve_parts_db(db_prefix) if db_prefix else None)
+        pts = parts.get_parts(session_id, primary_id)
+        try:
+            this_index = int(ref.get('secondary_id') or 0)
+        except Exception:
+            this_index = 0
+
+        selected = None
+        for p in pts:
+            if int(p.get('part_index', -1)) == this_index:
+                selected = p
+                break
+        if selected is None:
+            return out
+
+        this_tool_call = selected.get('tool_call_id')
+        this_retry_of = selected.get('retry_of_part_index')
+        for p in pts:
+            p_index = int(p.get('part_index', -1))
+            if p_index == this_index:
+                continue
+            same_tool_call = bool(this_tool_call) and (p.get('tool_call_id') == this_tool_call)
+            retry_of_this = p.get('retry_of_part_index') is not None and int(p.get('retry_of_part_index')) == this_index
+            this_is_retry_of_other = this_retry_of is not None and p_index == int(this_retry_of)
+            if same_tool_call or retry_of_this or this_is_retry_of_other:
+                out.append(
+                    _make_ref(
+                        'message_part',
+                        session_id,
+                        primary_id,
+                        str(p['part_index']),
+                        p.get('text', '')[:256],
+                        {
+                            'part_type': p.get('part_type'),
+                            'status': p.get('status'),
+                            'retry_of_part_index': p.get('retry_of_part_index'),
+                            'tool_name': p.get('tool_name'),
+                            'tool_call_id': p.get('tool_call_id'),
+                            'file_refs': p.get('file_refs') or [],
+                            'provenance': {
+                                'session_id': session_id,
+                                'message_id': primary_id,
+                                'part_index': p['part_index'],
+                            },
+                        },
+                    )
+                )
         return out
 
     if item_type == 'large_file':

@@ -27,5 +27,9 @@ def test_message_part_ingest_uses_durable_store(tmp_path, monkeypatch):
 
     store = real_store_cls(db_path=str(db_path))
     parts = store.get_parts('sess-123', 'msg-1')
-    assert parts == [{'part_index': 0, 'text': 'hello part', 'meta_json': None}]
+    assert len(parts) == 1
+    assert parts[0]['part_index'] == 0
+    assert parts[0]['text'] == 'hello part'
+    assert parts[0]['meta_json'] is None
+    assert parts[0]['part_type'] == 'text'
     assert not (Path.cwd() / 'data' / 'session_memory' / 'parts_sess-123_msg-1.json').exists()

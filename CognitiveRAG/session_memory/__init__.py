@@ -5,6 +5,7 @@ from .summary_nodes import SummaryNodeStore
 from .summary_edges import SummaryEdgeStore
 from .context_items import ContextItemStore
 from .large_file_store import LargeFileStore
+from .export import export_session_with_parts
 
 __all__ = [
     "ConversationStore",
@@ -13,4 +14,5 @@ __all__ = [
     "SummaryEdgeStore",
     "ContextItemStore",
     "LargeFileStore",
+    "export_session_with_parts",
 ]
