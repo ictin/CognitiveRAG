@@ -110,3 +110,81 @@ class SelectionExplanation(BaseModel):
     lane_totals: Dict[str, int] = Field(default_factory=dict)
     cluster_coverage: List[str] = Field(default_factory=list)
     reorder_strategy: str = "front_back_anchor"
+
+
+class RoleProbe(BaseModel):
+    role: str
+    prompt: str
+    purpose: str
+    expected_lanes: List[RetrievalLane] = Field(default_factory=list)
+    priority: int = 1
+
+    @field_validator("role", "prompt", "purpose", mode="before")
+    @classmethod
+    def _normalize_text(cls, value: Any) -> str:
+        text = str(value or "").strip()
+        return text
+
+    @field_validator("priority", mode="before")
+    @classmethod
+    def _normalize_priority(cls, value: Any) -> int:
+        try:
+            parsed = int(value)
+        except Exception:
+            parsed = 1
+        if parsed < 1:
+            return 1
+        if parsed > 10:
+            return 10
+        return parsed
+
+
+class DiscoveryPlan(BaseModel):
+    plan_version: str = "m9-mvp"
+    intent_family: IntentFamily
+    discovery_mode: DiscoveryMode = DiscoveryMode.OFF
+    web_sensitive: bool = False
+    risk_mode: str = "normal"
+    bounded: bool = True
+
+    query_variants: List[str] = Field(default_factory=list)
+    adjacent_topics: List[str] = Field(default_factory=list)
+    expected_lanes: List[RetrievalLane] = Field(default_factory=list)
+    contradiction_probes: List[RoleProbe] = Field(default_factory=list)
+    novelty_probes: List[RoleProbe] = Field(default_factory=list)
+    role_conditioned_probes: List[RoleProbe] = Field(default_factory=list)
+    notes: List[str] = Field(default_factory=list)
+
+    @field_validator(
+        "query_variants",
+        "adjacent_topics",
+        "notes",
+        mode="before",
+    )
+    @classmethod
+    def _normalize_str_list(cls, value: Any) -> List[str]:
+        if not isinstance(value, list):
+            return []
+        out: List[str] = []
+        seen = set()
+        for item in value:
+            text = str(item or "").strip()
+            if not text:
+                continue
+            key = text.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(text)
+        return out
+
+    @model_validator(mode="after")
+    def _bound_plan_lists(self) -> "DiscoveryPlan":
+        self.query_variants = self.query_variants[:6]
+        self.adjacent_topics = self.adjacent_topics[:8]
+        self.expected_lanes = self.expected_lanes[:8]
+        self.contradiction_probes = self.contradiction_probes[:6]
+        self.novelty_probes = self.novelty_probes[:6]
+        self.role_conditioned_probes = self.role_conditioned_probes[:8]
+        self.notes = self.notes[:8]
+        return self

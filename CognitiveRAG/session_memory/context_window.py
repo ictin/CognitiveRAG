@@ -8,6 +8,7 @@ import os
 from typing import Any, Callable, Dict, List, Optional
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily, RetrievalLane
+from CognitiveRAG.crag.cognition.controller import CognitiveController
 from CognitiveRAG.crag.context_selection.candidate_builder import build_candidates_with_route
 from CognitiveRAG.crag.context_selection.lane_pruning import prune_lane_local
 from CognitiveRAG.crag.context_selection.policies import get_policy
@@ -142,7 +143,13 @@ def assemble_context(
     fresh_tail = raw[-int(fresh_tail_count) :] if fresh_tail_count > 0 else []
     older_raw = raw[: max(0, len(raw) - len(fresh_tail))]
 
-    detected_intent = IntentFamily(intent_family) if intent_family else _detect_intent_family(query)
+    controller = CognitiveController()
+    discovery_plan = controller.build_plan(
+        query=query or "",
+        hinted_intent=intent_family,
+        local_evidence_count=len(older_raw) + len(summaries),
+    )
+    detected_intent = discovery_plan.intent_family
     policy = get_policy(detected_intent)
 
     # Phase A: hard reservations
@@ -207,4 +214,5 @@ def assemble_context(
             "lanes": [lane.value for lane in route_plan.lanes],
             "reason": route_plan.reason,
         },
+        "discovery_plan": discovery_plan.model_dump(mode="json"),
     }

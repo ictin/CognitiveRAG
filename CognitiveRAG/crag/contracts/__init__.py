@@ -2,6 +2,8 @@ from .enums import IntentFamily, RetrievalLane, MemoryType, DiscoveryMode, Fresh
 from .schemas import (
     ContextCandidate,
     ContextSelectionPolicy,
+    DiscoveryPlan,
+    RoleProbe,
     IntentWeights,
     SelectionExplanation,
     SelectedBlock,
@@ -17,6 +19,8 @@ __all__ = [
     "ConflictLevel",
     "ContextCandidate",
     "ContextSelectionPolicy",
+    "DiscoveryPlan",
+    "RoleProbe",
     "IntentWeights",
     "SelectionExplanation",
     "SelectedBlock",

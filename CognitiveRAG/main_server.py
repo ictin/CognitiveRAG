@@ -153,6 +153,8 @@ class AssembleContextResponse(BaseModel):
     fresh_tail: list[dict]
     summaries: list[dict]
     explanation: dict | None = None
+    retrieval_route: dict | None = None
+    discovery_plan: dict | None = None
 
 
 @app.post('/promote_session', response_model=PromoteResponse)
@@ -185,6 +187,8 @@ async def session_assemble_context(request: AssembleContextRequest):
             fresh_tail=list(out.get('fresh_tail') or []),
             summaries=list(out.get('summaries') or []),
             explanation=dict(out.get('explanation') or {}),
+            retrieval_route=dict(out.get('retrieval_route') or {}),
+            discovery_plan=dict(out.get('discovery_plan') or {}),
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Context assembly failed: {e}")
