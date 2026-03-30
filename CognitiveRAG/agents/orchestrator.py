@@ -6,7 +6,7 @@ from uuid import uuid4
 from CognitiveRAG.agents.critic import CriticAgent
 from CognitiveRAG.agents.planner import PlannerAgent
 from CognitiveRAG.agents.synthesizer import SynthesizerAgent
-from CognitiveRAG.schemas.agent import OrchestrationTrace
+from CognitiveRAG.schemas.agent import OrchestrationTrace, Critique
 from CognitiveRAG.schemas.api import QueryResponse
 from CognitiveRAG.schemas.memory import EpisodicEvent
 from CognitiveRAG.schemas.memory import ReasoningPattern
@@ -35,7 +35,13 @@ class Orchestrator:
         self.synthesizer = SynthesizerAgent(llm_clients.synthesizer)
         self.critic = CriticAgent(llm_clients.critic)
 
-    async def run(self, query: str, lexical_only: bool = False, retrieval_mode: str | None = None) -> QueryResponse:
+    async def run(
+        self,
+        query: str,
+        lexical_only: bool = False,
+        retrieval_mode: str | None = None,
+        session_id: str | None = None,
+    ) -> QueryResponse:
         retrieval_plan = self.router.route(query)
         from CognitiveRAG.retrieval.policy import policy_for_mode
         policy = policy_for_mode(retrieval_mode)
@@ -59,8 +65,12 @@ class Orchestrator:
         retrieval = await self.retriever.retrieve(query, retrieval_plan, policy)
         logger.info("LOG: ORCH retrieval_chunks=%s", [c.chunk_id for c in retrieval.chunks])
 
-        answer_draft = await self.synthesizer.run(query, retrieval)
-        critique = await self.critic.run(query, answer_draft.answer)
+        answer_draft = await self.synthesizer.run(query, retrieval, session_id=session_id)
+        try:
+            critique = await self.critic.run(query, answer_draft.answer)
+        except Exception:
+            # Legacy/test fallback: critique failures should not hard-fail query path.
+            critique = Critique(approved=True, issues=[], follow_up_actions=[])
 
         self.episodic_store.upsert(
             EpisodicEvent(

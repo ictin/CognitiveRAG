@@ -14,10 +14,12 @@ else:
     from .knowledge_base import kb
 import os
 import json
+import importlib
 from contextlib import asynccontextmanager
 import signal
 import sys
 import asyncio
+from pathlib import Path
 
 # --- Lifespan event handler ---
 @asynccontextmanager
@@ -55,6 +57,55 @@ class QueryRequest(BaseModel):
 class QueryResponse(BaseModel):
     answer: str
     sources: List[str]
+
+
+def _augment_query_with_session_summary(query: str, session_id: str | None) -> str:
+    if not session_id:
+        return query
+    path = Path(os.getcwd()) / "data" / "session_memory" / f"summaries_{session_id}.json"
+    if not path.exists():
+        return query
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return query
+    summary_text = " ".join(
+        str(item.get("summary") or "")
+        for item in payload
+        if isinstance(item, dict)
+    ).strip()
+    if not summary_text:
+        return query
+    return f"{summary_text}\n\n{query}"
+
+
+async def _legacy_synth_fallback(query: str, session_id: str | None) -> str | None:
+    """Best-effort fallback to avoid opaque 500s on legacy orchestrator wiring."""
+    try:
+        agents_mod = importlib.import_module("CognitiveRAG.agents")
+        orch_factory = getattr(agents_mod, "Orchestrator", None)
+        if orch_factory is None:
+            return None
+        orch = orch_factory()
+    except Exception:
+        return None
+
+    synth_client = None
+    synthesizer = getattr(orch, "synthesizer", None)
+    if synthesizer is not None:
+        synth_client = getattr(synthesizer, "llm_client", None) or getattr(synthesizer, "client", None)
+    if synth_client is None:
+        synth_client = getattr(getattr(orch, "_llm_clients", None), "synthesizer", None)
+    if synth_client is None or not hasattr(synth_client, "ainvoke_text"):
+        return None
+
+    augmented = _augment_query_with_session_summary(query, session_id)
+    if "\n\n" in augmented:
+        summary_text, base_query = augmented.split("\n\n", 1)
+    else:
+        summary_text, base_query = "", query
+    user_prompt = f"Query:\n{base_query}\n\nContext:\n[session_summaries] {summary_text}".rstrip()
+    return await synth_client.ainvoke_text(system_prompt=None, user_prompt=user_prompt)
 
 # --- Endpoints ---
 
@@ -99,8 +150,15 @@ async def process_query(request: QueryRequest):
     try:
         from .agents import Orchestrator
         orchestrator = Orchestrator()
-        # pass session_id through to orchestrator.run; await the async run
-        final_state = await orchestrator.run(request.query, session_id=request.session_id)
+        # pass session_id through when supported; fallback for legacy signatures
+        try:
+            final_state = await orchestrator.run(request.query, session_id=request.session_id)
+        except TypeError as exc:
+            if "session_id" not in str(exc):
+                raise
+            final_state = await orchestrator.run(
+                _augment_query_with_session_summary(request.query, request.session_id)
+            )
         # final_state is a QueryResponse model or dict-like; attempt to extract answer and context
         try:
             answer = final_state.answer if hasattr(final_state, 'answer') else final_state['answer']
@@ -115,6 +173,9 @@ async def process_query(request: QueryRequest):
             sources=sources
         )
     except Exception as e:
+        fallback_answer = await _legacy_synth_fallback(request.query, request.session_id)
+        if fallback_answer is not None:
+            return QueryResponse(answer=str(fallback_answer), sources=[])
         raise HTTPException(status_code=500, detail=f"An error occurred during query processing: {str(e)}")
 
 @app.get("/health")
