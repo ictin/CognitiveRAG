@@ -89,6 +89,31 @@ class StyleGistArtifact(SkillArtifact):
     style_traits: List[str] = Field(default_factory=list)
 
 
+AgentType = Literal["script_agent", "storyboard_agent"]
+
+
+class SkillPackRequest(BaseModel):
+    query: str
+    agent_type: AgentType
+    task_type: str
+    channel_type: str = ""
+    language: str = ""
+    style_profile: str = ""
+    max_items: int = 12
+
+
+class SkillPack(BaseModel):
+    query: str
+    agent_type: AgentType
+    task_type: str
+    channel_type: str = ""
+    language: str = ""
+    style_profile: str = ""
+    selected_artifact_ids: List[str] = Field(default_factory=list)
+    grouped_artifacts: Dict[str, List[SkillArtifact]] = Field(default_factory=dict)
+    warnings: List[str] = Field(default_factory=list)
+
+
 def normalize_key(text: str) -> str:
     return " ".join(str(text or "").lower().split())
 
@@ -166,4 +191,3 @@ def artifact_to_record(artifact: SkillArtifact) -> dict:
         "metadata_json": json.dumps(artifact.metadata),
         "payload_json": json.dumps(artifact.model_dump()),
     }
-
