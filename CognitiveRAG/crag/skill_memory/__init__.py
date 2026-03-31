@@ -1,5 +1,17 @@
 from CognitiveRAG.crag.skill_memory.dedup import dedup_artifacts
 from CognitiveRAG.crag.skill_memory.distill import distill_chunk
+from CognitiveRAG.crag.skill_memory.evaluation_retrieval import (
+    RankedEvaluationCase,
+    retrieve_best_evaluations,
+    retrieve_evaluations_for_execution,
+    retrieve_weak_evaluations,
+)
+from CognitiveRAG.crag.skill_memory.evaluation_schema import (
+    EvaluationProvenance,
+    SkillEvaluationCase,
+    build_evaluation_case,
+)
+from CognitiveRAG.crag.skill_memory.evaluation_store import SkillEvaluationStore
 from CognitiveRAG.crag.skill_memory.execution_retrieval import RankedExecutionCase, retrieve_similar_execution_cases
 from CognitiveRAG.crag.skill_memory.execution_schema import (
     ExecutionProvenance,
@@ -11,6 +23,7 @@ from CognitiveRAG.crag.skill_memory.linker import link_artifacts
 from CognitiveRAG.crag.skill_memory.pack_builder import build_skill_pack
 from CognitiveRAG.crag.skill_memory.ranking import RankedArtifact, rank_artifacts
 from CognitiveRAG.crag.skill_memory.retrieval import retrieve_skill_artifacts
+from CognitiveRAG.crag.skill_memory.rubric_runtime import RubricCriterionScore, RubricRuntime
 from CognitiveRAG.crag.skill_memory.schemas import (
     AgentType,
     AntiPatternArtifact,
@@ -31,8 +44,13 @@ from CognitiveRAG.crag.skill_memory.store import SkillMemoryStore
 __all__ = [
     "SkillMemoryStore",
     "SkillExecutionStore",
+    "SkillEvaluationStore",
     "SkillExecutionCase",
     "ExecutionProvenance",
+    "SkillEvaluationCase",
+    "EvaluationProvenance",
+    "RubricRuntime",
+    "RubricCriterionScore",
     "SkillPack",
     "SkillPackRequest",
     "SkillSourceRef",
@@ -56,4 +74,9 @@ __all__ = [
     "build_execution_case",
     "retrieve_similar_execution_cases",
     "RankedExecutionCase",
+    "build_evaluation_case",
+    "retrieve_best_evaluations",
+    "retrieve_weak_evaluations",
+    "retrieve_evaluations_for_execution",
+    "RankedEvaluationCase",
 ]
