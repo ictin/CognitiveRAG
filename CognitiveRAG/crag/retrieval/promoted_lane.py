@@ -8,6 +8,7 @@ from typing import List
 from CognitiveRAG.crag.contracts.enums import IntentFamily, MemoryType, RetrievalLane
 from CognitiveRAG.crag.graph_memory.enrichment import GraphRetrievalEnricher
 from CognitiveRAG.crag.retrieval.models import LaneHit
+from CognitiveRAG.memory.reasoning_success import refresh_reasoning_success_signals
 
 
 def _load_reasoning(workdir: str, limit: int = 10):
@@ -18,28 +19,34 @@ def _load_reasoning(workdir: str, limit: int = 10):
         try:
             return conn.execute(
                 "SELECT pattern_id, solution_summary, confidence, provenance_json, memory_subtype, normalized_text, freshness_state, "
-                "reuse_count, canonical_pattern_id, near_duplicate_of "
+                "reuse_count, canonical_pattern_id, near_duplicate_of, success_signal_count, failure_signal_count, success_confidence, success_basis_json "
                 "FROM reasoning_patterns ORDER BY rowid DESC LIMIT ?",
                 (int(limit),),
             ).fetchall()
         except sqlite3.OperationalError:
             try:
                 rows = conn.execute(
-                    "SELECT pattern_id, solution_summary, confidence, provenance_json, memory_subtype, normalized_text, freshness_state "
+                    "SELECT pattern_id, solution_summary, confidence, provenance_json, memory_subtype, normalized_text, freshness_state, "
+                    "reuse_count, canonical_pattern_id, near_duplicate_of "
                     "FROM reasoning_patterns ORDER BY rowid DESC LIMIT ?",
                     (int(limit),),
                 ).fetchall()
-                return [(*row, 1, None, None) for row in rows]
+                return [(*row, 0, 0, 0.0, None) for row in rows]
             except sqlite3.OperationalError:
                 rows = conn.execute(
                     "SELECT pattern_id, solution_summary, confidence, provenance_json FROM reasoning_patterns ORDER BY rowid DESC LIMIT ?",
                     (int(limit),),
                 ).fetchall()
-                return [(*row, None, None, None, 1, None, None) for row in rows]
+                return [(*row, None, None, None, 1, None, None, 0, 0, 0.0, None) for row in rows]
 
 
 def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: int = 6) -> List[LaneHit]:
     hits: List[LaneHit] = []
+    # Keep success-signal accumulation backend-owned and deterministic.
+    try:
+        refresh_reasoning_success_signals(workdir=workdir)
+    except Exception:
+        pass
     rows = _load_reasoning(workdir, limit=max(8, top_k))
     graph = GraphRetrievalEnricher(workdir)
     signature_matches = graph.find_problem_signature_matches(query=query, max_matches=5)
@@ -61,6 +68,10 @@ def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: in
         reuse_count,
         canonical_pattern_id,
         near_duplicate_of,
+        success_signal_count,
+        failure_signal_count,
+        success_confidence,
+        success_basis_json,
     ) in rows:
         try:
             provenance = {"reasoning_provenance": json.loads(provenance_json) if provenance_json else []}
@@ -77,6 +88,13 @@ def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: in
             provenance["canonical_pattern_id"] = canonical_pattern_id
         if near_duplicate_of:
             provenance["near_duplicate_of"] = near_duplicate_of
+        provenance["success_signal_count"] = int(success_signal_count or 0)
+        provenance["failure_signal_count"] = int(failure_signal_count or 0)
+        provenance["success_confidence"] = float(success_confidence or 0.0)
+        try:
+            provenance["success_basis"] = json.loads(success_basis_json) if success_basis_json else {}
+        except Exception:
+            provenance["success_basis"] = {}
         support_links = graph.get_reasoning_support_links(pattern_id=pattern_id)
         if support_links:
             provenance["graph_support_links"] = support_links
@@ -111,7 +129,10 @@ def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: in
             semantic += 0.1
         # Reuse is a bounded helper signal only.
         semantic += min(0.18, max(0, int(reuse_count or 1) - 1) * 0.03)
+        # Repeated-success promotion helper is additive and capped.
+        semantic += min(0.12, max(0.0, float(success_confidence or 0.0)) * 0.12)
         semantic += graph_bonus_by_pattern.get(pattern_id, 0.0)
+        effective_trust = max(0.0, min(1.0, float(confidence or 0.5) + min(0.10, float(success_confidence or 0.0) * 0.10)))
         hits.append(
             LaneHit(
                 id=f"promoted:{pattern_id}",
@@ -123,7 +144,7 @@ def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: in
                 semantic_score=semantic,
                 recency_score=0.55,
                 freshness_score=0.7,
-                trust_score=max(0.0, min(1.0, float(confidence or 0.5))),
+                trust_score=effective_trust,
                 novelty_score=0.45,
                 contradiction_risk=0.0,
                 cluster_id=memory_subtype or "promoted",

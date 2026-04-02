@@ -37,7 +37,11 @@ class ReasoningStore:
                     canonical_pattern_id TEXT,
                     near_duplicate_of TEXT,
                     reuse_count INTEGER NOT NULL DEFAULT 1,
-                    merged_from_json TEXT
+                    merged_from_json TEXT,
+                    success_signal_count INTEGER NOT NULL DEFAULT 0,
+                    failure_signal_count INTEGER NOT NULL DEFAULT 0,
+                    success_confidence REAL NOT NULL DEFAULT 0.0,
+                    success_basis_json TEXT
                 )
                 """
             )
@@ -60,9 +64,18 @@ class ReasoningStore:
                 conn.execute("ALTER TABLE reasoning_patterns ADD COLUMN reuse_count INTEGER NOT NULL DEFAULT 1")
             if "merged_from_json" not in cols:
                 conn.execute("ALTER TABLE reasoning_patterns ADD COLUMN merged_from_json TEXT")
+            if "success_signal_count" not in cols:
+                conn.execute("ALTER TABLE reasoning_patterns ADD COLUMN success_signal_count INTEGER NOT NULL DEFAULT 0")
+            if "failure_signal_count" not in cols:
+                conn.execute("ALTER TABLE reasoning_patterns ADD COLUMN failure_signal_count INTEGER NOT NULL DEFAULT 0")
+            if "success_confidence" not in cols:
+                conn.execute("ALTER TABLE reasoning_patterns ADD COLUMN success_confidence REAL NOT NULL DEFAULT 0.0")
+            if "success_basis_json" not in cols:
+                conn.execute("ALTER TABLE reasoning_patterns ADD COLUMN success_basis_json TEXT")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_reasoning_exact_fp ON reasoning_patterns(exact_fingerprint)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_reasoning_near_fp ON reasoning_patterns(near_fingerprint)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_reasoning_canonical ON reasoning_patterns(canonical_pattern_id)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_reasoning_success_conf ON reasoning_patterns(success_confidence)")
 
     @staticmethod
     def _normalize_text(text: str | None) -> str:
@@ -260,7 +273,7 @@ class ReasoningStore:
             try:
                 row = conn.execute(
                     "SELECT pattern_id, solution_summary, provenance_json, memory_subtype, normalized_text, freshness_state, "
-                    "reuse_count, canonical_pattern_id, near_duplicate_of "
+                    "reuse_count, canonical_pattern_id, near_duplicate_of, success_signal_count, failure_signal_count, success_confidence, success_basis_json "
                     "FROM reasoning_patterns ORDER BY rowid DESC LIMIT 1"
                 ).fetchone()
             except sqlite3.OperationalError:
@@ -278,7 +291,7 @@ class ReasoningStore:
                 }
             if not row:
                 return {}
-            pattern_id, solution_summary, provenance_json, memory_subtype, normalized_text, freshness_state, reuse_count, canonical_pattern_id, near_duplicate_of = row
+            pattern_id, solution_summary, provenance_json, memory_subtype, normalized_text, freshness_state, reuse_count, canonical_pattern_id, near_duplicate_of, success_signal_count, failure_signal_count, success_confidence, success_basis_json = row
             meta = {}
             try:
                 meta['provenance'] = json.loads(provenance_json) if provenance_json else []
@@ -295,6 +308,13 @@ class ReasoningStore:
                 meta['canonical_pattern_id'] = canonical_pattern_id
             if near_duplicate_of:
                 meta['near_duplicate_of'] = near_duplicate_of
+            meta['success_signal_count'] = int(success_signal_count or 0)
+            meta['failure_signal_count'] = int(failure_signal_count or 0)
+            meta['success_confidence'] = float(success_confidence or 0.0)
+            try:
+                meta['success_basis'] = json.loads(success_basis_json) if success_basis_json else {}
+            except Exception:
+                meta['success_basis'] = {}
             return {
                 "chunk_id": pattern_id,
                 "document_id": None,
@@ -312,11 +332,27 @@ class ReasoningStore:
             try:
                 rows = conn.execute(
                     "SELECT pattern_id, problem_signature, solution_summary, provenance_json, "
-                    "memory_subtype, normalized_text, freshness_state, reuse_count, canonical_pattern_id, near_duplicate_of "
+                    "memory_subtype, normalized_text, freshness_state, reuse_count, canonical_pattern_id, near_duplicate_of, "
+                    "success_signal_count, failure_signal_count, success_confidence, success_basis_json "
                     "FROM reasoning_patterns"
                 ).fetchall()
                 extracted = []
-                for pattern_id, problem_signature, solution_summary, provenance_json, memory_subtype, normalized_text, freshness_state, reuse_count, canonical_pattern_id, near_duplicate_of in rows:
+                for (
+                    pattern_id,
+                    problem_signature,
+                    solution_summary,
+                    provenance_json,
+                    memory_subtype,
+                    normalized_text,
+                    freshness_state,
+                    reuse_count,
+                    canonical_pattern_id,
+                    near_duplicate_of,
+                    success_signal_count,
+                    failure_signal_count,
+                    success_confidence,
+                    success_basis_json,
+                ) in rows:
                     extracted.append(
                         (
                             pattern_id,
@@ -329,13 +365,17 @@ class ReasoningStore:
                             reuse_count,
                             canonical_pattern_id,
                             near_duplicate_of,
+                            success_signal_count,
+                            failure_signal_count,
+                            success_confidence,
+                            success_basis_json,
                         )
                     )
             except sqlite3.OperationalError:
                 # Older DB schema without provenance_json; fall back gracefully
                 rows = conn.execute("SELECT pattern_id, problem_signature, solution_summary FROM reasoning_patterns").fetchall()
                 extracted = [
-                    (pattern_id, problem_signature, solution_summary, None, None, None, None, 1, None, None)
+                    (pattern_id, problem_signature, solution_summary, None, None, None, None, 1, None, None, 0, 0, 0.0, None)
                     for (pattern_id, problem_signature, solution_summary) in rows
                 ]
 
@@ -350,6 +390,10 @@ class ReasoningStore:
                 reuse_count,
                 canonical_pattern_id,
                 near_duplicate_of,
+                success_signal_count,
+                failure_signal_count,
+                success_confidence,
+                success_basis_json,
             ) in extracted:
                 lexical_base = " ".join(
                     [
@@ -378,6 +422,13 @@ class ReasoningStore:
                         meta['canonical_pattern_id'] = canonical_pattern_id
                     if near_duplicate_of:
                         meta['near_duplicate_of'] = near_duplicate_of
+                    meta['success_signal_count'] = int(success_signal_count or 0)
+                    meta['failure_signal_count'] = int(failure_signal_count or 0)
+                    meta['success_confidence'] = float(success_confidence or 0.0)
+                    try:
+                        meta['success_basis'] = json.loads(success_basis_json) if success_basis_json else {}
+                    except Exception:
+                        meta['success_basis'] = {}
                     results.append((float(score), {
                         "chunk_id": pattern_id,
                         "document_id": None,

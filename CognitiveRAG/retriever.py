@@ -264,6 +264,12 @@ class HybridRetriever:
                         reuse_count = 1
                     # Bounded helper only: reuse_count can nudge ranking, never dominate it.
                     reasoning_boost += min(0.08, max(0, reuse_count - 1) * 0.02)
+                    try:
+                        success_conf = float(rc.metadata.get('success_confidence') or 0.0)
+                    except Exception:
+                        success_conf = 0.0
+                    # Repeated-success helper remains capped and additive.
+                    reasoning_boost += min(0.06, max(0.0, success_conf) * 0.06)
                     # make ranking reason explicit
                     if ranking_reason:
                         ranking_reason = ranking_reason + '+reasoning'
