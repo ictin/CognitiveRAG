@@ -90,6 +90,7 @@ class SelectedBlock(BaseModel):
     memory_type: str
     tokens: int
     utility: float
+    contradiction_risk: float = 0.0
     cluster_id: str | None = None
     provenance: Dict[str, Any] = Field(default_factory=dict)
 
@@ -99,6 +100,7 @@ class DroppedBlock(BaseModel):
     lane: str
     tokens: int
     reason: str
+    contradiction_risk: float = 0.0
 
 
 class SelectionExplanation(BaseModel):

@@ -32,6 +32,7 @@ def build_explanation(
                 memory_type=candidate.memory_type.value,
                 tokens=candidate.tokens,
                 utility=round(float(utility), 6),
+                contradiction_risk=round(float(candidate.contradiction_risk), 6),
                 cluster_id=candidate.cluster_id,
                 provenance=candidate.provenance,
             )
@@ -43,6 +44,7 @@ def build_explanation(
             lane=c.lane.value,
             tokens=c.tokens,
             reason=reason,
+            contradiction_risk=round(float(c.contradiction_risk), 6),
         )
         for c, reason in dropped
     ]
