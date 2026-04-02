@@ -170,7 +170,17 @@ def assemble_context(
         workdir=WORKDIR,
         intent_family=detected_intent,
     )
+    pre_prune_count = len(candidates)
+    pre_prune_lane_counts: Dict[str, int] = {}
+    pre_prune_lane_tokens: Dict[str, int] = {}
+    for candidate in candidates:
+        lane = candidate.lane.value
+        pre_prune_lane_counts[lane] = pre_prune_lane_counts.get(lane, 0) + 1
+        pre_prune_lane_tokens[lane] = pre_prune_lane_tokens.get(lane, 0) + int(candidate.tokens)
+
     pruned = prune_lane_local(candidates)
+    post_prune_count = len(pruned)
+    pruned_count = max(0, pre_prune_count - post_prune_count)
 
     discovery_executor = DiscoveryExecutor()
     discovery_result = discovery_executor.run(plan=discovery_plan, candidate_pool=pruned)
@@ -187,6 +197,26 @@ def assemble_context(
     )
 
     selected_candidates = [candidate for candidate, _ in selected_pairs]
+    selected_lane_counts: Dict[str, int] = {}
+    selected_lane_tokens: Dict[str, int] = {}
+    for candidate in selected_candidates:
+        lane = candidate.lane.value
+        selected_lane_counts[lane] = selected_lane_counts.get(lane, 0) + 1
+        selected_lane_tokens[lane] = selected_lane_tokens.get(lane, 0) + int(candidate.tokens)
+
+    dropped_lane_counts: Dict[str, int] = {}
+    dropped_lane_tokens: Dict[str, int] = {}
+    drop_reason_counts: Dict[str, int] = {}
+    for candidate, reason in dropped:
+        lane = candidate.lane.value
+        dropped_lane_counts[lane] = dropped_lane_counts.get(lane, 0) + 1
+        dropped_lane_tokens[lane] = dropped_lane_tokens.get(lane, 0) + int(candidate.tokens)
+        drop_reason_counts[reason] = drop_reason_counts.get(reason, 0) + 1
+
+    selected_tokens_total = sum(int(c.tokens) for c in selected_candidates)
+    discovery_count = len(discovery_result.injected_discoveries)
+    discovery_tokens = sum(int(item.tokens) for item in discovery_result.injected_discoveries)
+    available_budget = max(0, int(budget) - int(reserved_tokens))
 
     # Compatibility mapping for existing consumers.
     selected_fresh = []
@@ -221,6 +251,42 @@ def assemble_context(
             "intent_family": route_plan.intent_family.value,
             "lanes": [lane.value for lane in route_plan.lanes],
             "reason": route_plan.reason,
+        },
+        "selector_metrics": {
+            "candidate_counts": {
+                "pre_prune": pre_prune_count,
+                "post_prune": post_prune_count,
+                "pruned": pruned_count,
+                "selected": len(selected_candidates),
+                "dropped": len(dropped),
+            },
+            "lane_counts": {
+                "pre_prune": pre_prune_lane_counts,
+                "selected": selected_lane_counts,
+                "dropped": dropped_lane_counts,
+            },
+            "lane_tokens": {
+                "pre_prune": pre_prune_lane_tokens,
+                "selected": selected_lane_tokens,
+                "dropped": dropped_lane_tokens,
+            },
+            "budget": {
+                "total_budget": int(budget),
+                "reserved_tokens": int(reserved_tokens),
+                "available_budget": int(available_budget),
+                "selected_tokens": int(selected_tokens_total),
+                "used_total_tokens": int(reserved_tokens + selected_tokens_total),
+                "budget_utilization_ratio": float(selected_tokens_total / max(1, available_budget)),
+            },
+            "decision_stats": {
+                "drop_reasons": drop_reason_counts,
+                "route_intent_family": route_plan.intent_family.value,
+                "route_lane_count": len(route_plan.lanes),
+            },
+            "discovery": {
+                "injected_count": discovery_count,
+                "injected_tokens": discovery_tokens,
+            },
         },
         "discovery_plan": discovery_plan.model_dump(mode="json"),
         "discovery": discovery_result.model_dump(mode="json"),
