@@ -21,7 +21,7 @@ def build_explanation(
     selected_blocks: list[SelectedBlock] = []
     cluster_coverage: set[str] = set()
 
-    for candidate, utility in selected:
+    for order_index, (candidate, utility) in enumerate(selected):
         lane_totals[candidate.lane.value] += candidate.tokens
         if candidate.cluster_id:
             cluster_coverage.add(candidate.cluster_id)
@@ -32,6 +32,7 @@ def build_explanation(
                 memory_type=candidate.memory_type.value,
                 tokens=candidate.tokens,
                 utility=round(float(utility), 6),
+                order_index=order_index,
                 contradiction_risk=round(float(candidate.contradiction_risk), 6),
                 cluster_id=candidate.cluster_id,
                 provenance=candidate.provenance,

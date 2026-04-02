@@ -90,6 +90,7 @@ class SelectedBlock(BaseModel):
     memory_type: str
     tokens: int
     utility: float
+    order_index: int = 0
     contradiction_risk: float = 0.0
     cluster_id: str | None = None
     provenance: Dict[str, Any] = Field(default_factory=dict)
