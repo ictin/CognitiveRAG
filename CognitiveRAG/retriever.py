@@ -258,6 +258,12 @@ class HybridRetriever:
                 reasoning_boost = 0.0
                 if src_type == 'reasoning':
                     reasoning_boost = 0.2
+                    try:
+                        reuse_count = int(rc.metadata.get('reuse_count') or 1)
+                    except Exception:
+                        reuse_count = 1
+                    # Bounded helper only: reuse_count can nudge ranking, never dominate it.
+                    reasoning_boost += min(0.08, max(0, reuse_count - 1) * 0.02)
                     # make ranking reason explicit
                     if ranking_reason:
                         ranking_reason = ranking_reason + '+reasoning'

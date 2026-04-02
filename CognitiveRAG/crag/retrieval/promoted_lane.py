@@ -17,16 +17,25 @@ def _load_reasoning(workdir: str, limit: int = 10):
     with sqlite3.connect(db_path) as conn:
         try:
             return conn.execute(
-                "SELECT pattern_id, solution_summary, confidence, provenance_json, memory_subtype, normalized_text, freshness_state "
+                "SELECT pattern_id, solution_summary, confidence, provenance_json, memory_subtype, normalized_text, freshness_state, "
+                "reuse_count, canonical_pattern_id, near_duplicate_of "
                 "FROM reasoning_patterns ORDER BY rowid DESC LIMIT ?",
                 (int(limit),),
             ).fetchall()
         except sqlite3.OperationalError:
-            rows = conn.execute(
-                "SELECT pattern_id, solution_summary, confidence, provenance_json FROM reasoning_patterns ORDER BY rowid DESC LIMIT ?",
-                (int(limit),),
-            ).fetchall()
-            return [(*row, None, None, None) for row in rows]
+            try:
+                rows = conn.execute(
+                    "SELECT pattern_id, solution_summary, confidence, provenance_json, memory_subtype, normalized_text, freshness_state "
+                    "FROM reasoning_patterns ORDER BY rowid DESC LIMIT ?",
+                    (int(limit),),
+                ).fetchall()
+                return [(*row, 1, None, None) for row in rows]
+            except sqlite3.OperationalError:
+                rows = conn.execute(
+                    "SELECT pattern_id, solution_summary, confidence, provenance_json FROM reasoning_patterns ORDER BY rowid DESC LIMIT ?",
+                    (int(limit),),
+                ).fetchall()
+                return [(*row, None, None, None, 1, None, None) for row in rows]
 
 
 def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: int = 6) -> List[LaneHit]:
@@ -41,7 +50,18 @@ def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: in
         graph_bonus_by_pattern[match.pattern_id] = max(prev, min(0.2, 0.05 + 0.2 * float(match.score)))
 
     qtokens = set((query or "").lower().split())
-    for pattern_id, summary, confidence, provenance_json, memory_subtype, normalized_text, freshness_state in rows:
+    for (
+        pattern_id,
+        summary,
+        confidence,
+        provenance_json,
+        memory_subtype,
+        normalized_text,
+        freshness_state,
+        reuse_count,
+        canonical_pattern_id,
+        near_duplicate_of,
+    ) in rows:
         try:
             provenance = {"reasoning_provenance": json.loads(provenance_json) if provenance_json else []}
         except Exception:
@@ -52,6 +72,11 @@ def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: in
             provenance["freshness_state"] = freshness_state
         if normalized_text:
             provenance["normalized_text"] = normalized_text
+        provenance["reuse_count"] = int(reuse_count or 1)
+        if canonical_pattern_id:
+            provenance["canonical_pattern_id"] = canonical_pattern_id
+        if near_duplicate_of:
+            provenance["near_duplicate_of"] = near_duplicate_of
         support_links = graph.get_reasoning_support_links(pattern_id=pattern_id)
         if support_links:
             provenance["graph_support_links"] = support_links
@@ -84,6 +109,8 @@ def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: in
             semantic += 0.12
         if memory_subtype and intent_family == IntentFamily.EXACT_RECALL and "workflow" in memory_subtype:
             semantic += 0.1
+        # Reuse is a bounded helper signal only.
+        semantic += min(0.18, max(0, int(reuse_count or 1) - 1) * 0.03)
         semantic += graph_bonus_by_pattern.get(pattern_id, 0.0)
         hits.append(
             LaneHit(
