@@ -5,6 +5,7 @@ from .relations import (
     record_reasoning_pattern_supported_by,
     record_web_promoted_derived_from,
 )
+from .enrichment import GraphResolvedByMatch, GraphRetrievalEnricher
 
 __all__ = [
     'GraphNode',
@@ -16,4 +17,6 @@ __all__ = [
     'record_reasoning_pattern_supported_by',
     'record_web_promoted_derived_from',
     'record_problem_signature_resolved_by',
+    'GraphResolvedByMatch',
+    'GraphRetrievalEnricher',
 ]

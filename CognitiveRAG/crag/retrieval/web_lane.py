@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import List
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily, MemoryType, RetrievalLane
+from CognitiveRAG.crag.graph_memory.enrichment import GraphRetrievalEnricher
 from CognitiveRAG.crag.retrieval.models import LaneHit
 from CognitiveRAG.crag.web_memory.evidence_store import WebEvidenceStore
 from CognitiveRAG.crag.web_memory.fetch import WebFetcher
@@ -53,6 +54,7 @@ def retrieve(
     fetcher = WebFetcher(evidence_store=evidence_store, fetch_log=fetch_log)
     web_evidence = fetcher.fetch_plan(plan=plan, need=need, min_cache_hits=2)
     promoted_hits = promoted_store.search(query, top_k=max(1, top_k // 2))
+    graph = GraphRetrievalEnricher(workdir)
 
     # Opportunistic lightweight promotion for stable non-freshness-sensitive evidence.
     if web_evidence and (not need.freshness_sensitive):
@@ -76,18 +78,26 @@ def retrieve(
         text = item.get("canonical_fact") or ""
         if not text:
             continue
+        graph_origins = graph.get_web_promoted_origins(promoted_id=str(item.get("promoted_id") or ""))
+        provenance = {
+            "promoted_id": item.get("promoted_id"),
+            "evidence_ids": item.get("evidence_ids") or [],
+            "freshness_state": item.get("freshness_state"),
+            "metadata": item.get("metadata") or {},
+        }
+        if graph_origins:
+            provenance["graph_source_origins"] = graph_origins
+            provenance["graph_source_origin_count"] = len(graph_origins)
+            first_source = next((origin.get("source_url") for origin in graph_origins if origin.get("source_url")), None)
+            if first_source:
+                provenance["source_url"] = first_source
         hits.append(
             LaneHit(
                 id=f"webpromoted:{item.get('promoted_id')}",
                 lane=RetrievalLane.WEB,
                 memory_type=MemoryType.WEB_PROMOTED_FACT,
                 text=text,
-                provenance={
-                    "promoted_id": item.get("promoted_id"),
-                    "evidence_ids": item.get("evidence_ids") or [],
-                    "freshness_state": item.get("freshness_state"),
-                    "metadata": item.get("metadata") or {},
-                },
+                provenance=provenance,
                 lexical_score=0.4,
                 semantic_score=0.55,
                 recency_score=0.4,

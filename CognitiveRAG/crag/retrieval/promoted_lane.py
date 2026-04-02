@@ -6,6 +6,7 @@ import sqlite3
 from typing import List
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily, MemoryType, RetrievalLane
+from CognitiveRAG.crag.graph_memory.enrichment import GraphRetrievalEnricher
 from CognitiveRAG.crag.retrieval.models import LaneHit
 
 
@@ -31,6 +32,13 @@ def _load_reasoning(workdir: str, limit: int = 10):
 def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: int = 6) -> List[LaneHit]:
     hits: List[LaneHit] = []
     rows = _load_reasoning(workdir, limit=max(8, top_k))
+    graph = GraphRetrievalEnricher(workdir)
+    signature_matches = graph.find_problem_signature_matches(query=query, max_matches=5)
+    graph_bonus_by_pattern: dict[str, float] = {}
+    for match in signature_matches:
+        prev = graph_bonus_by_pattern.get(match.pattern_id, 0.0)
+        # Bounded additive helper signal, never a graph-only takeover.
+        graph_bonus_by_pattern[match.pattern_id] = max(prev, min(0.2, 0.05 + 0.2 * float(match.score)))
 
     qtokens = set((query or "").lower().split())
     for pattern_id, summary, confidence, provenance_json, memory_subtype, normalized_text, freshness_state in rows:
@@ -44,6 +52,22 @@ def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: in
             provenance["freshness_state"] = freshness_state
         if normalized_text:
             provenance["normalized_text"] = normalized_text
+        support_links = graph.get_reasoning_support_links(pattern_id=pattern_id)
+        if support_links:
+            provenance["graph_support_links"] = support_links
+            provenance["graph_support_count"] = len(support_links)
+
+        linked_matches = [m for m in signature_matches if m.pattern_id == pattern_id]
+        if linked_matches:
+            provenance["graph_problem_signature_matches"] = [
+                {
+                    "problem_signature": m.problem_signature,
+                    "overlap": m.overlap,
+                    "query_token_count": m.query_token_count,
+                    "match_score": m.score,
+                }
+                for m in linked_matches
+            ]
         text = (summary or "").strip()
         if memory_subtype:
             text = f"[{memory_subtype}] {text}"
@@ -60,6 +84,7 @@ def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: in
             semantic += 0.12
         if memory_subtype and intent_family == IntentFamily.EXACT_RECALL and "workflow" in memory_subtype:
             semantic += 0.1
+        semantic += graph_bonus_by_pattern.get(pattern_id, 0.0)
         hits.append(
             LaneHit(
                 id=f"promoted:{pattern_id}",
