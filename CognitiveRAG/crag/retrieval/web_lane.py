@@ -59,7 +59,7 @@ def retrieve(
     # Opportunistic lightweight promotion for stable non-freshness-sensitive evidence.
     if web_evidence and (not need.freshness_sensitive):
         first = web_evidence[0]
-        promoted_store.upsert_fact(
+        promoted_store.stage_fact(
             promoted_id=_id("wp", (first.get("title") or first.get("url") or query)),
             canonical_fact=(first.get("snippet") or first.get("extracted_text") or "")[:280],
             evidence_ids=[str(first.get("evidence_id") or "")],
@@ -71,6 +71,8 @@ def retrieve(
             },
             now_iso=_now_iso(),
         )
+        # Deterministic backend approval rule may promote staged -> trusted.
+        promoted_store.promote_if_eligible(_id("wp", (first.get("title") or first.get("url") or query)), now_iso=_now_iso())
         promoted_hits = promoted_store.search(query, top_k=max(1, top_k // 2))
 
     hits: List[LaneHit] = []
@@ -83,6 +85,10 @@ def retrieve(
             "promoted_id": item.get("promoted_id"),
             "evidence_ids": item.get("evidence_ids") or [],
             "freshness_state": item.get("freshness_state"),
+            "promotion_state": item.get("promotion_state") or "staged",
+            "approval_reason": item.get("approval_reason") or "",
+            "approval_basis": item.get("approval_basis") or {},
+            "approved_at": item.get("approved_at"),
             "metadata": item.get("metadata") or {},
         }
         if graph_origins:
@@ -91,6 +97,9 @@ def retrieve(
             first_source = next((origin.get("source_url") for origin in graph_origins if origin.get("source_url")), None)
             if first_source:
                 provenance["source_url"] = first_source
+        state = str(item.get("promotion_state") or "staged")
+        trust_adjust = 0.08 if state == "trusted" else -0.05
+        semantic_adjust = 0.05 if state == "trusted" else 0.0
         hits.append(
             LaneHit(
                 id=f"webpromoted:{item.get('promoted_id')}",
@@ -99,13 +108,13 @@ def retrieve(
                 text=text,
                 provenance=provenance,
                 lexical_score=0.4,
-                semantic_score=0.55,
+                semantic_score=0.55 + semantic_adjust,
                 recency_score=0.4,
                 freshness_score=0.7 if item.get("freshness_state") in {"hot", "warm"} else 0.4,
-                trust_score=float(item.get("confidence") or 0.5),
+                trust_score=max(0.0, min(1.0, float(item.get("confidence") or 0.5) + trust_adjust)),
                 novelty_score=0.35,
                 contradiction_risk=0.1,
-                cluster_id="web_promoted",
+                cluster_id=f"web_promoted:{state}",
                 compressible=True,
             ).with_token_estimate()
         )
@@ -143,5 +152,12 @@ def retrieve(
             ).with_token_estimate()
         )
 
-    hits.sort(key=lambda h: (0 if h.memory_type == MemoryType.WEB_PROMOTED_FACT else 1, h.id))
+    def _sort_key(hit: LaneHit):
+        if hit.memory_type == MemoryType.WEB_PROMOTED_FACT:
+            state = str((hit.provenance or {}).get("promotion_state") or "staged")
+            state_rank = 0 if state == "trusted" else 1
+            return (0, state_rank, -float(hit.trust_score or 0.0), hit.id)
+        return (1, 0, -float(hit.trust_score or 0.0), hit.id)
+
+    hits.sort(key=_sort_key)
     return hits[: top_k]
