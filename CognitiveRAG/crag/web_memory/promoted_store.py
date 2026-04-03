@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 from datetime import datetime, timezone
@@ -14,6 +15,8 @@ class WebPromotedMemoryStore:
     FRESHNESS_STALE = "stale"
     FRESHNESS_REVALIDATION_PENDING = "revalidation_pending"
     DEFAULT_TTL_HOURS = 72.0
+    CONTRADICTION_RELATION = "contradicts"
+    CONTRADICTION_STATUS_OPEN = "open"
 
     def __init__(self, db_path: str | Path):
         self.db_path = Path(db_path)
@@ -51,6 +54,21 @@ class WebPromotedMemoryStore:
                 )
                 """
             )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS web_promoted_contradictions (
+                    contradiction_id TEXT PRIMARY KEY,
+                    claim_a_id TEXT NOT NULL,
+                    claim_b_id TEXT NOT NULL,
+                    relation_type TEXT NOT NULL DEFAULT 'contradicts',
+                    conflict_status TEXT NOT NULL DEFAULT 'open',
+                    detection_rule TEXT NOT NULL,
+                    source_basis_json TEXT NOT NULL DEFAULT '{}',
+                    created_at TEXT,
+                    updated_at TEXT
+                )
+                """
+            )
             cols = {row[1] for row in conn.execute("PRAGMA table_info(web_promoted_memory)").fetchall()}
             if "promotion_state" not in cols:
                 conn.execute("ALTER TABLE web_promoted_memory ADD COLUMN promotion_state TEXT NOT NULL DEFAULT 'trusted'")
@@ -74,6 +92,9 @@ class WebPromotedMemoryStore:
                 conn.execute("ALTER TABLE web_promoted_memory ADD COLUMN state_updated_at TEXT")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_web_promoted_state ON web_promoted_memory(promotion_state)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_web_promoted_freshness_lifecycle ON web_promoted_memory(freshness_lifecycle_state)")
+            conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_web_promoted_contradiction_pair ON web_promoted_contradictions(claim_a_id, claim_b_id, relation_type)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_web_promoted_contradiction_claim_a ON web_promoted_contradictions(claim_a_id)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_web_promoted_contradiction_claim_b ON web_promoted_contradictions(claim_b_id)")
             # Conservative migration guardrail: rows without any validation basis should not stay fresh forever.
             conn.execute(
                 """
@@ -113,6 +134,28 @@ class WebPromotedMemoryStore:
             WebPromotedMemoryStore.FRESHNESS_REVALIDATION_PENDING,
         }
         return s if s in valid else WebPromotedMemoryStore.FRESHNESS_STALE
+
+    @staticmethod
+    def _normalized_text(value: str | None) -> str:
+        return " ".join(str(value or "").strip().lower().split())
+
+    def _claim_signature(self, record: Dict[str, Any]) -> tuple[str, str]:
+        metadata = dict(record.get("metadata") or {})
+        key = self._normalized_text(metadata.get("claim_key"))
+        value = self._normalized_text(metadata.get("claim_value"))
+        if not key or not value:
+            return "", ""
+        return key, value
+
+    @staticmethod
+    def _pair(a: str, b: str) -> tuple[str, str]:
+        return (a, b) if a <= b else (b, a)
+
+    @classmethod
+    def _contradiction_id(cls, claim_a_id: str, claim_b_id: str, relation_type: str) -> str:
+        a, b = cls._pair(claim_a_id, claim_b_id)
+        raw = f"{a}|{b}|{relation_type}"
+        return "wpc:" + hashlib.sha1(raw.encode("utf-8")).hexdigest()[:20]
 
     def _evaluate_transition(
         self,
@@ -253,6 +296,7 @@ class WebPromotedMemoryStore:
             last_validated_at=effective_last_validated,
             revalidation_requested_at=revalidation_requested_at,
         )
+        self._detect_and_record_contradictions(promoted_id=promoted_id, now_iso=now)
 
     def stage_fact(
         self,
@@ -404,6 +448,176 @@ class WebPromotedMemoryStore:
             revalidation_requested_at=now,
         )
         return self.get(promoted_id)
+
+    def register_contradiction(
+        self,
+        *,
+        claim_a_id: str,
+        claim_b_id: str,
+        detection_rule: str,
+        source_basis: Dict[str, Any] | None = None,
+        relation_type: str = CONTRADICTION_RELATION,
+        conflict_status: str = CONTRADICTION_STATUS_OPEN,
+        now_iso: str | None = None,
+    ) -> Dict[str, Any]:
+        a, b = self._pair(claim_a_id, claim_b_id)
+        now = now_iso or ""
+        contradiction_id = self._contradiction_id(a, b, relation_type)
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO web_promoted_contradictions(
+                    contradiction_id, claim_a_id, claim_b_id, relation_type,
+                    conflict_status, detection_rule, source_basis_json, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(contradiction_id) DO UPDATE SET
+                    conflict_status=excluded.conflict_status,
+                    detection_rule=excluded.detection_rule,
+                    source_basis_json=excluded.source_basis_json,
+                    updated_at=excluded.updated_at
+                """,
+                (
+                    contradiction_id,
+                    a,
+                    b,
+                    relation_type,
+                    conflict_status,
+                    detection_rule,
+                    json.dumps(source_basis or {}),
+                    now,
+                    now,
+                ),
+            )
+        return {
+            "contradiction_id": contradiction_id,
+            "claim_a_id": a,
+            "claim_b_id": b,
+            "relation_type": relation_type,
+            "conflict_status": conflict_status,
+            "detection_rule": detection_rule,
+            "source_basis": dict(source_basis or {}),
+            "created_at": now,
+            "updated_at": now,
+        }
+
+    def _list_all_records(self) -> List[Dict[str, Any]]:
+        with self._connect() as conn:
+            rows = conn.execute("SELECT promoted_id FROM web_promoted_memory ORDER BY promoted_id ASC").fetchall()
+        out: List[Dict[str, Any]] = []
+        for row in rows:
+            rec = self.get(str(row["promoted_id"]))
+            if rec:
+                out.append(rec)
+        return out
+
+    def _detect_and_record_contradictions(self, *, promoted_id: str, now_iso: str | None = None) -> List[Dict[str, Any]]:
+        current = self.get(promoted_id)
+        if not current:
+            return []
+        key, value = self._claim_signature(current)
+        if not key or not value:
+            return []
+
+        now = now_iso or ""
+        current_meta = dict(current.get("metadata") or {})
+        current_source_class = str(current_meta.get("source_class") or "web_promoted")
+        records = self._list_all_records()
+        created: List[Dict[str, Any]] = []
+        for other in records:
+            other_id = str(other.get("promoted_id") or "")
+            if not other_id or other_id == promoted_id:
+                continue
+            other_key, other_value = self._claim_signature(other)
+            if not other_key or not other_value:
+                continue
+            if other_key != key:
+                continue
+            if other_value == value:
+                continue
+
+            other_meta = dict(other.get("metadata") or {})
+            basis = {
+                "claim_key": key,
+                "claim_a_value": value,
+                "claim_b_value": other_value,
+                "claim_a_source_class": current_source_class,
+                "claim_b_source_class": str(other_meta.get("source_class") or "web_promoted"),
+                "claim_a_promotion_state": current.get("promotion_state"),
+                "claim_b_promotion_state": other.get("promotion_state"),
+                "claim_a_freshness_lifecycle_state": current.get("freshness_lifecycle_state"),
+                "claim_b_freshness_lifecycle_state": other.get("freshness_lifecycle_state"),
+            }
+            created.append(
+                self.register_contradiction(
+                    claim_a_id=promoted_id,
+                    claim_b_id=other_id,
+                    detection_rule="claim_key_value_mismatch",
+                    source_basis=basis,
+                    now_iso=now,
+                )
+            )
+        return created
+
+    def get_contradictions_for(self, promoted_id: str) -> List[Dict[str, Any]]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT contradiction_id, claim_a_id, claim_b_id, relation_type, conflict_status, detection_rule, source_basis_json, created_at, updated_at
+                FROM web_promoted_contradictions
+                WHERE claim_a_id=? OR claim_b_id=?
+                ORDER BY updated_at DESC, contradiction_id ASC
+                """,
+                (promoted_id, promoted_id),
+            ).fetchall()
+        out: List[Dict[str, Any]] = []
+        for row in rows:
+            try:
+                basis = json.loads(row["source_basis_json"]) if row["source_basis_json"] else {}
+            except Exception:
+                basis = {}
+            claim_a_id = str(row["claim_a_id"] or "")
+            claim_b_id = str(row["claim_b_id"] or "")
+            other_id = claim_b_id if claim_a_id == promoted_id else claim_a_id
+            other = self.get(other_id) if other_id else None
+            out.append(
+                {
+                    "contradiction_id": row["contradiction_id"],
+                    "claim_a_id": claim_a_id,
+                    "claim_b_id": claim_b_id,
+                    "other_claim_id": other_id,
+                    "relation_type": row["relation_type"] or self.CONTRADICTION_RELATION,
+                    "conflict_status": row["conflict_status"] or self.CONTRADICTION_STATUS_OPEN,
+                    "detection_rule": row["detection_rule"] or "",
+                    "source_basis": basis,
+                    "other_claim_source_class": str((other or {}).get("metadata", {}).get("source_class") or "web_promoted"),
+                    "other_claim_promotion_state": (other or {}).get("promotion_state"),
+                    "other_claim_freshness_lifecycle_state": (other or {}).get("freshness_lifecycle_state"),
+                    "other_claim_last_validated_at": (other or {}).get("last_validated_at"),
+                    "created_at": row["created_at"],
+                    "updated_at": row["updated_at"],
+                }
+            )
+        return out
+
+    def get_contradiction_summary(self, promoted_id: str) -> Dict[str, Any]:
+        contradictions = self.get_contradictions_for(promoted_id)
+        open_rows = [row for row in contradictions if str(row.get("conflict_status") or "") == self.CONTRADICTION_STATUS_OPEN]
+        other_ids = sorted({str(row.get("other_claim_id") or "") for row in open_rows if str(row.get("other_claim_id") or "")})
+        source_classes = sorted(
+            {
+                str(row.get("other_claim_source_class") or "")
+                for row in open_rows
+                if str(row.get("other_claim_source_class") or "")
+            }
+        )
+        return {
+            "has_contradiction": bool(open_rows),
+            "open_contradiction_count": len(open_rows),
+            "contradiction_ids": [str(row.get("contradiction_id") or "") for row in open_rows],
+            "conflicting_claim_ids": other_ids,
+            "conflicting_source_classes": source_classes,
+            "contradictions": open_rows,
+        }
 
     def get(self, promoted_id: str) -> Dict[str, Any] | None:
         with self._connect() as conn:
