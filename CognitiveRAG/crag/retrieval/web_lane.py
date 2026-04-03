@@ -107,6 +107,11 @@ def retrieve(
             "evidence_ids": item.get("evidence_ids") or [],
             "freshness_state": item.get("freshness_state"),
             "promotion_state": item.get("promotion_state") or "staged",
+            "promotion_tier": item.get("promotion_tier") or "local",
+            "origin_tier": item.get("origin_tier") or (item.get("promotion_tier") or "local"),
+            "promoted_from_ids": item.get("promoted_from_ids") or [],
+            "promotion_basis": item.get("promotion_basis") or {},
+            "promotion_history": item.get("promotion_history") or [],
             "freshness_lifecycle_state": item.get("freshness_lifecycle_state") or "stale",
             "freshness_reason": item.get("freshness_reason") or "",
             "freshness_policy": item.get("freshness_policy") or {},
@@ -126,6 +131,7 @@ def retrieve(
                 provenance["source_url"] = first_source
         state = str(item.get("promotion_state") or "staged")
         lifecycle = str(item.get("freshness_lifecycle_state") or "stale")
+        tier = str(item.get("promotion_tier") or "local")
         has_contradiction = bool(contradiction_summary.get("has_contradiction"))
         if state == "trusted" and lifecycle == WebPromotedMemoryStore.FRESHNESS_FRESH:
             trust_adjust = 0.08
@@ -139,6 +145,13 @@ def retrieve(
         else:
             trust_adjust = -0.05
             semantic_adjust = 0.0
+        # Tier preference is additive and bounded.
+        if tier == WebPromotedMemoryStore.TIER_GLOBAL:
+            trust_adjust += 0.06
+            semantic_adjust += 0.03
+        elif tier == WebPromotedMemoryStore.TIER_WORKSPACE:
+            trust_adjust += 0.03
+            semantic_adjust += 0.015
         if has_contradiction:
             # Contradictory promoted knowledge remains retrievable but should carry caution.
             trust_adjust -= 0.12
@@ -157,7 +170,7 @@ def retrieve(
                 trust_score=max(0.0, min(1.0, float(item.get("confidence") or 0.5) + trust_adjust)),
                 novelty_score=0.35,
                 contradiction_risk=(0.65 if has_contradiction else 0.1),
-                cluster_id=f"web_promoted:{state}:{lifecycle}",
+                cluster_id=f"web_promoted:{tier}:{state}:{lifecycle}",
                 compressible=True,
             ).with_token_estimate()
         )
@@ -199,11 +212,13 @@ def retrieve(
         if hit.memory_type == MemoryType.WEB_PROMOTED_FACT:
             state = str((hit.provenance or {}).get("promotion_state") or "staged")
             lifecycle = str((hit.provenance or {}).get("freshness_lifecycle_state") or "stale")
+            tier = str((hit.provenance or {}).get("promotion_tier") or "local")
             contradiction_count = int(((hit.provenance or {}).get("contradiction") or {}).get("open_contradiction_count") or 0)
             state_rank = 0 if state == "trusted" else 1
             lifecycle_rank = 0 if lifecycle == "fresh" else (1 if lifecycle == "revalidation_pending" else 2)
+            tier_rank = 0 if tier == "global" else (1 if tier == "workspace" else 2)
             contradiction_rank = 0 if contradiction_count == 0 else 1
-            return (0, state_rank, lifecycle_rank, contradiction_rank, -float(hit.trust_score or 0.0), hit.id)
+            return (0, tier_rank, state_rank, lifecycle_rank, contradiction_rank, -float(hit.trust_score or 0.0), hit.id)
         return (1, 0, -float(hit.trust_score or 0.0), hit.id)
 
     hits.sort(key=_sort_key)

@@ -17,6 +17,9 @@ class WebPromotedMemoryStore:
     DEFAULT_TTL_HOURS = 72.0
     CONTRADICTION_RELATION = "contradicts"
     CONTRADICTION_STATUS_OPEN = "open"
+    TIER_LOCAL = "local"
+    TIER_WORKSPACE = "workspace"
+    TIER_GLOBAL = "global"
 
     def __init__(self, db_path: str | Path):
         self.db_path = Path(db_path)
@@ -39,6 +42,11 @@ class WebPromotedMemoryStore:
                     confidence REAL NOT NULL,
                     freshness_state TEXT NOT NULL,
                     promotion_state TEXT NOT NULL DEFAULT 'trusted',
+                    promotion_tier TEXT NOT NULL DEFAULT 'workspace',
+                    origin_tier TEXT NOT NULL DEFAULT 'workspace',
+                    promoted_from_ids_json TEXT NOT NULL DEFAULT '[]',
+                    promotion_basis_json TEXT NOT NULL DEFAULT '{}',
+                    promotion_history_json TEXT NOT NULL DEFAULT '[]',
                     freshness_lifecycle_state TEXT NOT NULL DEFAULT 'fresh',
                     freshness_reason TEXT NOT NULL DEFAULT '',
                     freshness_policy_json TEXT NOT NULL DEFAULT '{}',
@@ -72,6 +80,16 @@ class WebPromotedMemoryStore:
             cols = {row[1] for row in conn.execute("PRAGMA table_info(web_promoted_memory)").fetchall()}
             if "promotion_state" not in cols:
                 conn.execute("ALTER TABLE web_promoted_memory ADD COLUMN promotion_state TEXT NOT NULL DEFAULT 'trusted'")
+            if "promotion_tier" not in cols:
+                conn.execute("ALTER TABLE web_promoted_memory ADD COLUMN promotion_tier TEXT NOT NULL DEFAULT 'workspace'")
+            if "origin_tier" not in cols:
+                conn.execute("ALTER TABLE web_promoted_memory ADD COLUMN origin_tier TEXT NOT NULL DEFAULT 'workspace'")
+            if "promoted_from_ids_json" not in cols:
+                conn.execute("ALTER TABLE web_promoted_memory ADD COLUMN promoted_from_ids_json TEXT NOT NULL DEFAULT '[]'")
+            if "promotion_basis_json" not in cols:
+                conn.execute("ALTER TABLE web_promoted_memory ADD COLUMN promotion_basis_json TEXT NOT NULL DEFAULT '{}'")
+            if "promotion_history_json" not in cols:
+                conn.execute("ALTER TABLE web_promoted_memory ADD COLUMN promotion_history_json TEXT NOT NULL DEFAULT '[]'")
             if "freshness_lifecycle_state" not in cols:
                 conn.execute("ALTER TABLE web_promoted_memory ADD COLUMN freshness_lifecycle_state TEXT NOT NULL DEFAULT 'fresh'")
             if "freshness_reason" not in cols:
@@ -91,6 +109,7 @@ class WebPromotedMemoryStore:
             if "state_updated_at" not in cols:
                 conn.execute("ALTER TABLE web_promoted_memory ADD COLUMN state_updated_at TEXT")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_web_promoted_state ON web_promoted_memory(promotion_state)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_web_promoted_tier ON web_promoted_memory(promotion_tier)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_web_promoted_freshness_lifecycle ON web_promoted_memory(freshness_lifecycle_state)")
             conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_web_promoted_contradiction_pair ON web_promoted_contradictions(claim_a_id, claim_b_id, relation_type)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_web_promoted_contradiction_claim_a ON web_promoted_contradictions(claim_a_id)")
@@ -114,6 +133,16 @@ class WebPromotedMemoryStore:
     def _state(state: str | None) -> str:
         s = str(state or "").strip().lower()
         return s if s in {WebPromotedMemoryStore.STATE_STAGED, WebPromotedMemoryStore.STATE_TRUSTED} else WebPromotedMemoryStore.STATE_STAGED
+
+    @staticmethod
+    def _tier(tier: str | None) -> str:
+        t = str(tier or "").strip().lower()
+        valid = {
+            WebPromotedMemoryStore.TIER_LOCAL,
+            WebPromotedMemoryStore.TIER_WORKSPACE,
+            WebPromotedMemoryStore.TIER_GLOBAL,
+        }
+        return t if t in valid else WebPromotedMemoryStore.TIER_LOCAL
 
     @staticmethod
     def _parse_iso(ts: str | None) -> datetime | None:
@@ -194,6 +223,11 @@ class WebPromotedMemoryStore:
         metadata: Dict[str, Any] | None,
         now_iso: str,
         promotion_state: str,
+        promotion_tier: str,
+        origin_tier: str,
+        promoted_from_ids: List[str],
+        promotion_basis: Dict[str, Any] | None,
+        promotion_history: List[Dict[str, Any]] | None,
         approval_reason: str,
         approval_basis: Dict[str, Any] | None,
         approved_at: str | None,
@@ -204,23 +238,31 @@ class WebPromotedMemoryStore:
         revalidation_requested_at: str | None,
     ) -> None:
         state = self._state(promotion_state)
+        tier = self._tier(promotion_tier)
+        origin = self._tier(origin_tier)
         lifecycle = self._freshness_state(freshness_lifecycle_state)
         with self._connect() as conn:
             conn.execute(
                 """
                 INSERT INTO web_promoted_memory(
                     promoted_id, canonical_fact, evidence_ids_json, confidence, freshness_state,
-                    promotion_state, freshness_lifecycle_state, freshness_reason, freshness_policy_json,
+                    promotion_state, promotion_tier, origin_tier, promoted_from_ids_json, promotion_basis_json, promotion_history_json,
+                    freshness_lifecycle_state, freshness_reason, freshness_policy_json,
                     last_validated_at, revalidation_requested_at,
                     approval_reason, approval_basis_json, approved_at, state_updated_at,
                     metadata_json, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(promoted_id) DO UPDATE SET
                     canonical_fact=excluded.canonical_fact,
                     evidence_ids_json=excluded.evidence_ids_json,
                     confidence=excluded.confidence,
                     freshness_state=excluded.freshness_state,
                     promotion_state=excluded.promotion_state,
+                    promotion_tier=excluded.promotion_tier,
+                    origin_tier=excluded.origin_tier,
+                    promoted_from_ids_json=excluded.promoted_from_ids_json,
+                    promotion_basis_json=excluded.promotion_basis_json,
+                    promotion_history_json=excluded.promotion_history_json,
                     freshness_lifecycle_state=excluded.freshness_lifecycle_state,
                     freshness_reason=excluded.freshness_reason,
                     freshness_policy_json=excluded.freshness_policy_json,
@@ -240,6 +282,11 @@ class WebPromotedMemoryStore:
                     float(confidence),
                     freshness_state,
                     state,
+                    tier,
+                    origin,
+                    json.dumps(sorted({str(x).strip() for x in (promoted_from_ids or []) if str(x).strip()})),
+                    json.dumps(promotion_basis or {}),
+                    json.dumps(promotion_history or []),
                     lifecycle,
                     freshness_reason or "",
                     json.dumps(freshness_policy or {}),
@@ -266,6 +313,11 @@ class WebPromotedMemoryStore:
         metadata: Dict[str, Any] | None = None,
         now_iso: str | None = None,
         promotion_state: str = STATE_TRUSTED,
+        promotion_tier: str = TIER_LOCAL,
+        origin_tier: str | None = None,
+        promoted_from_ids: List[str] | None = None,
+        promotion_basis: Dict[str, Any] | None = None,
+        promotion_history: List[Dict[str, Any]] | None = None,
         approval_reason: str = "",
         approval_basis: Dict[str, Any] | None = None,
         freshness_lifecycle_state: str = FRESHNESS_FRESH,
@@ -276,6 +328,8 @@ class WebPromotedMemoryStore:
     ) -> None:
         now = now_iso or ""
         state = self._state(promotion_state)
+        tier = self._tier(promotion_tier)
+        origin = self._tier(origin_tier or promotion_tier)
         lifecycle = self._freshness_state(freshness_lifecycle_state)
         effective_last_validated = last_validated_at if last_validated_at is not None else (now if lifecycle == self.FRESHNESS_FRESH else None)
         self._upsert_internal(
@@ -287,6 +341,11 @@ class WebPromotedMemoryStore:
             metadata=metadata,
             now_iso=now,
             promotion_state=state,
+            promotion_tier=tier,
+            origin_tier=origin,
+            promoted_from_ids=list(promoted_from_ids or []),
+            promotion_basis=dict(promotion_basis or {}),
+            promotion_history=list(promotion_history or []),
             approval_reason=approval_reason if state == self.STATE_TRUSTED else "staged_pending_approval",
             approval_basis=(approval_basis or {}),
             approved_at=(now if state == self.STATE_TRUSTED else None),
@@ -318,6 +377,11 @@ class WebPromotedMemoryStore:
             metadata=metadata,
             now_iso=now_iso,
             promotion_state=self.STATE_STAGED,
+            promotion_tier=self.TIER_LOCAL,
+            origin_tier=self.TIER_LOCAL,
+            promoted_from_ids=[],
+            promotion_basis={"transition": "seed_local_stage"},
+            promotion_history=[],
             approval_reason="staged_pending_approval",
             approval_basis={"stage_source": "web_evidence"},
             freshness_lifecycle_state=self.FRESHNESS_STALE,
@@ -350,6 +414,11 @@ class WebPromotedMemoryStore:
             metadata=metadata,
             now_iso=now,
             promotion_state=next_state,
+            promotion_tier=record.get("promotion_tier") or self.TIER_LOCAL,
+            origin_tier=record.get("origin_tier") or (record.get("promotion_tier") or self.TIER_LOCAL),
+            promoted_from_ids=list(record.get("promoted_from_ids") or []),
+            promotion_basis=dict(record.get("promotion_basis") or {}),
+            promotion_history=list(record.get("promotion_history") or []),
             approval_reason=reason,
             approval_basis=basis,
             approved_at=(now if eligible else None),
@@ -410,6 +479,11 @@ class WebPromotedMemoryStore:
             metadata=md,
             now_iso=(now_iso or now.isoformat().replace("+00:00", "Z")),
             promotion_state=record["promotion_state"],
+            promotion_tier=record.get("promotion_tier") or self.TIER_LOCAL,
+            origin_tier=record.get("origin_tier") or (record.get("promotion_tier") or self.TIER_LOCAL),
+            promoted_from_ids=list(record.get("promoted_from_ids") or []),
+            promotion_basis=dict(record.get("promotion_basis") or {}),
+            promotion_history=list(record.get("promotion_history") or []),
             approval_reason=record.get("approval_reason") or "",
             approval_basis=dict(record.get("approval_basis") or {}),
             approved_at=record.get("approved_at"),
@@ -438,6 +512,11 @@ class WebPromotedMemoryStore:
             metadata=dict(record.get("metadata") or {}),
             now_iso=now,
             promotion_state=record["promotion_state"],
+            promotion_tier=record.get("promotion_tier") or self.TIER_LOCAL,
+            origin_tier=record.get("origin_tier") or (record.get("promotion_tier") or self.TIER_LOCAL),
+            promoted_from_ids=list(record.get("promoted_from_ids") or []),
+            promotion_basis=dict(record.get("promotion_basis") or {}),
+            promotion_history=list(record.get("promotion_history") or []),
             approval_reason=record.get("approval_reason") or "",
             approval_basis=dict(record.get("approval_basis") or {}),
             approved_at=record.get("approved_at"),
@@ -624,6 +703,7 @@ class WebPromotedMemoryStore:
             row = conn.execute(
                 """
                 SELECT promoted_id, canonical_fact, evidence_ids_json, confidence, freshness_state, promotion_state,
+                       promotion_tier, origin_tier, promoted_from_ids_json, promotion_basis_json, promotion_history_json,
                        freshness_lifecycle_state, freshness_reason, freshness_policy_json, last_validated_at, revalidation_requested_at,
                        approval_reason, approval_basis_json, approved_at, state_updated_at, metadata_json, created_at, updated_at
                 FROM web_promoted_memory
@@ -646,6 +726,18 @@ class WebPromotedMemoryStore:
         except Exception:
             approval_basis = {}
         try:
+            promoted_from_ids = json.loads(row["promoted_from_ids_json"]) if row["promoted_from_ids_json"] else []
+        except Exception:
+            promoted_from_ids = []
+        try:
+            promotion_basis = json.loads(row["promotion_basis_json"]) if row["promotion_basis_json"] else {}
+        except Exception:
+            promotion_basis = {}
+        try:
+            promotion_history = json.loads(row["promotion_history_json"]) if row["promotion_history_json"] else []
+        except Exception:
+            promotion_history = []
+        try:
             freshness_policy = json.loads(row["freshness_policy_json"]) if row["freshness_policy_json"] else {}
         except Exception:
             freshness_policy = {}
@@ -656,6 +748,11 @@ class WebPromotedMemoryStore:
             "confidence": row["confidence"],
             "freshness_state": row["freshness_state"],
             "promotion_state": self._state(row["promotion_state"]),
+            "promotion_tier": self._tier(row["promotion_tier"]),
+            "origin_tier": self._tier(row["origin_tier"]),
+            "promoted_from_ids": promoted_from_ids,
+            "promotion_basis": promotion_basis,
+            "promotion_history": promotion_history,
             "freshness_lifecycle_state": self._freshness_state(row["freshness_lifecycle_state"]),
             "freshness_reason": row["freshness_reason"] or "",
             "freshness_policy": freshness_policy,
@@ -678,6 +775,7 @@ class WebPromotedMemoryStore:
                 rows = conn.execute(
                     """
                     SELECT promoted_id, canonical_fact, evidence_ids_json, confidence, freshness_state, promotion_state,
+                           promotion_tier, origin_tier, promoted_from_ids_json, promotion_basis_json, promotion_history_json,
                            freshness_lifecycle_state, freshness_reason, freshness_policy_json, last_validated_at, revalidation_requested_at,
                            approval_reason, approval_basis_json, approved_at, state_updated_at, metadata_json, created_at, updated_at
                     FROM web_promoted_memory
@@ -691,11 +789,13 @@ class WebPromotedMemoryStore:
                 rows = conn.execute(
                     """
                     SELECT promoted_id, canonical_fact, evidence_ids_json, confidence, freshness_state, promotion_state,
+                           promotion_tier, origin_tier, promoted_from_ids_json, promotion_basis_json, promotion_history_json,
                            freshness_lifecycle_state, freshness_reason, freshness_policy_json, last_validated_at, revalidation_requested_at,
                            approval_reason, approval_basis_json, approved_at, state_updated_at, metadata_json, created_at, updated_at
                     FROM web_promoted_memory
                     WHERE canonical_fact LIKE ?
                     ORDER BY CASE WHEN promotion_state='trusted' THEN 0 ELSE 1 END,
+                             CASE WHEN promotion_tier='global' THEN 0 WHEN promotion_tier='workspace' THEN 1 ELSE 2 END,
                              CASE WHEN freshness_lifecycle_state='fresh' THEN 0 WHEN freshness_lifecycle_state='revalidation_pending' THEN 1 ELSE 2 END,
                              confidence DESC, updated_at DESC
                     LIMIT ?
@@ -717,6 +817,18 @@ class WebPromotedMemoryStore:
             except Exception:
                 approval_basis = {}
             try:
+                promoted_from_ids = json.loads(r["promoted_from_ids_json"]) if r["promoted_from_ids_json"] else []
+            except Exception:
+                promoted_from_ids = []
+            try:
+                promotion_basis = json.loads(r["promotion_basis_json"]) if r["promotion_basis_json"] else {}
+            except Exception:
+                promotion_basis = {}
+            try:
+                promotion_history = json.loads(r["promotion_history_json"]) if r["promotion_history_json"] else []
+            except Exception:
+                promotion_history = []
+            try:
                 freshness_policy = json.loads(r["freshness_policy_json"]) if r["freshness_policy_json"] else {}
             except Exception:
                 freshness_policy = {}
@@ -728,6 +840,11 @@ class WebPromotedMemoryStore:
                     "confidence": r["confidence"],
                     "freshness_state": r["freshness_state"],
                     "promotion_state": self._state(r["promotion_state"]),
+                    "promotion_tier": self._tier(r["promotion_tier"]),
+                    "origin_tier": self._tier(r["origin_tier"]),
+                    "promoted_from_ids": promoted_from_ids,
+                    "promotion_basis": promotion_basis,
+                    "promotion_history": promotion_history,
                     "freshness_lifecycle_state": self._freshness_state(r["freshness_lifecycle_state"]),
                     "freshness_reason": r["freshness_reason"] or "",
                     "freshness_policy": freshness_policy,
@@ -743,3 +860,155 @@ class WebPromotedMemoryStore:
                 }
             )
         return out
+
+    def _append_promotion_history(
+        self,
+        *,
+        history: List[Dict[str, Any]] | None,
+        from_tier: str,
+        to_tier: str,
+        reason: str,
+        basis: Dict[str, Any] | None,
+        now_iso: str | None,
+    ) -> List[Dict[str, Any]]:
+        rows = list(history or [])
+        rows.append(
+            {
+                "from_tier": self._tier(from_tier),
+                "to_tier": self._tier(to_tier),
+                "reason": reason,
+                "basis": dict(basis or {}),
+                "timestamp": str(now_iso or ""),
+            }
+        )
+        return rows[-20:]
+
+    def promote_local_to_workspace(
+        self,
+        promoted_id: str,
+        *,
+        reason: str = "local_to_workspace_threshold",
+        now_iso: str | None = None,
+    ) -> Dict[str, Any] | None:
+        record = self.get(promoted_id)
+        if not record:
+            return None
+        current_tier = self._tier(record.get("promotion_tier"))
+        if current_tier in {self.TIER_WORKSPACE, self.TIER_GLOBAL}:
+            return record
+
+        confidence = float(record.get("confidence") or 0.0)
+        evidence_count = len(list(record.get("evidence_ids") or []))
+        has_source = bool((record.get("metadata") or {}).get("source_url") or (record.get("metadata") or {}).get("source_id"))
+        contradiction_summary = self.get_contradiction_summary(promoted_id)
+        open_conflicts = int(contradiction_summary.get("open_contradiction_count") or 0)
+        eligible = confidence >= 0.6 and evidence_count >= 1 and has_source and open_conflicts == 0
+        if not eligible:
+            return record
+
+        now = now_iso or ""
+        basis = {
+            "rule": reason,
+            "confidence": confidence,
+            "evidence_count": evidence_count,
+            "has_source": has_source,
+            "open_contradiction_count": open_conflicts,
+        }
+        self._upsert_internal(
+            promoted_id=record["promoted_id"],
+            canonical_fact=record["canonical_fact"],
+            evidence_ids=list(record.get("evidence_ids") or []),
+            confidence=confidence,
+            freshness_state=record["freshness_state"],
+            metadata=dict(record.get("metadata") or {}),
+            now_iso=now,
+            promotion_state=record["promotion_state"],
+            promotion_tier=self.TIER_WORKSPACE,
+            origin_tier=record.get("origin_tier") or self.TIER_LOCAL,
+            promoted_from_ids=sorted({*list(record.get("promoted_from_ids") or []), promoted_id}),
+            promotion_basis=basis,
+            promotion_history=self._append_promotion_history(
+                history=list(record.get("promotion_history") or []),
+                from_tier=current_tier,
+                to_tier=self.TIER_WORKSPACE,
+                reason=reason,
+                basis=basis,
+                now_iso=now,
+            ),
+            approval_reason=record.get("approval_reason") or "",
+            approval_basis=dict(record.get("approval_basis") or {}),
+            approved_at=record.get("approved_at"),
+            freshness_lifecycle_state=record.get("freshness_lifecycle_state") or self.FRESHNESS_STALE,
+            freshness_reason=record.get("freshness_reason") or "",
+            freshness_policy=dict(record.get("freshness_policy") or {"ttl_hours": self.DEFAULT_TTL_HOURS}),
+            last_validated_at=record.get("last_validated_at"),
+            revalidation_requested_at=record.get("revalidation_requested_at"),
+        )
+        return self.get(promoted_id)
+
+    def promote_workspace_to_global(
+        self,
+        promoted_id: str,
+        *,
+        reason: str = "workspace_to_global_strict_threshold",
+        now_iso: str | None = None,
+    ) -> Dict[str, Any] | None:
+        record = self.get(promoted_id)
+        if not record:
+            return None
+        current_tier = self._tier(record.get("promotion_tier"))
+        if current_tier == self.TIER_GLOBAL:
+            return record
+        if current_tier != self.TIER_WORKSPACE:
+            return record
+
+        confidence = float(record.get("confidence") or 0.0)
+        evidence_count = len(list(record.get("evidence_ids") or []))
+        trusted = str(record.get("promotion_state") or "") == self.STATE_TRUSTED
+        fresh = str(record.get("freshness_lifecycle_state") or "") == self.FRESHNESS_FRESH
+        contradiction_summary = self.get_contradiction_summary(promoted_id)
+        open_conflicts = int(contradiction_summary.get("open_contradiction_count") or 0)
+        eligible = trusted and fresh and open_conflicts == 0 and confidence >= 0.8 and evidence_count >= 2
+        if not eligible:
+            return record
+
+        now = now_iso or ""
+        basis = {
+            "rule": reason,
+            "trusted": trusted,
+            "fresh": fresh,
+            "open_contradiction_count": open_conflicts,
+            "confidence": confidence,
+            "evidence_count": evidence_count,
+        }
+        self._upsert_internal(
+            promoted_id=record["promoted_id"],
+            canonical_fact=record["canonical_fact"],
+            evidence_ids=list(record.get("evidence_ids") or []),
+            confidence=confidence,
+            freshness_state=record["freshness_state"],
+            metadata=dict(record.get("metadata") or {}),
+            now_iso=now,
+            promotion_state=record["promotion_state"],
+            promotion_tier=self.TIER_GLOBAL,
+            origin_tier=record.get("origin_tier") or self.TIER_LOCAL,
+            promoted_from_ids=sorted({*list(record.get("promoted_from_ids") or []), promoted_id}),
+            promotion_basis=basis,
+            promotion_history=self._append_promotion_history(
+                history=list(record.get("promotion_history") or []),
+                from_tier=current_tier,
+                to_tier=self.TIER_GLOBAL,
+                reason=reason,
+                basis=basis,
+                now_iso=now,
+            ),
+            approval_reason=record.get("approval_reason") or "",
+            approval_basis=dict(record.get("approval_basis") or {}),
+            approved_at=record.get("approved_at"),
+            freshness_lifecycle_state=record.get("freshness_lifecycle_state") or self.FRESHNESS_STALE,
+            freshness_reason=record.get("freshness_reason") or "",
+            freshness_policy=dict(record.get("freshness_policy") or {"ttl_hours": self.DEFAULT_TTL_HOURS}),
+            last_validated_at=record.get("last_validated_at"),
+            revalidation_requested_at=record.get("revalidation_requested_at"),
+        )
+        return self.get(promoted_id)
