@@ -25,6 +25,7 @@ from CognitiveRAG.crag.retrieval import (
     web_lane,
 )
 from CognitiveRAG.crag.retrieval.models import LaneHit
+from CognitiveRAG.crag.retrieval.rerank import rerank_hits
 
 
 @dataclass
@@ -618,6 +619,19 @@ def route_and_retrieve(
             h.id,
         )
     )
+
+    rerank = rerank_hits(
+        query=query,
+        hits=hits,
+        plan_lanes=plan.lanes,
+        hinted_categories=category_hints,
+        category_strong=bool(category_strong),
+    )
+    hits = list(rerank.hits)
+    plan.metadata = {
+        **dict(plan.metadata or {}),
+        "rerank": dict(rerank.metadata or {}),
+    }
 
     uncached_hits = _annotate_hot_cache(hits, hit=False)
     _HOT_CACHE.set(key, plan=plan, hits=uncached_hits)

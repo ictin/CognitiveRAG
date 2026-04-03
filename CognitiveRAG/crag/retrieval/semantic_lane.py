@@ -4,16 +4,7 @@ from typing import Any, Dict, Iterable, List
 
 from CognitiveRAG.crag.contracts.enums import MemoryType, RetrievalLane
 from CognitiveRAG.crag.retrieval.models import LaneHit
-
-
-def _norm_words(text: str) -> set[str]:
-    return {w for w in " ".join((text or "").lower().split()).split() if w}
-
-
-def _jaccard(a: set[str], b: set[str]) -> float:
-    if not a or not b:
-        return 0.0
-    return float(len(a & b)) / float(max(1, len(a | b)))
+from CognitiveRAG.crag.retrieval.vector_backend import VectorRecord, resolve_vector_backend
 
 
 def _mk(hit_id: str, text: str, provenance: Dict[str, Any], sem: float, *, memory_type: MemoryType, cluster: str | None = None) -> LaneHit:
@@ -42,30 +33,77 @@ def retrieve(
     older_raw: Iterable[Dict[str, Any]],
     summaries: Iterable[Dict[str, Any]],
     top_k: int = 8,
+    vector_backend_name: str | None = None,
 ) -> List[LaneHit]:
     hits: List[LaneHit] = []
-    qwords = _norm_words(query)
+    backend, requested_backend, used_fallback = resolve_vector_backend(vector_backend_name)
+    records: list[VectorRecord] = []
 
     for i, msg in enumerate(list(fresh_tail)):
         text = msg.get("text") or ""
-        sem = _jaccard(qwords, _norm_words(text))
-        if sem <= 0:
-            continue
-        hits.append(_mk(f"sem:fresh:{session_id}:{i}", text, {"message": msg, "recency": 0.9}, sem, memory_type=MemoryType.EPISODIC_RAW, cluster="fresh_tail"))
+        records.append(
+            VectorRecord(
+                record_id=f"sem:fresh:{session_id}:{i}",
+                text=text,
+                memory_type=MemoryType.EPISODIC_RAW,
+                cluster_id="fresh_tail",
+                source_type="fresh_tail",
+                provenance={"message": msg, "recency": 0.9},
+            )
+        )
 
     for i, msg in enumerate(list(older_raw)):
         text = msg.get("text") or ""
-        sem = _jaccard(qwords, _norm_words(text))
-        if sem <= 0:
-            continue
-        hits.append(_mk(f"sem:episodic:{session_id}:{i}", text, {"message": msg, "recency": 0.4}, sem, memory_type=MemoryType.EPISODIC_RAW, cluster="episodic"))
+        records.append(
+            VectorRecord(
+                record_id=f"sem:episodic:{session_id}:{i}",
+                text=text,
+                memory_type=MemoryType.EPISODIC_RAW,
+                cluster_id="episodic",
+                source_type="episodic",
+                provenance={"message": msg, "recency": 0.4},
+            )
+        )
 
     for i, summary in enumerate(list(summaries)):
         text = summary.get("summary") or summary.get("text") or ""
-        sem = _jaccard(qwords, _norm_words(text))
-        if sem <= 0:
-            continue
-        hits.append(_mk(f"sem:summary:{session_id}:{i}", text, {"summary": summary, "recency": 0.35}, sem, memory_type=MemoryType.SUMMARY, cluster="summaries"))
+        records.append(
+            VectorRecord(
+                record_id=f"sem:summary:{session_id}:{i}",
+                text=text,
+                memory_type=MemoryType.SUMMARY,
+                cluster_id="summaries",
+                source_type="summary",
+                provenance={"summary": summary, "recency": 0.35},
+            )
+        )
+
+    matches = backend.search(
+        query=query,
+        records=records,
+        top_k=top_k,
+        where=None,
+    )
+
+    for match in matches:
+        provenance = dict(match.record.provenance or {})
+        provenance["vector_backend"] = {
+            "abstraction_used": True,
+            "requested_backend": requested_backend,
+            "selected_backend": match.backend,
+            "fallback_used": bool(used_fallback),
+            "source_type": match.debug.get("source_type"),
+        }
+        hits.append(
+            _mk(
+                match.record.record_id,
+                match.record.text,
+                provenance,
+                sem=float(match.score),
+                memory_type=match.record.memory_type,
+                cluster=match.record.cluster_id,
+            )
+        )
 
     hits.sort(key=lambda h: (-h.semantic_score, h.id))
     return hits[:top_k]

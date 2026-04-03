@@ -54,6 +54,7 @@ def run_fast_retrieval_benchmark(
                 "hit_count": len(hits),
                 "lane_values": sorted({h.lane.value for h in hits}),
                 "category_routing": dict((plan.metadata or {}).get("category_routing") or {}),
+                "rerank": dict((plan.metadata or {}).get("rerank") or {}),
             }
         )
 
@@ -91,6 +92,11 @@ def run_fast_retrieval_benchmark(
             "router_hot_cache": get_hot_cache_stats(),
             "route_cache": get_route_cache_stats(),
             "topic_shortlist_cache": get_topic_shortlist_cache_stats(),
+        },
+        "rerank": {
+            "applied_runs": sum(1 for r in runs if bool(dict(r.get("rerank") or {}).get("applied"))),
+            "fallback_runs": sum(1 for r in runs if not bool(dict(r.get("rerank") or {}).get("applied"))),
+            "moved_count_total": sum(int(dict(r.get("rerank") or {}).get("moved_count") or 0) for r in runs),
         },
         "runs": runs,
     }

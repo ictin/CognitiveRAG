@@ -44,7 +44,10 @@ def test_fast_retrieval_benchmark_has_latency_and_cache_shape(tmp_path: Path):
     assert "router_hot_cache" in payload["cache"]
     assert "route_cache" in payload["cache"]
     assert "topic_shortlist_cache" in payload["cache"]
+    assert "rerank" in payload
+    assert "applied_runs" in payload["rerank"]
     assert payload["runs"][0]["cache_hit"] is False
+    assert "rerank" in payload["runs"][0]
 
 
 def test_fast_retrieval_benchmark_can_save_json(tmp_path: Path):
