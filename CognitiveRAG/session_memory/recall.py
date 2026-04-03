@@ -5,6 +5,7 @@ from .summary_nodes import SummaryNodeStore
 from .summary_edges import SummaryEdgeStore
 from .context_items import ContextItemStore
 from .large_file_store import LargeFileStore
+from .compaction import SessionCompactionStore, recover_segment_messages
 
 
 def _resolve_parts_db(db_prefix: Optional[str]) -> Optional[str]:
@@ -18,6 +19,14 @@ def _resolve_parts_db(db_prefix: Optional[str]) -> Optional[str]:
     if os.path.exists(cand2):
         return cand2
     return cand2
+
+
+def _resolve_compaction_db(db_prefix: Optional[str]) -> Optional[str]:
+    if not db_prefix:
+        return None
+    import os
+
+    return os.path.join(db_prefix, "compaction.sqlite3")
 
 
 def _make_ref(item_type: str, session_id: Optional[str], primary_id: str, secondary_id: Optional[str], preview: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
@@ -80,6 +89,43 @@ def search_session_memory(session_id: str, query: str, db_prefix: Optional[str] 
                 )
                 if len(results) >= top_k:
                     return results
+    except Exception:
+        pass
+
+    # compacted summaries with lineage-recoverable raw snapshots
+    try:
+        compaction = SessionCompactionStore(db_path=_resolve_compaction_db(db_prefix) if db_prefix else None)
+        for seg in compaction.list_segments(session_id):
+            snapshot_text = " ".join(str(r.get("text") or "") for r in list(seg.get("raw_snapshot") or []))
+            hay = " ".join(
+                [
+                    str(seg.get("summary") or ""),
+                    snapshot_text,
+                    str(seg.get("policy_reason") or ""),
+                    str(seg.get("status") or ""),
+                ]
+            ).lower()
+            if query.lower() not in hay:
+                continue
+            results.append(
+                _make_ref(
+                    "compacted_summary",
+                    session_id,
+                    seg.get("segment_id"),
+                    None,
+                    str(seg.get("summary") or "")[:256],
+                    {
+                        "status": seg.get("status"),
+                        "policy_reason": seg.get("policy_reason"),
+                        "source_count": int(seg.get("source_count") or 0),
+                        "source_index_start": int(seg.get("start_index") or 0),
+                        "source_index_end": int(seg.get("end_index") or 0),
+                        "recoverability": "raw_or_snapshot",
+                    },
+                )
+            )
+            if len(results) >= top_k:
+                return results
     except Exception:
         pass
 
@@ -170,6 +216,22 @@ def describe_session_item(ref: Dict[str, Any], db_prefix: Optional[str] = None) 
                 'node_id': n['node_id'],
                 'preview': (n.get('text') or '')[:512],
                 'references_large_file': False,
+            }
+    if item_type == "compacted_summary":
+        compaction = SessionCompactionStore(db_path=_resolve_compaction_db(db_prefix) if db_prefix else None)
+        seg = compaction.get_segment(session_id, primary_id)
+        if seg:
+            return {
+                "item_type": "compacted_summary",
+                "session_id": session_id,
+                "segment_id": seg.get("segment_id"),
+                "preview": str(seg.get("summary") or "")[:512],
+                "status": seg.get("status"),
+                "policy_reason": seg.get("policy_reason"),
+                "source_count": int(seg.get("source_count") or 0),
+                "source_index_start": int(seg.get("start_index") or 0),
+                "source_index_end": int(seg.get("end_index") or 0),
+                "recoverability": "raw_or_snapshot",
             }
     if item_type == 'large_file':
         # prefer legacy filename 'files.sqlite3' if present otherwise use 'large_files.sqlite3'
@@ -313,6 +375,31 @@ def expand_session_item(ref: Dict[str, Any], db_prefix: Optional[str] = None) ->
         rec = store.get_file(primary_id)
         if rec:
             out.append(_make_ref('large_file_meta', session_id, primary_id, None, rec.get('file_path',''), {'raw': rec.get('metadata_json')}))
+        return out
+
+    if item_type == "compacted_summary":
+        compaction = SessionCompactionStore(db_path=_resolve_compaction_db(db_prefix) if db_prefix else None)
+        seg = compaction.get_segment(session_id, primary_id)
+        if not seg:
+            return out
+        conv = ConversationStore(db_path=(db_prefix + '/conversations.sqlite3') if db_prefix else None)
+        raw_messages = conv.get_messages(session_id)
+        recovered = recover_segment_messages(segment=seg, raw_messages=raw_messages)
+        for row in recovered:
+            out.append(
+                _make_ref(
+                    "message",
+                    session_id,
+                    str(row.get("message_id") or f"index-{row.get('index')}"),
+                    None,
+                    str(row.get("text") or "")[:256],
+                    {
+                        "from_compaction_segment": seg.get("segment_id"),
+                        "recovered_from": row.get("recovered_from", "raw"),
+                        "source_index": row.get("index"),
+                    },
+                )
+            )
         return out
 
     return out

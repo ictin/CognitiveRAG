@@ -15,6 +15,13 @@ from CognitiveRAG.crag.context_selection.lane_pruning import prune_lane_local
 from CognitiveRAG.crag.context_selection.policies import get_policy
 from CognitiveRAG.crag.context_selection.selector import select_context
 from CognitiveRAG.crag.contracts.types import estimate_tokens
+from CognitiveRAG.session_memory.compaction import (
+    SessionCompactionStore,
+    build_lineage,
+    build_raw_snapshot,
+    compute_eligible_messages,
+    summarize_compaction_state,
+)
 
 
 WORKDIR = os.path.join(os.getcwd(), "data", "session_memory")
@@ -99,27 +106,87 @@ def compact_session(
     summarizer = summarizer or _default_summarizer
     raw_messages = _load_raw_messages(session_id)
 
-    older = [m for m in raw_messages if int(m.get("index", 0)) < int(older_than_index)]
-    if not older:
+    compaction_store = SessionCompactionStore(os.path.join(WORKDIR, "compaction.sqlite3"))
+    existing_segments = compaction_store.list_segments(session_id)
+    already_compacted = {
+        str(row.get("message_key") or "")
+        for seg in existing_segments
+        for row in list(seg.get("lineage") or [])
+        if str(row.get("message_key") or "")
+    }
+
+    compactable, quarantined = compute_eligible_messages(
+        raw_messages=raw_messages,
+        older_than_index=int(older_than_index),
+        already_compacted_keys=already_compacted,
+    )
+    if not compactable and not quarantined:
         return []
 
     chunk_size = 20
-    chunks = [older[i : i + chunk_size] for i in range(0, len(older), chunk_size)]
+    chunks = [compactable[i : i + chunk_size] for i in range(0, len(compactable), chunk_size)]
 
     existing = _load_fallback_summaries(session_id)
     created: List[Dict[str, Any]] = []
+    base_chunk_index = max([int(s.get("chunk_index", -1)) for s in existing], default=-1) + 1
 
     for i, chunk in enumerate(chunks):
         artifact = summarizer(chunk)
+        lineage = build_lineage(chunk)
+        snapshot = build_raw_snapshot(chunk)
+        start_index = min(int(m.get("index", 0)) for m in chunk)
+        end_index = max(int(m.get("index", 0)) for m in chunk)
+        import hashlib
+
+        lineage_key = "||".join(f"{row.get('message_key')}|{row.get('index')}" for row in lineage)
+        segment_id = f"compact:{hashlib.sha1(f'{session_id}|{lineage_key}'.encode('utf-8')).hexdigest()}"
+        compaction_store.upsert_segment(
+            session_id=session_id,
+            segment_id=segment_id,
+            chunk_index=base_chunk_index + i,
+            start_index=start_index,
+            end_index=end_index,
+            summary=str(artifact.get("summary") or ""),
+            source_count=int(artifact.get("source_count", len(chunk))),
+            policy_reason="age_based_chunk_compaction",
+            status="compacted",
+            lineage=lineage,
+            raw_snapshot=snapshot,
+            metadata={
+                "older_than_index": int(older_than_index),
+                "created_by": "context_window.v3.compaction_policy",
+            },
+        )
         node = {
             "session_id": session_id,
-            "chunk_index": i,
+            "chunk_index": base_chunk_index + i,
             "summary": artifact.get("summary"),
             "source_count": artifact.get("source_count", len(chunk)),
-            "created_by": "context_window.v2.selector_foundation",
+            "created_by": "context_window.v3.compaction_policy",
+            "compaction": {
+                "segment_id": segment_id,
+                "status": "compacted",
+                "policy_reason": "age_based_chunk_compaction",
+                "source_index_start": start_index,
+                "source_index_end": end_index,
+                "lineage_count": len(lineage),
+                "recoverability": "raw_or_snapshot",
+            },
         }
         existing.append(node)
         created.append(node)
+
+    for idx, qmsg in enumerate(quarantined):
+        q_index = int(qmsg.get("index", idx))
+        q_mid = str(qmsg.get("message_id") or "")
+        message_key = q_mid and f"message_id:{q_mid}" or f"index:{q_index}"
+        compaction_store.upsert_quarantined(
+            session_id=session_id,
+            message_key=message_key,
+            msg_index=q_index,
+            reason="low_value_quarantine",
+            metadata={"preview": str(qmsg.get("text") or "")[:120]},
+        )
 
     _save_fallback_summaries(session_id, existing)
     return created
@@ -140,6 +207,7 @@ def assemble_context(
     """
     raw = sorted(_load_raw_messages(session_id), key=lambda m: int(m.get("index", 0)))
     summaries = _load_summaries(session_id)
+    compaction_store = SessionCompactionStore(os.path.join(WORKDIR, "compaction.sqlite3"))
 
     fresh_tail = raw[-int(fresh_tail_count) :] if fresh_tail_count > 0 else []
     older_raw = raw[: max(0, len(raw) - len(fresh_tail))]
@@ -230,6 +298,10 @@ def assemble_context(
     if not selected_fresh:
         # Always preserve minimal fresh tail visibility contract.
         selected_fresh = fresh_tail[-max(1, policy.minimal_fresh_tail) :]
+    if not selected_summaries and summaries:
+        # Preserve pre-existing fallback behavior: surfaced summaries remain visible
+        # even when selector excludes summary-lane blocks from final selection.
+        selected_summaries = summaries[:1]
 
     return {
         "fresh_tail": selected_fresh,
@@ -291,4 +363,10 @@ def assemble_context(
         },
         "discovery_plan": discovery_plan.model_dump(mode="json"),
         "discovery": discovery_result.model_dump(mode="json"),
+        "compaction": summarize_compaction_state(session_id=session_id, store=compaction_store),
+        "recoverability": {
+            "raw_message_count": len(raw),
+            "summary_count": len(summaries),
+            "lineage_recovery_mode": "raw_or_snapshot",
+        },
     }
