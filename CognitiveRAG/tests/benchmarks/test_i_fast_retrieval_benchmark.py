@@ -42,6 +42,8 @@ def test_fast_retrieval_benchmark_has_latency_and_cache_shape(tmp_path: Path):
     assert "pruned_hit_count_total" in payload["category_routing"]
     assert payload["cache"]["run_misses"] >= 1
     assert "router_hot_cache" in payload["cache"]
+    assert "route_cache" in payload["cache"]
+    assert "topic_shortlist_cache" in payload["cache"]
     assert payload["runs"][0]["cache_hit"] is False
 
 

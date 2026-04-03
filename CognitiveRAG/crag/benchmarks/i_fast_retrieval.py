@@ -7,7 +7,13 @@ from datetime import datetime, timezone
 from typing import Any, Dict
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily
-from CognitiveRAG.crag.retrieval.router import clear_hot_cache, get_hot_cache_stats, route_and_retrieve
+from CognitiveRAG.crag.retrieval.router import (
+    clear_routing_caches,
+    get_hot_cache_stats,
+    get_route_cache_stats,
+    get_topic_shortlist_cache_stats,
+    route_and_retrieve,
+)
 
 
 def _run_id() -> str:
@@ -23,7 +29,7 @@ def run_fast_retrieval_benchmark(
     repeats: int = 3,
     top_k_per_lane: int = 6,
 ) -> Dict[str, Any]:
-    clear_hot_cache()
+    clear_routing_caches()
 
     runs = []
     for idx in range(max(1, int(repeats))):
@@ -83,6 +89,8 @@ def run_fast_retrieval_benchmark(
             "run_hits": sum(1 for r in runs if r["cache_hit"]),
             "run_misses": sum(1 for r in runs if not r["cache_hit"]),
             "router_hot_cache": get_hot_cache_stats(),
+            "route_cache": get_route_cache_stats(),
+            "topic_shortlist_cache": get_topic_shortlist_cache_stats(),
         },
         "runs": runs,
     }

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import re
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
@@ -201,6 +202,136 @@ class AgentHotCache:
 _HOT_CACHE = AgentHotCache()
 
 
+@dataclass
+class _RouteCacheEntry:
+    plan: RoutePlan
+    expires_at: float
+
+
+class RouteDecisionCache:
+    def __init__(self, *, max_entries: int = 128, ttl_seconds: float = 90.0):
+        self.max_entries = int(max(1, max_entries))
+        self.ttl_seconds = float(max(0.001, ttl_seconds))
+        self._entries: "OrderedDict[Tuple[str, ...], _RouteCacheEntry]" = OrderedDict()
+        self.hits = 0
+        self.misses = 0
+        self.evictions = 0
+
+    def clear(self) -> None:
+        self._entries.clear()
+        self.hits = 0
+        self.misses = 0
+        self.evictions = 0
+
+    def _prune(self) -> None:
+        now = time.monotonic()
+        expired = [k for k, v in self._entries.items() if v.expires_at <= now]
+        for key in expired:
+            self._entries.pop(key, None)
+            self.evictions += 1
+
+    def get(self, key: Tuple[str, ...]) -> _RouteCacheEntry | None:
+        self._prune()
+        entry = self._entries.get(key)
+        if entry is None:
+            self.misses += 1
+            return None
+        self._entries.move_to_end(key)
+        self.hits += 1
+        return entry
+
+    def set(self, key: Tuple[str, ...], plan: RoutePlan) -> None:
+        self._prune()
+        self._entries[key] = _RouteCacheEntry(
+            plan=copy.deepcopy(plan),
+            expires_at=(time.monotonic() + self.ttl_seconds),
+        )
+        self._entries.move_to_end(key)
+        while len(self._entries) > self.max_entries:
+            self._entries.popitem(last=False)
+            self.evictions += 1
+
+    def stats(self) -> Dict[str, float | int]:
+        return {
+            "entries": len(self._entries),
+            "hits": self.hits,
+            "misses": self.misses,
+            "evictions": self.evictions,
+            "max_entries": self.max_entries,
+            "ttl_seconds": self.ttl_seconds,
+        }
+
+
+@dataclass
+class _ShortlistCacheEntry:
+    hinted_categories: tuple[str, ...]
+    strong_signal: bool
+    score: float
+    reason: str
+    expires_at: float
+
+
+class TopicShortlistCache:
+    def __init__(self, *, max_entries: int = 128, ttl_seconds: float = 90.0):
+        self.max_entries = int(max(1, max_entries))
+        self.ttl_seconds = float(max(0.001, ttl_seconds))
+        self._entries: "OrderedDict[Tuple[str, ...], _ShortlistCacheEntry]" = OrderedDict()
+        self.hits = 0
+        self.misses = 0
+        self.evictions = 0
+
+    def clear(self) -> None:
+        self._entries.clear()
+        self.hits = 0
+        self.misses = 0
+        self.evictions = 0
+
+    def _prune(self) -> None:
+        now = time.monotonic()
+        expired = [k for k, v in self._entries.items() if v.expires_at <= now]
+        for key in expired:
+            self._entries.pop(key, None)
+            self.evictions += 1
+
+    def get(self, key: Tuple[str, ...]) -> _ShortlistCacheEntry | None:
+        self._prune()
+        entry = self._entries.get(key)
+        if entry is None:
+            self.misses += 1
+            return None
+        self._entries.move_to_end(key)
+        self.hits += 1
+        return entry
+
+    def set(self, key: Tuple[str, ...], *, hinted_categories: tuple[str, ...], strong_signal: bool, score: float, reason: str) -> None:
+        self._prune()
+        self._entries[key] = _ShortlistCacheEntry(
+            hinted_categories=tuple(hinted_categories),
+            strong_signal=bool(strong_signal),
+            score=float(score),
+            reason=str(reason),
+            expires_at=(time.monotonic() + self.ttl_seconds),
+        )
+        self._entries.move_to_end(key)
+        while len(self._entries) > self.max_entries:
+            self._entries.popitem(last=False)
+            self.evictions += 1
+
+    def stats(self) -> Dict[str, float | int]:
+        return {
+            "entries": len(self._entries),
+            "hits": self.hits,
+            "misses": self.misses,
+            "evictions": self.evictions,
+            "max_entries": self.max_entries,
+            "ttl_seconds": self.ttl_seconds,
+        }
+
+
+_ROUTE_CACHE = RouteDecisionCache()
+_TOPIC_SHORTLIST_CACHE = TopicShortlistCache()
+
+
 def get_hot_cache_stats() -> Dict[str, float | int]:
     return _HOT_CACHE.stats()
 
@@ -209,8 +340,60 @@ def clear_hot_cache() -> None:
     _HOT_CACHE.clear()
 
 
+def get_route_cache_stats() -> Dict[str, float | int]:
+    return _ROUTE_CACHE.stats()
+
+
+def clear_route_cache() -> None:
+    _ROUTE_CACHE.clear()
+
+
+def get_topic_shortlist_cache_stats() -> Dict[str, float | int]:
+    return _TOPIC_SHORTLIST_CACHE.stats()
+
+
+def clear_topic_shortlist_cache() -> None:
+    _TOPIC_SHORTLIST_CACHE.clear()
+
+
+def clear_routing_caches() -> None:
+    clear_hot_cache()
+    clear_route_cache()
+    clear_topic_shortlist_cache()
+
+
+_WORD_RE = re.compile(r"\W+")
+_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "for",
+    "from",
+    "how",
+    "in",
+    "is",
+    "of",
+    "on",
+    "or",
+    "the",
+    "to",
+    "what",
+    "with",
+}
+
+
 def _normalized_query(query: str) -> str:
     return " ".join((query or "").strip().lower().split())
+
+
+def _query_signature(query: str, *, max_terms: int = 12) -> tuple[str, ...]:
+    normalized = _normalized_query(query)
+    terms = [t for t in _WORD_RE.split(normalized) if t and t not in _STOPWORDS]
+    # near-repeated queries share sorted term signatures
+    return tuple(sorted(dict.fromkeys(terms))[: max(1, int(max_terms))])
 
 
 def _cache_key(
@@ -230,6 +413,14 @@ def _cache_key(
         # from read-time freshness updates that can legitimately touch sqlite mtime.
         str(workdir),
     )
+
+
+def _route_cache_key(*, query: str, intent_family: IntentFamily) -> tuple[str, ...]:
+    return (intent_family.value, *_query_signature(query))
+
+
+def _shortlist_cache_key(*, query: str) -> tuple[str, ...]:
+    return _query_signature(query)
 
 
 def _annotate_hot_cache(hits: list[LaneHit], *, hit: bool) -> list[LaneHit]:
@@ -302,19 +493,69 @@ def route_and_retrieve(
         plan.reason = f"{plan.reason}|agent_hot_cache_hit"
         return plan, _annotate_hot_cache(copy.deepcopy(cached.hits), hit=True)
 
-    router = LaneRouter()
-    plan = router.route(query=query, intent_family=intent_family)
-    category_decision = decide_query_category_routing(query)
+    shortlist_key = _shortlist_cache_key(query=query)
+    shortlist_cached = _TOPIC_SHORTLIST_CACHE.get(shortlist_key)
+    if shortlist_cached is not None:
+        category_hints = tuple(shortlist_cached.hinted_categories)
+        category_strong = bool(shortlist_cached.strong_signal)
+        category_score = float(shortlist_cached.score)
+        category_reason = str(shortlist_cached.reason)
+        shortlist_hit = True
+    else:
+        category_decision = decide_query_category_routing(query)
+        category_hints = tuple(category_decision.hinted_categories)
+        category_strong = bool(category_decision.strong_signal)
+        category_score = float(category_decision.score)
+        category_reason = str(category_decision.reason)
+        _TOPIC_SHORTLIST_CACHE.set(
+            shortlist_key,
+            hinted_categories=category_hints,
+            strong_signal=category_strong,
+            score=category_score,
+            reason=category_reason,
+        )
+        shortlist_hit = False
+
+    route_key = _route_cache_key(query=query, intent_family=intent_family)
+    route_cached = _ROUTE_CACHE.get(route_key)
+    if route_cached is not None:
+        plan = copy.deepcopy(route_cached.plan)
+        plan.reason = f"{plan.reason}|route_cache_hit"
+        route_hit = True
+    else:
+        router = LaneRouter()
+        plan = router.route(query=query, intent_family=intent_family)
+        _ROUTE_CACHE.set(
+            route_key,
+            RoutePlan(
+                intent_family=plan.intent_family,
+                lanes=list(plan.lanes),
+                reason=plan.reason,
+                metadata={},
+            ),
+        )
+        route_hit = False
+
     plan.metadata = {
         **dict(plan.metadata or {}),
         "category_routing": {
-            "hinted_categories": list(category_decision.hinted_categories),
-            "strong_signal": bool(category_decision.strong_signal),
-            "score": float(category_decision.score),
-            "reason": category_decision.reason,
+            "hinted_categories": list(category_hints),
+            "strong_signal": bool(category_strong),
+            "score": float(category_score),
+            "reason": category_reason,
             "pruned_lanes": [],
             "fallback_lanes": [],
             "pruned_hit_count": 0,
+            "shortlist_cache": {
+                "hit": bool(shortlist_hit),
+                "key_terms": list(shortlist_key),
+                "reason": "cache_hit" if shortlist_hit else "cache_miss_computed",
+            },
+        },
+        "route_cache": {
+            "hit": bool(route_hit),
+            "key_terms": list(route_key),
+            "reason": "cache_hit" if route_hit else "cache_miss_computed",
         },
     }
 
@@ -335,7 +576,7 @@ def route_and_retrieve(
         if handler is None:
             continue
         lane_top_k = int(top_k_per_lane)
-        if category_decision.strong_signal and lane in expensive_lanes:
+        if category_strong and lane in expensive_lanes:
             lane_top_k = max(2, int(top_k_per_lane // 2))
         lane_hits = handler(
             query=query,
@@ -349,8 +590,8 @@ def route_and_retrieve(
         )
         lane_hits = _attach_category_graph_metadata(workdir=workdir, hits=list(lane_hits or []))
 
-        if category_decision.strong_signal and lane in expensive_lanes and lane_hits:
-            hinted = set(category_decision.hinted_categories)
+        if category_strong and lane in expensive_lanes and lane_hits:
+            hinted = set(category_hints)
             matched = [h for h in lane_hits if (_category_ids(h) & hinted)]
             if matched:
                 pruned = max(0, len(lane_hits) - len(matched))
