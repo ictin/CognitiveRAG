@@ -251,6 +251,7 @@ def assemble_context(
             "intent_family": route_plan.intent_family.value,
             "lanes": [lane.value for lane in route_plan.lanes],
             "reason": route_plan.reason,
+            "metadata": dict(route_plan.metadata or {}),
         },
         "selector_metrics": {
             "candidate_counts": {

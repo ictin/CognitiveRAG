@@ -3,10 +3,16 @@ from __future__ import annotations
 import copy
 import time
 from collections import OrderedDict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Tuple
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily, RetrievalLane
+from CognitiveRAG.crag.graph_memory.category_graph import (
+    categories_for_hit_from_graph,
+    decide_query_category_routing,
+    record_category_relations_for_hits,
+)
+from CognitiveRAG.crag.graph_memory.store import GraphMemoryStore
 from CognitiveRAG.crag.retrieval import (
     corpus_lane,
     episodic_lane,
@@ -25,6 +31,7 @@ class RoutePlan:
     intent_family: IntentFamily
     lanes: list[RetrievalLane]
     reason: str
+    metadata: dict = field(default_factory=dict)
 
 
 class LaneRouter:
@@ -238,6 +245,39 @@ def _annotate_hot_cache(hits: list[LaneHit], *, hit: bool) -> list[LaneHit]:
     return out
 
 
+def _graph_store(workdir: str) -> GraphMemoryStore:
+    from os import path
+
+    return GraphMemoryStore(path.join(workdir, "graph_memory.sqlite3"))
+
+
+def _attach_category_graph_metadata(*, workdir: str, hits: list[LaneHit]) -> list[LaneHit]:
+    if not hits:
+        return []
+    store = _graph_store(workdir)
+    # Persist deterministic category edges for reusable routing/filtering.
+    record_category_relations_for_hits(store, hits=hits)
+
+    out: list[LaneHit] = []
+    for hit in hits:
+        clone = hit.model_copy(deep=True)
+        categories = categories_for_hit_from_graph(store, clone)
+        prov = dict(clone.provenance or {})
+        prov["category_graph"] = {
+            "categories": categories,
+            "category_count": len(categories),
+        }
+        clone.provenance = prov
+        out.append(clone)
+    return out
+
+
+def _category_ids(hit: LaneHit) -> set[str]:
+    cg = dict((hit.provenance or {}).get("category_graph") or {})
+    rows = list(cg.get("categories") or [])
+    return {str(r.get("category") or "") for r in rows if str(r.get("category") or "")}
+
+
 def route_and_retrieve(
     *,
     query: str,
@@ -264,6 +304,19 @@ def route_and_retrieve(
 
     router = LaneRouter()
     plan = router.route(query=query, intent_family=intent_family)
+    category_decision = decide_query_category_routing(query)
+    plan.metadata = {
+        **dict(plan.metadata or {}),
+        "category_routing": {
+            "hinted_categories": list(category_decision.hinted_categories),
+            "strong_signal": bool(category_decision.strong_signal),
+            "score": float(category_decision.score),
+            "reason": category_decision.reason,
+            "pruned_lanes": [],
+            "fallback_lanes": [],
+            "pruned_hit_count": 0,
+        },
+    }
 
     hits: list[LaneHit] = []
 
@@ -274,12 +327,16 @@ def route_and_retrieve(
         intent_family=intent_family,
         top_k=top_k_per_lane,
     )
-    hits.extend(fast_hits)
+    hits.extend(_attach_category_graph_metadata(workdir=workdir, hits=fast_hits))
 
+    expensive_lanes = {RetrievalLane.CORPUS, RetrievalLane.LARGE_FILE, RetrievalLane.WEB}
     for lane in plan.lanes:
         handler = LANE_HANDLERS.get(lane)
         if handler is None:
             continue
+        lane_top_k = int(top_k_per_lane)
+        if category_decision.strong_signal and lane in expensive_lanes:
+            lane_top_k = max(2, int(top_k_per_lane // 2))
         lane_hits = handler(
             query=query,
             intent_family=intent_family,
@@ -288,9 +345,26 @@ def route_and_retrieve(
             older_raw=older_raw,
             summaries=summaries,
             workdir=workdir,
-            top_k=top_k_per_lane,
+            top_k=lane_top_k,
         )
-        hits.extend(list(lane_hits or []))
+        lane_hits = _attach_category_graph_metadata(workdir=workdir, hits=list(lane_hits or []))
+
+        if category_decision.strong_signal and lane in expensive_lanes and lane_hits:
+            hinted = set(category_decision.hinted_categories)
+            matched = [h for h in lane_hits if (_category_ids(h) & hinted)]
+            if matched:
+                pruned = max(0, len(lane_hits) - len(matched))
+                lane_hits = matched
+                route_meta = dict(plan.metadata.get("category_routing") or {})
+                route_meta["pruned_lanes"] = list(dict.fromkeys([*list(route_meta.get("pruned_lanes") or []), lane.value]))
+                route_meta["pruned_hit_count"] = int(route_meta.get("pruned_hit_count") or 0) + int(pruned)
+                plan.metadata["category_routing"] = route_meta
+            else:
+                route_meta = dict(plan.metadata.get("category_routing") or {})
+                route_meta["fallback_lanes"] = list(dict.fromkeys([*list(route_meta.get("fallback_lanes") or []), lane.value]))
+                plan.metadata["category_routing"] = route_meta
+
+        hits.extend(lane_hits)
 
     fast_lane_order = {
         RetrievalLane.GLOBAL_PROMOTED: -3,

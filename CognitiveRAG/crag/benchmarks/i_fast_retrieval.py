@@ -47,6 +47,7 @@ def run_fast_retrieval_benchmark(
                 "cache_hit": cache_hit,
                 "hit_count": len(hits),
                 "lane_values": sorted({h.lane.value for h in hits}),
+                "category_routing": dict((plan.metadata or {}).get("category_routing") or {}),
             }
         )
 
@@ -62,6 +63,21 @@ def run_fast_retrieval_benchmark(
             "avg_ms": (sum(latencies) / len(latencies)) if latencies else 0.0,
             "min_ms": min(latencies) if latencies else 0.0,
             "max_ms": max(latencies) if latencies else 0.0,
+        },
+        "category_routing": {
+            "strong_signal_runs": sum(
+                1
+                for r in runs
+                if bool(dict(r.get("category_routing") or {}).get("strong_signal"))
+            ),
+            "pruned_hit_count_total": sum(
+                int(dict(r.get("category_routing") or {}).get("pruned_hit_count") or 0)
+                for r in runs
+            ),
+            "fallback_lane_events": sum(
+                len(list(dict(r.get("category_routing") or {}).get("fallback_lanes") or []))
+                for r in runs
+            ),
         },
         "cache": {
             "run_hits": sum(1 for r in runs if r["cache_hit"]),

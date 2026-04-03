@@ -6,6 +6,15 @@ from .relations import (
     record_web_promoted_derived_from,
 )
 from .enrichment import GraphResolvedByMatch, GraphRetrievalEnricher
+from .category_graph import (
+    CategoryHint,
+    CategoryRoutingDecision,
+    decide_query_category_routing,
+    infer_category_hints,
+    record_category_relations_for_hits,
+    read_categories_for_node,
+    categories_for_hit_from_graph,
+)
 
 __all__ = [
     'GraphNode',
@@ -19,4 +28,11 @@ __all__ = [
     'record_problem_signature_resolved_by',
     'GraphResolvedByMatch',
     'GraphRetrievalEnricher',
+    'CategoryHint',
+    'CategoryRoutingDecision',
+    'infer_category_hints',
+    'decide_query_category_routing',
+    'record_category_relations_for_hits',
+    'read_categories_for_node',
+    'categories_for_hit_from_graph',
 ]
