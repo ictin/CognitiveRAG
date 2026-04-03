@@ -112,6 +112,7 @@ class SkillPack(BaseModel):
     selected_artifact_ids: List[str] = Field(default_factory=list)
     grouped_artifacts: Dict[str, List[SkillArtifact]] = Field(default_factory=dict)
     warnings: List[str] = Field(default_factory=list)
+    selection_explanations: Dict[str, Dict[str, object]] = Field(default_factory=dict)
 
 
 def normalize_key(text: str) -> str:

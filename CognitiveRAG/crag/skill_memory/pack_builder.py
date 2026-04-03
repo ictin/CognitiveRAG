@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Dict, List
 
+from CognitiveRAG.crag.graph_memory.skill_graph import read_skill_graph_signal
+from CognitiveRAG.crag.graph_memory.store import GraphMemoryStore
+from CognitiveRAG.crag.skill_memory.ranking import RankedArtifact
 from CognitiveRAG.crag.skill_memory.retrieval import retrieve_skill_artifacts
 from CognitiveRAG.crag.skill_memory.schemas import SkillArtifact, SkillPack, SkillPackRequest
 from CognitiveRAG.crag.skill_memory.store import SkillMemoryStore
@@ -39,8 +43,71 @@ def _append(grouped: Dict[str, List[SkillArtifact]], artifact: SkillArtifact) ->
     grouped.setdefault(artifact.artifact_type, []).append(artifact)
 
 
+def _apply_graph_evaluation_signals(
+    *,
+    store: SkillMemoryStore,
+    ranked: List[RankedArtifact],
+) -> tuple[List[RankedArtifact], Dict[str, Dict[str, object]]]:
+    graph_db = Path(store.db_path).parent / "graph_memory.sqlite3"
+    if not graph_db.exists():
+        return ranked, {}
+
+    graph_store = GraphMemoryStore(graph_db)
+    explanations: Dict[str, Dict[str, object]] = {}
+    adjusted: List[RankedArtifact] = []
+    for row in ranked:
+        signal = read_skill_graph_signal(graph_store, artifact_id=row.artifact.artifact_id)
+        uses = int(signal.get("uses_count") or 0)
+        reinforces = int(signal.get("reinforce_count") or 0)
+        critiques = int(signal.get("critique_count") or 0)
+        supports = int(signal.get("support_count") or 0)
+        evidence_volume = uses + reinforces + critiques
+
+        # Sparse history should not dominate baseline ranking.
+        if evidence_volume < 2:
+            boost = 0.0
+            penalty = 0.0
+            signal_mode = "fallback_sparse_history"
+        else:
+            boost = min(5.0, (reinforces * 1.6) + (uses * 0.4) + min(1.0, supports * 0.2))
+            penalty = min(4.5, critiques * 1.5)
+            signal_mode = "signal_applied"
+
+        net = max(-4.5, min(5.0, boost - penalty))
+        if signal_mode == "fallback_sparse_history":
+            net = 0.0
+
+        reasons = list(row.reasons)
+        if net > 0:
+            reasons.append("graph_eval_boost")
+        elif net < 0:
+            reasons.append("graph_eval_penalty")
+        elif signal_mode == "fallback_sparse_history":
+            reasons.append("graph_eval_fallback")
+
+        adjusted_score = float(row.score) + float(net)
+        adjusted.append(RankedArtifact(artifact=row.artifact, score=adjusted_score, reasons=reasons))
+        explanations[row.artifact.artifact_id] = {
+            "base_score": float(row.score),
+            "adjusted_score": float(adjusted_score),
+            "adjustment": float(net),
+            "signal_mode": signal_mode,
+            "graph_signal": {
+                "uses_count": uses,
+                "reinforce_count": reinforces,
+                "critique_count": critiques,
+                "support_count": supports,
+            },
+            "reasons": reasons,
+        }
+
+    adjusted.sort(key=lambda r: (-r.score, r.artifact.artifact_id))
+    return adjusted, explanations
+
+
 def build_skill_pack(*, store: SkillMemoryStore, request: SkillPackRequest) -> SkillPack:
     ranked = retrieve_skill_artifacts(store=store, request=request, include_raw=True)
+    ranked, rank_explanations = _apply_graph_evaluation_signals(store=store, ranked=ranked)
     quotas = _quota_for(request)
     grouped: Dict[str, List[SkillArtifact]] = {}
     selected_ids: List[str] = []
@@ -89,5 +156,5 @@ def build_skill_pack(*, store: SkillMemoryStore, request: SkillPackRequest) -> S
         selected_artifact_ids=selected_ids,
         grouped_artifacts=grouped,
         warnings=warnings,
+        selection_explanations={k: rank_explanations.get(k, {}) for k in selected_ids},
     )
-

@@ -5,6 +5,8 @@ import sqlite3
 from pathlib import Path
 from typing import Iterable, List
 
+from CognitiveRAG.crag.graph_memory.skill_graph import record_execution_case_graph_links
+from CognitiveRAG.crag.graph_memory.store import GraphMemoryStore
 from CognitiveRAG.crag.skill_memory.case_linker import normalize_artifact_ids
 from CognitiveRAG.crag.skill_memory.execution_schema import SkillExecutionCase
 
@@ -123,6 +125,8 @@ class SkillExecutionStore:
                 """,
                 [(case.execution_case_id, artifact_id) for artifact_id in artifact_ids],
             )
+        graph_store = GraphMemoryStore(self.db_path.parent / "graph_memory.sqlite3")
+        record_execution_case_graph_links(graph_store, case=case)
 
     def upsert_many(self, cases: Iterable[SkillExecutionCase]) -> int:
         count = 0
@@ -173,4 +177,3 @@ class SkillExecutionStore:
                 (*params, int(limit)),
             ).fetchall()
         return [SkillExecutionCase.model_validate(json.loads(r["payload_json"])) for r in rows]
-

@@ -15,6 +15,12 @@ from .category_graph import (
     read_categories_for_node,
     categories_for_hit_from_graph,
 )
+from .skill_graph import (
+    read_skill_graph_signal,
+    record_evaluation_case_graph_links,
+    record_execution_case_graph_links,
+    record_skill_artifact_graph_links,
+)
 
 __all__ = [
     'GraphNode',
@@ -35,4 +41,8 @@ __all__ = [
     'record_category_relations_for_hits',
     'read_categories_for_node',
     'categories_for_hit_from_graph',
+    'record_skill_artifact_graph_links',
+    'record_execution_case_graph_links',
+    'record_evaluation_case_graph_links',
+    'read_skill_graph_signal',
 ]

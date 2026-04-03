@@ -6,6 +6,8 @@ import re
 from pathlib import Path
 from typing import Iterable, List
 
+from CognitiveRAG.crag.graph_memory.skill_graph import record_skill_artifact_graph_links
+from CognitiveRAG.crag.graph_memory.store import GraphMemoryStore
 from CognitiveRAG.crag.skill_memory.schemas import SkillArtifact, artifact_to_record
 
 
@@ -81,6 +83,8 @@ class SkillMemoryStore:
                     rec["payload_json"],
                 ),
             )
+        graph_store = GraphMemoryStore(self.db_path.parent / "graph_memory.sqlite3")
+        record_skill_artifact_graph_links(graph_store, artifact=artifact)
 
     def upsert_many(self, artifacts: Iterable[SkillArtifact]) -> int:
         count = 0

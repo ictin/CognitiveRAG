@@ -5,6 +5,8 @@ import sqlite3
 from pathlib import Path
 from typing import Iterable, List
 
+from CognitiveRAG.crag.graph_memory.skill_graph import record_evaluation_case_graph_links
+from CognitiveRAG.crag.graph_memory.store import GraphMemoryStore
 from CognitiveRAG.crag.skill_memory.evaluation_linker import evaluation_link_row, has_valid_execution_link
 from CognitiveRAG.crag.skill_memory.evaluation_schema import SkillEvaluationCase
 
@@ -130,6 +132,29 @@ class SkillEvaluationStore:
                 """,
                 evaluation_link_row(case),
             )
+        graph_store = GraphMemoryStore(self.db_path.parent / "graph_memory.sqlite3")
+        record_evaluation_case_graph_links(
+            graph_store,
+            case=case,
+            artifact_ids=self._artifact_ids_for_execution_case(case.execution_case_id),
+        )
+
+    def _artifact_ids_for_execution_case(self, execution_case_id: str) -> List[str]:
+        execution_db = self.db_path.parent / "skill_exec.sqlite3"
+        if not execution_db.exists():
+            return []
+        with sqlite3.connect(execution_db) as conn:
+            row = conn.execute(
+                "SELECT selected_artifact_ids_json FROM skill_execution_cases WHERE execution_case_id = ?",
+                (execution_case_id,),
+            ).fetchone()
+        if not row or not row[0]:
+            return []
+        try:
+            payload = json.loads(row[0])
+        except Exception:
+            return []
+        return sorted({str(v) for v in (payload or []) if str(v)})
 
     def upsert_many(self, cases: Iterable[SkillEvaluationCase]) -> int:
         count = 0
@@ -203,4 +228,3 @@ class SkillEvaluationStore:
                 (execution_case_id, int(limit)),
             ).fetchall()
         return [SkillEvaluationCase.model_validate(json.loads(r["payload_json"])) for r in rows]
-
