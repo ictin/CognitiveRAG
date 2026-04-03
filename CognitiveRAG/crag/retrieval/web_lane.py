@@ -75,6 +75,18 @@ def retrieve(
         promoted_store.promote_if_eligible(_id("wp", (first.get("title") or first.get("url") or query)), now_iso=_now_iso())
         promoted_hits = promoted_store.search(query, top_k=max(1, top_k // 2))
 
+    # Evaluate freshness lifecycle at read time; explicit revalidation requests
+    # are made through store APIs/workflows, not implicit retrieval side effects.
+    refreshed_promoted_hits = []
+    for item in promoted_hits:
+        promoted_id = str(item.get("promoted_id") or "")
+        if not promoted_id:
+            refreshed_promoted_hits.append(item)
+            continue
+        refreshed = promoted_store.evaluate_freshness(promoted_id, now_iso=_now_iso())
+        refreshed_promoted_hits.append(refreshed or item)
+    promoted_hits = refreshed_promoted_hits
+
     hits: List[LaneHit] = []
     for item in promoted_hits:
         text = item.get("canonical_fact") or ""
@@ -86,6 +98,11 @@ def retrieve(
             "evidence_ids": item.get("evidence_ids") or [],
             "freshness_state": item.get("freshness_state"),
             "promotion_state": item.get("promotion_state") or "staged",
+            "freshness_lifecycle_state": item.get("freshness_lifecycle_state") or "stale",
+            "freshness_reason": item.get("freshness_reason") or "",
+            "freshness_policy": item.get("freshness_policy") or {},
+            "last_validated_at": item.get("last_validated_at"),
+            "revalidation_requested_at": item.get("revalidation_requested_at"),
             "approval_reason": item.get("approval_reason") or "",
             "approval_basis": item.get("approval_basis") or {},
             "approved_at": item.get("approved_at"),
@@ -98,8 +115,19 @@ def retrieve(
             if first_source:
                 provenance["source_url"] = first_source
         state = str(item.get("promotion_state") or "staged")
-        trust_adjust = 0.08 if state == "trusted" else -0.05
-        semantic_adjust = 0.05 if state == "trusted" else 0.0
+        lifecycle = str(item.get("freshness_lifecycle_state") or "stale")
+        if state == "trusted" and lifecycle == WebPromotedMemoryStore.FRESHNESS_FRESH:
+            trust_adjust = 0.08
+            semantic_adjust = 0.05
+        elif state == "trusted" and lifecycle == WebPromotedMemoryStore.FRESHNESS_REVALIDATION_PENDING:
+            trust_adjust = -0.10
+            semantic_adjust = -0.03
+        elif state == "trusted":
+            trust_adjust = -0.08
+            semantic_adjust = -0.02
+        else:
+            trust_adjust = -0.05
+            semantic_adjust = 0.0
         hits.append(
             LaneHit(
                 id=f"webpromoted:{item.get('promoted_id')}",
@@ -114,7 +142,7 @@ def retrieve(
                 trust_score=max(0.0, min(1.0, float(item.get("confidence") or 0.5) + trust_adjust)),
                 novelty_score=0.35,
                 contradiction_risk=0.1,
-                cluster_id=f"web_promoted:{state}",
+                cluster_id=f"web_promoted:{state}:{lifecycle}",
                 compressible=True,
             ).with_token_estimate()
         )
@@ -155,8 +183,10 @@ def retrieve(
     def _sort_key(hit: LaneHit):
         if hit.memory_type == MemoryType.WEB_PROMOTED_FACT:
             state = str((hit.provenance or {}).get("promotion_state") or "staged")
+            lifecycle = str((hit.provenance or {}).get("freshness_lifecycle_state") or "stale")
             state_rank = 0 if state == "trusted" else 1
-            return (0, state_rank, -float(hit.trust_score or 0.0), hit.id)
+            lifecycle_rank = 0 if lifecycle == "fresh" else (1 if lifecycle == "revalidation_pending" else 2)
+            return (0, state_rank, lifecycle_rank, -float(hit.trust_score or 0.0), hit.id)
         return (1, 0, -float(hit.trust_score or 0.0), hit.id)
 
     hits.sort(key=_sort_key)
