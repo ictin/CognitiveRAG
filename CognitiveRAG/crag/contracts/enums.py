@@ -24,6 +24,9 @@ class RetrievalLane(str, Enum):
     REASONING = "reasoning"
     DISCOVERY = "discovery"
     WEB = "web"
+    INSTALLATION_FAST = "installation_fast"
+    WORKSPACE_FAST = "workspace_fast"
+    GLOBAL_PROMOTED = "global_promoted"
     ARCHITECTURE = "architecture"
     FALLBACK_MIRROR = "fallback_mirror"
 
