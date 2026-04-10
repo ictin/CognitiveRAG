@@ -86,6 +86,7 @@ Epic B parity status:
 NLI-level compatibility completeness remains partial until Epic B parity closes it.
 Current B3 behavior includes deterministic contradiction threshold drops, heuristic pairwise compatibility gating, and a runtime-configured NLI backend path with deterministic fallback when the backend is unavailable.
 The backend now includes explicit optional dependency wiring for real NLI mode (`pip install .[nli]`), machine-readable runtime fallback diagnostics, and an environment-gated real transformers compatibility test path that runs only when local model assets are available.
+Use `tools/check_b3_nli_env.py` for a machine-readable environment feasibility probe before attempting real-NLI runtime proof.
 Current active Epic B step is B3 (contradiction and compatibility filtering).
 
 ## What is later
@@ -102,9 +103,11 @@ Graph is planned, not current implementation.
 cd /home/ictin_claw/.openclaw/workspace/CognitiveRAG
 python3 -m pip install -r CognitiveRAG/requirements.txt
 python3 -m pip install ".[nli]"   # optional, enables real transformers-backed compatibility path when local model assets exist
+python3 -m pip install "./CognitiveRAG[nli]"   # equivalent optional install path when using nested package entrypoint
 python3 -m uvicorn CognitiveRAG.main_server:app --reload --host 127.0.0.1 --port 8080
 python3 -m pytest CognitiveRAG/tests/context_selection -q
 python3 -m pytest CognitiveRAG/tests/retrieval -q
 python3 -m pytest CognitiveRAG/tests -q
+python3 tools/check_b3_nli_env.py
 ./tools/run_b3_validation_seq.sh
 ```
