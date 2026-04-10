@@ -1,89 +1,101 @@
 # CognitiveRAG
 
-Backend intelligence layer for OpenClaw memory, retrieval, and context construction.
+CognitiveRAG gives an OpenClaw agent better memory, better evidence selection, and clearer reasoning context for each turn.
 
-## What CognitiveRAG Is
+## What CognitiveRAG Does For An OpenClaw Agent
 
-CognitiveRAG is a multi-layer memory and context-construction backend for OpenClaw. It builds typed evidence candidates across retrieval lanes, applies policy/scoring/selection constraints, and returns explanation artifacts that show why context was selected.
+CognitiveRAG is the backend intelligence layer that helps an agent:
+- remember important facts without losing recoverability
+- retrieve the best available evidence for the current turn (instead of dumping unranked context)
+- reuse prior promoted knowledge and reasoning outcomes
+- combine local corpus evidence with web evidence pathways
+- explain why specific context was selected
+- run bounded discovery loops when deeper exploration is useful
 
-## Why This Exists
+## Why This Is Different From Ordinary RAG
 
-OpenClaw needs a backend that can do more than simple top-k recall. CognitiveRAG exists to:
-- remember important information over time
-- retrieve the best current evidence across local and web-aware lanes
-- preserve reusable conclusions and promoted memory
-- support bounded discovery and deeper follow-up when useful
-- explain selection decisions so behavior is inspectable and testable
+Ordinary RAG often stops at "retrieve top-k chunks and paste them." CognitiveRAG focuses on memory-aware, policy-constrained context construction:
+- multi-lane candidate generation
+- lane-local pruning and utility signals
+- constrained selection under budget
+- explanation artifacts as first-class output
 
-## Core Guarantees
+This makes answers more auditable and better aligned to long-running agent workflows.
 
-CognitiveRAG is designed to keep these guarantees explicit:
-- backend owns intelligence and canonical retrieval/memory policy
-- source-class and truthfulness boundaries are preserved in outputs
-- context selection is constrained by policy and budget, not unlimited append
-- explanation artifacts are first-class outputs, not optional debugging text
+## Core Benefits
+
+- Better continuity across sessions and turns
+- Better evidence quality under token pressure
+- Better reuse of validated/promoted knowledge
+- Better transparency into context selection decisions
+- Better safety around source-class and truthfulness boundaries
 
 ## Current Architecture
 
-Primary backend surfaces in this repo:
+Primary backend surfaces:
 - API/service entrypoints: `CognitiveRAG/main_server.py`, `CognitiveRAG/api/routes/*`
 - Retrieval lanes and routing: `CognitiveRAG/crag/retrieval/*`
 - Context selection and explanation model: `CognitiveRAG/crag/context_selection/*`
-- Session memory and compaction/recovery: `CognitiveRAG/session_memory/*`
-- Promoted/reasoning/web/skill memory subsystems: `CognitiveRAG/memory/*`, `CognitiveRAG/web_memory/*`, `CognitiveRAG/skill_memory/*`
+- Session memory compaction/recovery: `CognitiveRAG/session_memory/*`
+- Promoted/reasoning/web/skill memory layers: `CognitiveRAG/memory/*`, `CognitiveRAG/web_memory/*`, `CognitiveRAG/skill_memory/*`
 
 ## Memory Taxonomy
 
-Current code paths cover:
+Current memory/evidence layers include:
 - session/episodic memory
 - promoted memory
 - reasoning memory
 - skill execution/evaluation memory
 - web evidence and promoted web memory
-- corpus/lexical/semantic retrieval-backed memory access
+- corpus/lexical/semantic retrieval lanes
 
-Markdown mirror outputs are integration artifacts, not the full memory system.
+Markdown mirrors are integration artifacts, not the full memory system.
 
 ## Context Construction Model
 
-High-level model used by current backend path:
-1. build typed candidates from retrieval/memory lanes
-2. perform lane-local pruning and normalization
+Current backend flow:
+1. build typed candidates across lanes
+2. normalize and prune lane-local candidates
 3. compute utility and policy-conditioned scoring signals
-4. apply constrained selection under token/budget rules
-5. reorder for long-context utility where applicable
-6. emit explanation artifacts describing selected context and influence
+4. apply constrained selection under token/budget limits
+5. reorder for long-context utility where relevant
+6. emit explanation artifacts describing selected influence/context
 
-## What Is Already Implemented
+## What Is Already Real
 
 Implemented baseline includes:
-- multi-lane retrieval foundation
+- retrieval lanes and router foundation
 - context-selection foundation with explanation outputs
 - promoted memory and reasoning memory slices
-- web evidence + promoted web slices
+- web evidence and promoted web slices
 - bounded discovery/controller slices
 - skill-memory execution/evaluation slices
 
 ## What Is Partial
 
-Current Epic B parity status:
+Epic B parity status:
 - B1 typed candidate coverage: `PARTLY_BUILT`
 - B2 scoring and token-budget rules: `PARTLY_BUILT`
 - B3 contradiction/compatibility filtering: `PARTLY_BUILT`
 - B4 reorder and explanation output: `FULLY_BUILT`
 
-So parity work remains active on B1-B3.
+NLI-style compatibility completeness should be treated as partial until Epic B parity closes it.
 
-## What Is Not Started Yet (Current Program Scope)
+## What Is Next
 
-- Graph-phase delivery as an active implementation phase is not started in the current program order.
-- Current focus remains Epic B parity, then Epic C safety/metrics.
+Current order:
+1. Epic A done
+2. Epic B now (design/code parity closure)
+3. Epic C next (metrics/smoke/regression safety)
+4. Graph work later
 
-## Repo Role In OpenClaw Ecosystem
+Graph is planned, but not represented as current implementation.
 
-- `CognitiveRAG` (this repo): backend intelligence and canonical truth
+## Repo Role In The OpenClaw Ecosystem
+
+- `CognitiveRAG` (this repo): backend intelligence and canonical memory/retrieval/context logic
 - `openclaw-cognitiverag-memory`: OpenClaw integration adapter
-- `openclaw-upstream`: OpenClaw runtime/core (not changed unless proven unavoidable)
+- `openclaw-upstream`: OpenClaw runtime/core (changed only if unavoidable and proven)
 
 ## Setup / Run / Test
 
@@ -92,29 +104,19 @@ From repo root:
 cd /home/ictin_claw/.openclaw/workspace/CognitiveRAG
 ```
 
-Install dependencies (typical local workflow):
+Install dependencies:
 ```bash
 python3 -m pip install -r CognitiveRAG/requirements.txt
 ```
 
-Run backend service (example):
+Run service (example):
 ```bash
 python3 -m uvicorn CognitiveRAG.main_server:app --reload --host 127.0.0.1 --port 8080
 ```
 
-Run tests (targeted first):
+Run tests:
 ```bash
 python3 -m pytest CognitiveRAG/tests/context_selection -q
 python3 -m pytest CognitiveRAG/tests/retrieval -q
 python3 -m pytest CognitiveRAG/tests -q
 ```
-
-## Current Roadmap Phase
-
-Current order:
-1. Epic A completed
-2. Epic B (current): context design/code parity audit and gap closure
-3. Epic C: metrics, smoke, and regression safety
-4. Graph layer later
-
-Graph is planned, but it is not presented as current-phase completed work.
