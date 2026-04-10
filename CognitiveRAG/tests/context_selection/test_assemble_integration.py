@@ -183,6 +183,16 @@ def test_assemble_context_runtime_nli_path_changes_selection_and_reports_engine(
     monkeypatch.setenv("CRAG_COMPAT_ENGINE", "nli")
     monkeypatch.setenv("CRAG_COMPAT_NLI_BACKEND", "transformers")
     monkeypatch.setattr(
+        "CognitiveRAG.crag.context_selection.compatibility.check_transformers_nli_backend",
+        lambda model_name=None: {
+            "backend": "transformers",
+            "available": True,
+            "reason_code": "ok",
+            "reason": "local_model_asset_available",
+            "model_name": model_name,
+        },
+    )
+    monkeypatch.setattr(
         "CognitiveRAG.crag.context_selection.compatibility.TransformersNLIAdapter",
         lambda model_name=None: _Adapter(),
     )
@@ -259,6 +269,16 @@ def test_assemble_context_runtime_nli_unavailable_falls_back_and_keeps_conflict_
     monkeypatch.setenv("CRAG_COMPAT_ENGINE", "nli")
     monkeypatch.setenv("CRAG_COMPAT_NLI_BACKEND", "transformers")
     monkeypatch.setattr(
+        "CognitiveRAG.crag.context_selection.compatibility.check_transformers_nli_backend",
+        lambda model_name=None: {
+            "backend": "transformers",
+            "available": True,
+            "reason_code": "ok",
+            "reason": "local_model_asset_available",
+            "model_name": model_name,
+        },
+    )
+    monkeypatch.setattr(
         "CognitiveRAG.crag.context_selection.compatibility.TransformersNLIAdapter",
         lambda model_name=None: (_ for _ in ()).throw(ImportError("missing transformers")),
     )
@@ -288,4 +308,5 @@ def test_assemble_context_runtime_nli_unavailable_falls_back_and_keeps_conflict_
     assert runtime_state["resolved_engine"] == "nli"
     assert runtime_state["backend_available"] is False
     assert runtime_state["fallback_active"] is True
-    assert str(runtime_state["reason"]).startswith("adapter_unavailable:")
+    assert runtime_state["reason_code"] == "adapter_init_failed"
+    assert str(runtime_state["reason"]).startswith("adapter_init_failed:")

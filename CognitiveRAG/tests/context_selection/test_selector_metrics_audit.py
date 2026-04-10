@@ -114,6 +114,8 @@ def test_selector_metrics_output_shape_stable_keys():
         "resolved_engine",
         "backend_available",
         "fallback_active",
+        "reason_code",
         "reason",
+        "diagnostics",
     }
     assert set(metrics["discovery"].keys()) == {"injected_count", "injected_tokens"}

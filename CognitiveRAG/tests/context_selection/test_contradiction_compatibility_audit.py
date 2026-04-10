@@ -4,6 +4,7 @@ from CognitiveRAG.crag.contracts.enums import IntentFamily, MemoryType, Retrieva
 from CognitiveRAG.crag.contracts.schemas import ContextCandidate
 from CognitiveRAG.crag.context_selection.compatibility import (
     NLIBackedCompatibilityEngine,
+    check_transformers_nli_backend,
     load_runtime_compatibility_engine_from_env,
     resolve_compatibility_engine,
 )
@@ -181,11 +182,22 @@ def test_runtime_engine_loading_defaults_to_heuristic(monkeypatch):
     assert engine.name == "heuristic"
     assert state.resolved_engine == "heuristic"
     assert state.fallback_active is False
+    assert state.reason_code == "mode_not_nli"
 
 
 def test_runtime_engine_loading_nli_unavailable_falls_back(monkeypatch):
     monkeypatch.setenv("CRAG_COMPAT_ENGINE", "nli")
     monkeypatch.setenv("CRAG_COMPAT_NLI_BACKEND", "transformers")
+    monkeypatch.setattr(
+        "CognitiveRAG.crag.context_selection.compatibility.check_transformers_nli_backend",
+        lambda model_name=None: {
+            "backend": "transformers",
+            "available": True,
+            "reason_code": "ok",
+            "reason": "local_model_asset_available",
+            "model_name": model_name,
+        },
+    )
     monkeypatch.setattr(
         "CognitiveRAG.crag.context_selection.compatibility.TransformersNLIAdapter",
         lambda model_name=None: (_ for _ in ()).throw(ImportError("missing transformers")),
@@ -194,12 +206,23 @@ def test_runtime_engine_loading_nli_unavailable_falls_back(monkeypatch):
     assert engine.name == "nli"
     assert state.backend_available is False
     assert state.fallback_active is True
-    assert state.reason.startswith("adapter_unavailable:")
+    assert state.reason_code == "adapter_init_failed"
+    assert state.reason.startswith("adapter_init_failed:")
 
 
 def test_runtime_engine_loading_nli_available(monkeypatch):
     monkeypatch.setenv("CRAG_COMPAT_ENGINE", "nli")
     monkeypatch.setenv("CRAG_COMPAT_NLI_BACKEND", "transformers")
+    monkeypatch.setattr(
+        "CognitiveRAG.crag.context_selection.compatibility.check_transformers_nli_backend",
+        lambda model_name=None: {
+            "backend": "transformers",
+            "available": True,
+            "reason_code": "ok",
+            "reason": "local_model_asset_available",
+            "model_name": model_name,
+        },
+    )
     monkeypatch.setattr(
         "CognitiveRAG.crag.context_selection.compatibility.TransformersNLIAdapter",
         lambda model_name=None: _AlwaysContradictAdapter(),
@@ -208,6 +231,7 @@ def test_runtime_engine_loading_nli_available(monkeypatch):
     assert engine.name == "nli"
     assert state.backend_available is True
     assert state.fallback_active is False
+    assert state.reason_code == "adapter_loaded"
     assert state.reason == "adapter_loaded"
 
 
@@ -265,3 +289,30 @@ def test_selector_nli_mode_is_deterministic_across_repeated_runs():
         runs.append(([c.id for c, _ in selected], [(c.id, reason) for c, reason in dropped]))
 
     assert runs[0] == runs[1] == runs[2]
+
+
+def test_runtime_engine_invalid_mode_and_backend_are_machine_readable(monkeypatch):
+    monkeypatch.setenv("CRAG_COMPAT_ENGINE", "invalid-mode")
+    monkeypatch.setenv("CRAG_COMPAT_NLI_BACKEND", "invalid-backend")
+    monkeypatch.setenv("CRAG_COMPAT_NLI_THRESHOLD", "oops")
+    engine, state = load_runtime_compatibility_engine_from_env()
+
+    assert engine.name == "heuristic"
+    assert state.configured_mode == "heuristic"
+    assert state.configured_backend == "transformers"
+    assert state.reason_code == "invalid_mode"
+    assert state.reason == "invalid_mode:invalid-mode"
+    assert state.diagnostics["raw_mode"] == "invalid-mode"
+    warning = state.diagnostics["threshold_warning"]
+    assert warning["reason_code"] == "invalid_threshold"
+    assert warning["effective_value"] == 0.75
+
+
+def test_transformers_dependency_check_reports_missing_dependency(monkeypatch):
+    monkeypatch.setattr(
+        "CognitiveRAG.crag.context_selection.compatibility.importlib.util.find_spec",
+        lambda _name: None,
+    )
+    check = check_transformers_nli_backend("cross-encoder/nli-deberta-v3-base")
+    assert check["available"] is False
+    assert check["reason_code"] == "missing_dependency"

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import importlib.util
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Protocol
 
 from CognitiveRAG.crag.contracts.schemas import ContextCandidate
@@ -10,6 +12,9 @@ from CognitiveRAG.crag.contracts.schemas import ContextCandidate
 
 _NEGATIVE_MARKERS = {"not", "never", "cannot", "cant", "can't", "failed", "failure", "no", "disabled", "off"}
 _POSITIVE_MARKERS = {"works", "working", "succeeds", "success", "yes", "enabled", "active", "on"}
+_SUPPORTED_COMPAT_MODES = {"heuristic", "nli"}
+_SUPPORTED_NLI_BACKENDS = {"transformers"}
+_DEFAULT_NLI_MODEL = "cross-encoder/nli-deberta-v3-base"
 
 
 def _tokens(text: str) -> set[str]:
@@ -44,7 +49,9 @@ class RuntimeCompatibilityState:
     resolved_engine: str
     backend_available: bool
     fallback_active: bool
+    reason_code: str = ""
     reason: str = ""
+    diagnostics: dict[str, Any] = field(default_factory=dict)
 
 
 class CompatibilityEngine(Protocol):
@@ -159,6 +166,62 @@ class TransformersNLIAdapter:
         return min(0.5, score)
 
 
+def _has_local_model_asset(model_name: str) -> bool:
+    text = str(model_name or "").strip()
+    if not text:
+        return False
+
+    candidate_path = Path(text).expanduser()
+    if candidate_path.is_dir():
+        return True
+
+    cache_key = f"models--{text.replace('/', '--')}"
+    hub_dirs: list[Path] = []
+    hf_home = os.getenv("HF_HOME")
+    if hf_home:
+        hub_dirs.append(Path(hf_home).expanduser() / "hub")
+    hub_cache = os.getenv("HUGGINGFACE_HUB_CACHE")
+    if hub_cache:
+        hub_dirs.append(Path(hub_cache).expanduser())
+    hub_dirs.append(Path.home() / ".cache" / "huggingface" / "hub")
+
+    seen: set[str] = set()
+    for hub_dir in hub_dirs:
+        key = str(hub_dir)
+        if key in seen:
+            continue
+        seen.add(key)
+        if (hub_dir / cache_key).exists():
+            return True
+    return False
+
+
+def check_transformers_nli_backend(model_name: str = _DEFAULT_NLI_MODEL) -> dict[str, Any]:
+    if importlib.util.find_spec("transformers") is None:
+        return {
+            "backend": "transformers",
+            "available": False,
+            "reason_code": "missing_dependency",
+            "reason": "transformers_import_not_found",
+            "model_name": model_name,
+        }
+    if not _has_local_model_asset(model_name):
+        return {
+            "backend": "transformers",
+            "available": False,
+            "reason_code": "missing_model_asset",
+            "reason": "local_model_asset_not_found",
+            "model_name": model_name,
+        }
+    return {
+        "backend": "transformers",
+        "available": True,
+        "reason_code": "ok",
+        "reason": "local_model_asset_available",
+        "model_name": model_name,
+    }
+
+
 def resolve_compatibility_engine(
     *,
     mode: str = "heuristic",
@@ -178,17 +241,39 @@ def resolve_compatibility_engine(
 
 
 def load_runtime_compatibility_engine_from_env() -> tuple[CompatibilityEngine, RuntimeCompatibilityState]:
-    mode = str(os.getenv("CRAG_COMPAT_ENGINE", "heuristic")).strip().lower() or "heuristic"
-    backend = str(os.getenv("CRAG_COMPAT_NLI_BACKEND", "transformers")).strip().lower() or "transformers"
-    model_name = str(os.getenv("CRAG_COMPAT_NLI_MODEL", "cross-encoder/nli-deberta-v3-base")).strip()
+    raw_mode = str(os.getenv("CRAG_COMPAT_ENGINE", "heuristic")).strip().lower() or "heuristic"
+    mode = raw_mode if raw_mode in _SUPPORTED_COMPAT_MODES else "heuristic"
+
+    raw_backend = str(os.getenv("CRAG_COMPAT_NLI_BACKEND", "transformers")).strip().lower() or "transformers"
+    backend = raw_backend if raw_backend in _SUPPORTED_NLI_BACKENDS else "transformers"
+
+    model_name = str(os.getenv("CRAG_COMPAT_NLI_MODEL", _DEFAULT_NLI_MODEL)).strip()
+    if not model_name:
+        model_name = _DEFAULT_NLI_MODEL
+
     raw_threshold = str(os.getenv("CRAG_COMPAT_NLI_THRESHOLD", "0.75")).strip()
+    threshold_reason_code = ""
+    threshold_reason = ""
     try:
         threshold = float(raw_threshold)
     except Exception:
         threshold = 0.75
+        threshold_reason_code = "invalid_threshold"
+        threshold_reason = f"invalid_threshold:{raw_threshold}"
 
     if mode != "nli":
         engine = HeuristicCompatibilityEngine()
+        reason_code = "mode_not_nli" if raw_mode in _SUPPORTED_COMPAT_MODES else "invalid_mode"
+        reason = "mode_not_nli"
+        if reason_code == "invalid_mode":
+            reason = f"invalid_mode:{raw_mode}"
+        diagnostics: dict[str, Any] = {"raw_mode": raw_mode}
+        if threshold_reason_code:
+            diagnostics["threshold_warning"] = {
+                "reason_code": threshold_reason_code,
+                "reason": threshold_reason,
+                "effective_value": threshold,
+            }
         state = RuntimeCompatibilityState(
             configured_mode=mode,
             configured_backend=backend,
@@ -196,24 +281,46 @@ def load_runtime_compatibility_engine_from_env() -> tuple[CompatibilityEngine, R
             resolved_engine=engine.name,
             backend_available=False,
             fallback_active=False,
-            reason="mode_not_nli",
+            reason_code=reason_code,
+            reason=reason,
+            diagnostics=diagnostics,
         )
         return engine, state
 
     adapter: PairwiseNLIAdapter | None = None
     backend_available = False
-    reason = "adapter_not_loaded"
+    reason_code = ""
+    reason = ""
+    diagnostics: dict[str, Any] = {
+        "raw_mode": raw_mode,
+        "raw_backend": raw_backend,
+    }
+    if threshold_reason_code:
+        diagnostics["threshold_warning"] = {
+            "reason_code": threshold_reason_code,
+            "reason": threshold_reason,
+            "effective_value": threshold,
+        }
+
     if backend == "transformers":
-        try:
-            adapter = TransformersNLIAdapter(model_name=model_name)
-            backend_available = True
-            reason = "adapter_loaded"
-        except Exception as exc:
-            adapter = None
-            backend_available = False
-            reason = f"adapter_unavailable:{type(exc).__name__}"
+        diagnostics["dependency_check"] = check_transformers_nli_backend(model_name=model_name)
+        if bool(diagnostics["dependency_check"]["available"]):
+            try:
+                adapter = TransformersNLIAdapter(model_name=model_name)
+                backend_available = True
+                reason_code = "adapter_loaded"
+                reason = "adapter_loaded"
+            except Exception as exc:
+                adapter = None
+                backend_available = False
+                reason_code = "adapter_init_failed"
+                reason = f"adapter_init_failed:{type(exc).__name__}"
+        else:
+            reason_code = str(diagnostics["dependency_check"]["reason_code"])
+            reason = str(diagnostics["dependency_check"]["reason"])
     else:
-        reason = "unknown_backend"
+        reason_code = "invalid_backend"
+        reason = f"invalid_backend:{raw_backend}"
 
     engine = resolve_compatibility_engine(
         mode="nli",
@@ -227,7 +334,9 @@ def load_runtime_compatibility_engine_from_env() -> tuple[CompatibilityEngine, R
         resolved_engine=engine.name,
         backend_available=backend_available,
         fallback_active=not backend_available,
+        reason_code=reason_code,
         reason=reason,
+        diagnostics=diagnostics,
     )
     return engine, state
 
