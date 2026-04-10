@@ -79,12 +79,12 @@ Markdown mirrors are integration artifacts, not the full memory system.
 
 Epic B parity status:
 - B1 typed candidate coverage: `FULLY_BUILT`
-- B2 scoring and token-budget rules: `PARTLY_BUILT`
+- B2 scoring and token-budget rules: `FULLY_BUILT`
 - B3 contradiction/compatibility filtering: `PARTLY_BUILT`
 - B4 reorder and explanation output: `FULLY_BUILT`
 
 NLI-level compatibility completeness remains partial until Epic B parity closes it.
-Current active Epic B step is B2 (scoring and token-budget rules).
+Current active Epic B step is B3 (contradiction and compatibility filtering).
 
 ## What is later
 

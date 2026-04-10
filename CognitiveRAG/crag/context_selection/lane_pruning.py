@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from CognitiveRAG.crag.contracts.enums import RetrievalLane
 from CognitiveRAG.crag.contracts.schemas import ContextCandidate
 
 
@@ -68,6 +69,7 @@ def prune_lane_local(candidates: Iterable[ContextCandidate], max_candidate_token
             and candidate.compressible
             and merged[-1].compressible
             and merged[-1].lane == candidate.lane
+            and candidate.lane != RetrievalLane.FRESH_TAIL
             and merged[-1].cluster_id == candidate.cluster_id
             and merged[-1].tokens < 32
             and candidate.tokens < 32

@@ -30,3 +30,15 @@ def test_lane_pruning_dedupes_and_splits_and_merges():
     assert "b" not in out_ids  # deduped
     assert any("c#part" in i for i in out_ids)  # split
     assert any("d+e" == i for i in out_ids)  # tiny merge
+
+
+def test_lane_pruning_does_not_merge_fresh_tail_items():
+    a = _c("f1", "tail one", tokens=5, cluster="k1")
+    b = _c("f2", "tail two", tokens=5, cluster="k1")
+    a.lane = RetrievalLane.FRESH_TAIL
+    b.lane = RetrievalLane.FRESH_TAIL
+    out = prune_lane_local([a, b], max_candidate_tokens=100)
+    out_ids = [c.id for c in out]
+    assert "f1" in out_ids
+    assert "f2" in out_ids
+    assert not any("f1+f2" == i for i in out_ids)
