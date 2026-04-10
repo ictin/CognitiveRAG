@@ -101,5 +101,19 @@ def test_selector_metrics_output_shape_stable_keys():
         "used_total_tokens",
         "budget_utilization_ratio",
     }
-    assert set(metrics["decision_stats"].keys()) == {"drop_reasons", "route_intent_family", "route_lane_count"}
+    assert set(metrics["decision_stats"].keys()) == {
+        "drop_reasons",
+        "route_intent_family",
+        "route_lane_count",
+        "compatibility_engine",
+    }
+    assert set(metrics["decision_stats"]["compatibility_engine"].keys()) == {
+        "configured_mode",
+        "configured_backend",
+        "configured_model",
+        "resolved_engine",
+        "backend_available",
+        "fallback_active",
+        "reason",
+    }
     assert set(metrics["discovery"].keys()) == {"injected_count", "injected_tokens"}

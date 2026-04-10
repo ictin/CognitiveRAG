@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 from typing import Any, Protocol
@@ -33,6 +34,17 @@ class CompatibilityDecision:
     conflict: bool
     reason: str | None = None
     engine: str = "heuristic"
+
+
+@dataclass(frozen=True)
+class RuntimeCompatibilityState:
+    configured_mode: str
+    configured_backend: str
+    configured_model: str
+    resolved_engine: str
+    backend_available: bool
+    fallback_active: bool
+    reason: str = ""
 
 
 class CompatibilityEngine(Protocol):
@@ -163,6 +175,61 @@ def resolve_compatibility_engine(
         fallback_engine=fallback,
         contradiction_threshold=contradiction_threshold,
     )
+
+
+def load_runtime_compatibility_engine_from_env() -> tuple[CompatibilityEngine, RuntimeCompatibilityState]:
+    mode = str(os.getenv("CRAG_COMPAT_ENGINE", "heuristic")).strip().lower() or "heuristic"
+    backend = str(os.getenv("CRAG_COMPAT_NLI_BACKEND", "transformers")).strip().lower() or "transformers"
+    model_name = str(os.getenv("CRAG_COMPAT_NLI_MODEL", "cross-encoder/nli-deberta-v3-base")).strip()
+    raw_threshold = str(os.getenv("CRAG_COMPAT_NLI_THRESHOLD", "0.75")).strip()
+    try:
+        threshold = float(raw_threshold)
+    except Exception:
+        threshold = 0.75
+
+    if mode != "nli":
+        engine = HeuristicCompatibilityEngine()
+        state = RuntimeCompatibilityState(
+            configured_mode=mode,
+            configured_backend=backend,
+            configured_model=model_name,
+            resolved_engine=engine.name,
+            backend_available=False,
+            fallback_active=False,
+            reason="mode_not_nli",
+        )
+        return engine, state
+
+    adapter: PairwiseNLIAdapter | None = None
+    backend_available = False
+    reason = "adapter_not_loaded"
+    if backend == "transformers":
+        try:
+            adapter = TransformersNLIAdapter(model_name=model_name)
+            backend_available = True
+            reason = "adapter_loaded"
+        except Exception as exc:
+            adapter = None
+            backend_available = False
+            reason = f"adapter_unavailable:{type(exc).__name__}"
+    else:
+        reason = "unknown_backend"
+
+    engine = resolve_compatibility_engine(
+        mode="nli",
+        adapter=adapter,
+        contradiction_threshold=threshold,
+    )
+    state = RuntimeCompatibilityState(
+        configured_mode=mode,
+        configured_backend=backend,
+        configured_model=model_name,
+        resolved_engine=engine.name,
+        backend_available=backend_available,
+        fallback_active=not backend_available,
+        reason=reason,
+    )
+    return engine, state
 
 
 def compatibility_conflict_reason(

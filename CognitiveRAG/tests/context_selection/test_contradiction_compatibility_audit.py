@@ -4,6 +4,7 @@ from CognitiveRAG.crag.contracts.enums import IntentFamily, MemoryType, Retrieva
 from CognitiveRAG.crag.contracts.schemas import ContextCandidate
 from CognitiveRAG.crag.context_selection.compatibility import (
     NLIBackedCompatibilityEngine,
+    load_runtime_compatibility_engine_from_env,
     resolve_compatibility_engine,
 )
 from CognitiveRAG.crag.context_selection.policies import get_policy
@@ -158,6 +159,11 @@ class _MockNLIAdapter:
         return 0.92 if key in self._pairs else 0.12
 
 
+class _AlwaysContradictAdapter:
+    def contradiction_score(self, left: str, right: str) -> float:
+        return 0.91
+
+
 def test_engine_selection_defaults_and_nli_fallback():
     heuristic_engine = resolve_compatibility_engine(mode="heuristic")
     assert heuristic_engine.name == "heuristic"
@@ -166,6 +172,43 @@ def test_engine_selection_defaults_and_nli_fallback():
     nli_engine = resolve_compatibility_engine(mode="nli", adapter=None)
     assert nli_engine.name == "nli"
     assert isinstance(nli_engine, NLIBackedCompatibilityEngine)
+
+
+def test_runtime_engine_loading_defaults_to_heuristic(monkeypatch):
+    monkeypatch.delenv("CRAG_COMPAT_ENGINE", raising=False)
+    monkeypatch.delenv("CRAG_COMPAT_NLI_BACKEND", raising=False)
+    engine, state = load_runtime_compatibility_engine_from_env()
+    assert engine.name == "heuristic"
+    assert state.resolved_engine == "heuristic"
+    assert state.fallback_active is False
+
+
+def test_runtime_engine_loading_nli_unavailable_falls_back(monkeypatch):
+    monkeypatch.setenv("CRAG_COMPAT_ENGINE", "nli")
+    monkeypatch.setenv("CRAG_COMPAT_NLI_BACKEND", "transformers")
+    monkeypatch.setattr(
+        "CognitiveRAG.crag.context_selection.compatibility.TransformersNLIAdapter",
+        lambda model_name=None: (_ for _ in ()).throw(ImportError("missing transformers")),
+    )
+    engine, state = load_runtime_compatibility_engine_from_env()
+    assert engine.name == "nli"
+    assert state.backend_available is False
+    assert state.fallback_active is True
+    assert state.reason.startswith("adapter_unavailable:")
+
+
+def test_runtime_engine_loading_nli_available(monkeypatch):
+    monkeypatch.setenv("CRAG_COMPAT_ENGINE", "nli")
+    monkeypatch.setenv("CRAG_COMPAT_NLI_BACKEND", "transformers")
+    monkeypatch.setattr(
+        "CognitiveRAG.crag.context_selection.compatibility.TransformersNLIAdapter",
+        lambda model_name=None: _AlwaysContradictAdapter(),
+    )
+    engine, state = load_runtime_compatibility_engine_from_env()
+    assert engine.name == "nli"
+    assert state.backend_available is True
+    assert state.fallback_active is False
+    assert state.reason == "adapter_loaded"
 
 
 def test_selector_nli_mode_can_block_conflict_heuristic_would_allow():

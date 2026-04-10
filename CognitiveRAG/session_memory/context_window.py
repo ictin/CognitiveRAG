@@ -11,6 +11,7 @@ from CognitiveRAG.crag.contracts.enums import IntentFamily, RetrievalLane
 from CognitiveRAG.crag.cognition.controller import CognitiveController
 from CognitiveRAG.crag.cognition.discovery import DiscoveryExecutor, discovery_items_to_candidates
 from CognitiveRAG.crag.context_selection.candidate_builder import build_candidates_with_route
+from CognitiveRAG.crag.context_selection.compatibility import load_runtime_compatibility_engine_from_env
 from CognitiveRAG.crag.context_selection.lane_pruning import prune_lane_local
 from CognitiveRAG.crag.context_selection.policies import get_policy
 from CognitiveRAG.crag.context_selection.selector import select_context
@@ -256,12 +257,14 @@ def assemble_context(
     if discovery_candidates:
         pruned = pruned + discovery_candidates
 
+    compatibility_engine, compatibility_state = load_runtime_compatibility_engine_from_env()
     selected_pairs, dropped, explanation = select_context(
         candidates=pruned,
         policy=policy,
         total_budget=int(budget),
         reserved_tokens=reserved_tokens,
         intent_family=detected_intent,
+        compatibility_engine=compatibility_engine,
     )
 
     selected_candidates = [candidate for candidate, _ in selected_pairs]
@@ -355,6 +358,7 @@ def assemble_context(
                 "drop_reasons": drop_reason_counts,
                 "route_intent_family": route_plan.intent_family.value,
                 "route_lane_count": len(route_plan.lanes),
+                "compatibility_engine": compatibility_state.__dict__,
             },
             "discovery": {
                 "injected_count": discovery_count,
