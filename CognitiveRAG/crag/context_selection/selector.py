@@ -4,6 +4,7 @@ from typing import Iterable, List, Tuple
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily
 from CognitiveRAG.crag.contracts.schemas import ContextCandidate, ContextSelectionPolicy
+from CognitiveRAG.crag.context_selection.compatibility import compatibility_conflict_reason
 from CognitiveRAG.crag.context_selection.explanation import build_explanation
 from CognitiveRAG.crag.context_selection.models import SelectionState
 from CognitiveRAG.crag.context_selection.reorder import reorder_for_prompt
@@ -35,6 +36,7 @@ def select_context(
     reserved_tokens: int,
     intent_family: IntentFamily,
     contradiction_threshold: float = 0.95,
+    pairwise_compatibility: bool = True,
 ) -> tuple[list[tuple[ContextCandidate, float]], list[tuple[ContextCandidate, str]], object]:
     """Budgeted multi-store context optimizer.
 
@@ -57,6 +59,11 @@ def select_context(
     selected_clusters: set[str] = set()
     must_include = [c for c in filtered if c.must_include]
     for candidate in sorted(must_include, key=lambda c: (c.tokens, c.id)):
+        if pairwise_compatibility:
+            reason = compatibility_conflict_reason(candidate, state.selected)
+            if reason:
+                dropped.append((candidate, reason))
+                continue
         if not _can_add(candidate, state, policy, total_budget):
             dropped.append((candidate, "budget_or_lane_cap"))
             continue
@@ -92,6 +99,12 @@ def select_context(
                 scored.append((value_per_token, util, candidate))
             scored.sort(key=lambda x: (-x[0], -x[1], x[2].id))
             _, util, best = scored[0]
+            if pairwise_compatibility:
+                reason = compatibility_conflict_reason(best, state.selected)
+                if reason:
+                    dropped.append((best, reason))
+                    remaining = [c for c in remaining if c.id != best.id]
+                    continue
             if not _can_add(best, state, policy, total_budget):
                 dropped.append((best, "budget_or_lane_cap"))
                 remaining = [c for c in remaining if c.id != best.id]
@@ -118,6 +131,12 @@ def select_context(
         scored.sort(key=lambda x: (-x[0], -x[1], x[2].id))
         _, util, best = scored[0]
         remaining = [c for c in remaining if c.id != best.id]
+
+        if pairwise_compatibility:
+            reason = compatibility_conflict_reason(best, state.selected)
+            if reason:
+                dropped.append((best, reason))
+                continue
 
         if not _can_add(best, state, policy, total_budget):
             dropped.append((best, "budget_or_lane_cap"))

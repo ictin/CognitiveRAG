@@ -58,13 +58,17 @@ def test_contradiction_threshold_is_hard_drop_and_reason_is_explicit():
     assert dropped_block.contradiction_risk == 0.99
 
 
-def test_below_threshold_contradiction_is_soft_penalty_not_pairwise_exclusion():
+def test_pairwise_compatibility_gate_excludes_conflicting_claim_values():
     policy = get_policy(IntentFamily.INVESTIGATIVE)
     policy.lane_maxima[RetrievalLane.CORPUS.value] = 10
 
-    # Intentionally contradictory texts but both below hard threshold.
+    # Both below hard contradiction threshold; compatibility gate decides conflict.
     a = _cand("a", text="Feature flag is enabled for all users.", risk=0.2, lex=0.8, sem=0.8)
     b = _cand("b", text="Feature flag is NOT enabled for all users.", risk=0.25, lex=0.8, sem=0.8)
+    a.provenance["claim_key"] = "feature_flag_all_users"
+    a.provenance["claim_value"] = "enabled"
+    b.provenance["claim_key"] = "feature_flag_all_users"
+    b.provenance["claim_value"] = "disabled"
 
     selected, dropped, explanation = select_context(
         candidates=[a, b],
@@ -75,13 +79,37 @@ def test_below_threshold_contradiction_is_soft_penalty_not_pairwise_exclusion():
     )
 
     selected_ids = [c.id for c, _ in selected]
-    # No pairwise compatibility logic exists, so both survive.
-    assert set(selected_ids) == {"a", "b"}
-    assert dropped == []
+    assert selected_ids == ["a"]
+    dropped_map = {c.id: reason for c, reason in dropped}
+    assert dropped_map["b"] == "compatibility_conflict"
 
-    selected_block_ids = {b.id for b in explanation.selected_blocks}
-    assert selected_block_ids == {"a", "b"}
-    assert all(b.contradiction_risk > 0 for b in explanation.selected_blocks)
+    selected_block_ids = {block.id for block in explanation.selected_blocks}
+    assert selected_block_ids == {"a"}
+    dropped_block = next(block for block in explanation.dropped_blocks if block.id == "b")
+    assert dropped_block.reason == "compatibility_conflict"
+
+
+def test_no_claim_conflict_keeps_below_threshold_candidates():
+    policy = get_policy(IntentFamily.INVESTIGATIVE)
+    policy.lane_maxima[RetrievalLane.CORPUS.value] = 10
+
+    a = _cand("a", text="Feature flag is enabled for all users.", risk=0.2, lex=0.8, sem=0.8)
+    b = _cand("b", text="Feature flag is enabled for all users.", risk=0.25, lex=0.8, sem=0.8)
+    a.provenance["claim_key"] = "feature_flag_all_users"
+    a.provenance["claim_value"] = "enabled"
+    b.provenance["claim_key"] = "feature_flag_all_users"
+    b.provenance["claim_value"] = "enabled"
+
+    selected, dropped, _ = select_context(
+        candidates=[a, b],
+        policy=policy,
+        total_budget=100,
+        reserved_tokens=0,
+        intent_family=IntentFamily.INVESTIGATIVE,
+    )
+
+    assert {c.id for c, _ in selected} == {"a", "b"}
+    assert dropped == []
 
 
 def test_contradiction_penalty_changes_utility_heuristically():
