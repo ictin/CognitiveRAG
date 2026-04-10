@@ -73,3 +73,48 @@ def test_real_transformers_nli_runtime_path_executes_when_assets_available(monke
         runs.append(([c.id for c, _ in selected], [(c.id, reason) for c, reason in dropped]))
 
     assert runs[0] == runs[1]
+
+
+@pytest.mark.skipif(
+    os.getenv("CRAG_RUN_REAL_NLI_TESTS", "").strip() != "1",
+    reason="set CRAG_RUN_REAL_NLI_TESTS=1 to run real transformers-backed compatibility path",
+)
+def test_real_nli_mode_can_change_selector_choice_relative_to_heuristic(monkeypatch):
+    model_name = str(os.getenv("CRAG_COMPAT_NLI_MODEL", "cross-encoder/nli-deberta-v3-base")).strip()
+    check = check_transformers_nli_backend(model_name=model_name)
+    if not check["available"]:
+        pytest.skip(f"real NLI unavailable: {check['reason_code']} ({check['reason']})")
+
+    policy = get_policy(IntentFamily.INVESTIGATIVE)
+    policy.lane_maxima[RetrievalLane.CORPUS.value] = 10
+    a = _cand("a", "Paris is the capital of France.")
+    b = _cand("b", "Berlin is the capital of France.")
+
+    selected_h, dropped_h, _ = select_context(
+        candidates=[a, b],
+        policy=policy,
+        total_budget=100,
+        reserved_tokens=0,
+        intent_family=IntentFamily.INVESTIGATIVE,
+    )
+    assert {c.id for c, _ in selected_h} == {"a", "b"}
+    assert dropped_h == []
+
+    monkeypatch.setenv("CRAG_COMPAT_ENGINE", "nli")
+    monkeypatch.setenv("CRAG_COMPAT_NLI_BACKEND", "transformers")
+    monkeypatch.setenv("CRAG_COMPAT_NLI_MODEL", model_name)
+    monkeypatch.setenv("CRAG_COMPAT_NLI_THRESHOLD", "0.55")
+    engine, state = load_runtime_compatibility_engine_from_env()
+    assert state.backend_available is True
+    assert state.fallback_active is False
+
+    selected_nli, dropped_nli, _ = select_context(
+        candidates=[a, b],
+        policy=policy,
+        total_budget=100,
+        reserved_tokens=0,
+        intent_family=IntentFamily.INVESTIGATIVE,
+        compatibility_engine=engine,
+    )
+    assert [c.id for c, _ in selected_nli] == ["a"]
+    assert {c.id: reason for c, reason in dropped_nli}["b"] == "compatibility_conflict_nli"
