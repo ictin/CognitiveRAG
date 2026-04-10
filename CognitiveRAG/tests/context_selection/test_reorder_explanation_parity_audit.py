@@ -140,3 +140,32 @@ def test_d_explanation_includes_final_order_index_but_not_anchor_membership_labe
     as_dict = explanation.model_dump()
     assert "reorder_strategy" in as_dict
     assert "anchor_bucket" not in as_dict["selected_blocks"][0]
+
+
+def test_e_selected_dropped_and_why_fields_are_stable_across_repeated_runs():
+    policy = get_policy(IntentFamily.CORPUS_OVERVIEW)
+
+    keep = _cand("keep", RetrievalLane.CORPUS, MemoryType.CORPUS_CHUNK, utility_hint=0.9, tokens=20)
+    risky = _cand("risky", RetrievalLane.CORPUS, MemoryType.CORPUS_CHUNK, utility_hint=0.95, tokens=20)
+    risky.contradiction_risk = 0.99
+    budget_drop = _cand("budget_drop", RetrievalLane.EPISODIC, MemoryType.EPISODIC_RAW, utility_hint=0.5, tokens=120)
+
+    runs: list[dict] = []
+    for _ in range(3):
+        selected, dropped, explanation = select_context(
+            candidates=[budget_drop, keep, risky],
+            policy=policy,
+            total_budget=90,
+            reserved_tokens=20,
+            intent_family=IntentFamily.CORPUS_OVERVIEW,
+        )
+        runs.append(
+            {
+                "selected_ids": [c.id for c, _ in selected],
+                "dropped": [(c.id, reason) for c, reason in dropped],
+                "selected_blocks": [(b.id, b.order_index) for b in explanation.selected_blocks],
+                "dropped_blocks": [(b.id, b.reason) for b in explanation.dropped_blocks],
+            }
+        )
+
+    assert runs[0] == runs[1] == runs[2]
