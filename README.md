@@ -85,7 +85,7 @@ Epic B parity status:
 
 NLI-level compatibility completeness remains partial until Epic B parity closes it.
 Current B3 behavior includes deterministic contradiction threshold drops, heuristic pairwise compatibility gating, and a runtime-configured NLI backend path with deterministic fallback when the backend is unavailable.
-The backend now includes explicit optional dependency wiring for real NLI mode (`pip install .[nli]`), machine-readable runtime fallback diagnostics, and an environment-gated real transformers compatibility test path that runs only when local model assets are available.
+The backend now includes explicit optional dependency wiring for real NLI mode (`pip install .[nli]`, including `transformers` + `torch`), machine-readable runtime fallback diagnostics, and an environment-gated real transformers compatibility test path that runs only when local model assets are available.
 Use `tools/check_b3_nli_env.py` for a machine-readable environment feasibility probe before attempting real-NLI runtime proof.
 Current active Epic B step is B3 (contradiction and compatibility filtering).
 

@@ -205,6 +205,14 @@ def check_transformers_nli_backend(model_name: str = _DEFAULT_NLI_MODEL) -> dict
             "reason": "transformers_import_not_found",
             "model_name": model_name,
         }
+    if importlib.util.find_spec("torch") is None:
+        return {
+            "backend": "transformers",
+            "available": False,
+            "reason_code": "missing_runtime_framework",
+            "reason": "torch_import_not_found",
+            "model_name": model_name,
+        }
     if not _has_local_model_asset(model_name):
         return {
             "backend": "transformers",

@@ -316,3 +316,20 @@ def test_transformers_dependency_check_reports_missing_dependency(monkeypatch):
     check = check_transformers_nli_backend("cross-encoder/nli-deberta-v3-base")
     assert check["available"] is False
     assert check["reason_code"] == "missing_dependency"
+
+
+def test_transformers_dependency_check_reports_missing_torch_runtime(monkeypatch):
+    def _spec(name: str):
+        if name == "transformers":
+            return object()
+        if name == "torch":
+            return None
+        return object()
+
+    monkeypatch.setattr(
+        "CognitiveRAG.crag.context_selection.compatibility.importlib.util.find_spec",
+        _spec,
+    )
+    check = check_transformers_nli_backend("cross-encoder/nli-deberta-v3-base")
+    assert check["available"] is False
+    assert check["reason_code"] == "missing_runtime_framework"
