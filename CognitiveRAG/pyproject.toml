@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "CognitiveRAG"
 version = "0.1.0"
 description = "CognitiveRAG memory/agent utilities"
+keywords = ["rag", "memory", "retrieval", "context-selection", "openclaw"]
 authors = [ { name = "ictin" } ]
 readme = "../README.md"
 requires-python = ">=3.8"
