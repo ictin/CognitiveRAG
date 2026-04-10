@@ -1,35 +1,46 @@
 # CognitiveRAG
 
-**CognitiveRAG is a multi-layer memory and context-construction backend for OpenClaw.**
+**CognitiveRAG is a multi-layer memory and context-construction backend for OpenClaw.**  
 It helps an agent remember what matters, choose better evidence for the current turn, reuse prior reasoning and promoted knowledge, incorporate local files and web evidence, and explain why specific context was selected.
+
+## Why this matters
+
+Most agent systems fail in the same places:
+- they forget important earlier work
+- they stuff the prompt with too much weak context
+- they fail to reuse good prior reasoning
+- they blur together temporary evidence and durable knowledge
+- they cannot clearly explain why a given piece of context was included
+
+CognitiveRAG is built to fix those problems.
 
 ## What this does for an OpenClaw agent
 
-CognitiveRAG is built to improve the things that break first in ordinary agent systems:
+CognitiveRAG improves the things that matter in real use:
 
-- **Memory continuity**: important conclusions, workflows, and prior reasoning do not disappear when the chat gets long.
-- **Better evidence selection**: the system assembles the best context under budget, not just nearest-text or newest-text dumps.
-- **Reasoning reuse**: useful prior reasoning and promoted knowledge are brought back when relevant.
-- **First-class evidence lanes**: local corpus data, promoted memory, episodic memory, reasoning memory, and web evidence can all contribute in controlled ways.
-- **Explainable context construction**: the system can expose what was selected, what was dropped, and why.
-- **Bounded discovery**: it can explore useful adjacent evidence without uncontrolled search.
+- **Memory continuity** — important conclusions, workflows, and prior reasoning stay reusable instead of disappearing into long chats.
+- **Better evidence selection** — the system tries to assemble the best context under budget, not just the nearest or newest text.
+- **Reasoning reuse** — useful prior reasoning and promoted knowledge can be brought back when relevant.
+- **First-class evidence lanes** — local corpus data, promoted memory, episodic memory, reasoning memory, and web evidence can all contribute in controlled ways.
+- **Explainable context construction** — the system can expose what was selected, what was dropped, and why.
+- **Bounded discovery** — it can explore adjacent evidence without turning into uncontrolled search.
 
 ## Why this is different from ordinary RAG
 
-CognitiveRAG is **not** just:
-- vector search over chunks,
-- chat-memory summarization,
-- top-k prompt stuffing,
-- or a thin plugin that injects a larger prompt.
+CognitiveRAG is not just:
+- vector search over chunks
+- chat-memory summarization
+- top-k prompt stuffing
+- or a bigger prompt wrapped around a chat interface
 
 It is a backend intelligence layer for OpenClaw that combines multi-layer memory, retrieval lanes, typed candidates, budget-aware selection, promoted knowledge, reasoning reuse, and explainable context assembly.
 
 ## Core benefits
 
-- Better turn quality under token constraints.
+- Better turn quality under token limits.
 - Better long-session reliability and recoverability.
 - Better reuse of high-value prior knowledge.
-- Better evidence grounding across local and web sources.
+- Better grounding across local and web evidence.
 - Better auditability of context decisions.
 
 ## Current architecture
@@ -47,17 +58,17 @@ Current layers include:
 - session and episodic memory
 - promoted memory
 - reasoning memory
-- skill execution/evaluation memory
+- skill execution and evaluation memory
 - web evidence and promoted web memory
-- corpus lexical/semantic retrieval lanes
+- corpus lexical and semantic retrieval lanes
 
 Markdown mirrors are integration artifacts, not the full memory system.
 
-## What is already implemented
+## What is already real
 
 - retrieval lanes
 - context-selection foundation
-- durable promoted memory
+- promoted memory durability
 - reasoning memory and reuse
 - web evidence and promoted web memory
 - explanation artifacts
@@ -74,15 +85,13 @@ Epic B parity status:
 
 NLI-level compatibility completeness remains partial until Epic B parity closes it.
 
-## What is next
+## What is later
 
-Current order:
-1. Epic A done
-2. Epic B now
-3. Epic C next
-4. Graph later
+- graph layer and graph-assisted retrieval
+- deeper trust/promotion lifecycle expansion
+- federation/hive-style extensions
 
-Graph is planned and explicitly not presented as current implementation.
+Graph is planned, not current implementation.
 
 ## Setup / run / test
 
