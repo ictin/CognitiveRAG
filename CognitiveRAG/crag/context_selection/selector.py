@@ -4,7 +4,11 @@ from typing import Iterable, List, Tuple
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily
 from CognitiveRAG.crag.contracts.schemas import ContextCandidate, ContextSelectionPolicy
-from CognitiveRAG.crag.context_selection.compatibility import compatibility_conflict_reason
+from CognitiveRAG.crag.context_selection.compatibility import (
+    CompatibilityEngine,
+    compatibility_conflict_reason,
+    resolve_compatibility_engine,
+)
 from CognitiveRAG.crag.context_selection.explanation import build_explanation
 from CognitiveRAG.crag.context_selection.models import SelectionState
 from CognitiveRAG.crag.context_selection.reorder import reorder_for_prompt
@@ -37,6 +41,7 @@ def select_context(
     intent_family: IntentFamily,
     contradiction_threshold: float = 0.95,
     pairwise_compatibility: bool = True,
+    compatibility_engine: CompatibilityEngine | None = None,
 ) -> tuple[list[tuple[ContextCandidate, float]], list[tuple[ContextCandidate, str]], object]:
     """Budgeted multi-store context optimizer.
 
@@ -57,10 +62,11 @@ def select_context(
     # Phase A/B selected must_include first.
     scored_map: dict[str, float] = {}
     selected_clusters: set[str] = set()
+    active_compatibility_engine = compatibility_engine or resolve_compatibility_engine(mode="heuristic")
     must_include = [c for c in filtered if c.must_include]
     for candidate in sorted(must_include, key=lambda c: (c.tokens, c.id)):
         if pairwise_compatibility:
-            reason = compatibility_conflict_reason(candidate, state.selected)
+            reason = compatibility_conflict_reason(candidate, state.selected, engine=active_compatibility_engine)
             if reason:
                 dropped.append((candidate, reason))
                 continue
@@ -100,7 +106,7 @@ def select_context(
             scored.sort(key=lambda x: (-x[0], -x[1], x[2].id))
             _, util, best = scored[0]
             if pairwise_compatibility:
-                reason = compatibility_conflict_reason(best, state.selected)
+                reason = compatibility_conflict_reason(best, state.selected, engine=active_compatibility_engine)
                 if reason:
                     dropped.append((best, reason))
                     remaining = [c for c in remaining if c.id != best.id]
@@ -133,7 +139,7 @@ def select_context(
         remaining = [c for c in remaining if c.id != best.id]
 
         if pairwise_compatibility:
-            reason = compatibility_conflict_reason(best, state.selected)
+            reason = compatibility_conflict_reason(best, state.selected, engine=active_compatibility_engine)
             if reason:
                 dropped.append((best, reason))
                 continue

@@ -84,7 +84,7 @@ Epic B parity status:
 - B4 reorder and explanation output: `FULLY_BUILT`
 
 NLI-level compatibility completeness remains partial until Epic B parity closes it.
-Current B3 behavior includes deterministic contradiction threshold drops and heuristic pairwise compatibility gating; NLI-backed compatibility is not implemented yet.
+Current B3 behavior includes deterministic contradiction threshold drops, heuristic pairwise compatibility gating, and an optional NLI-backed compatibility adapter path with deterministic fallback.
 Current active Epic B step is B3 (contradiction and compatibility filtering).
 
 ## What is later

@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily, MemoryType, RetrievalLane
 from CognitiveRAG.crag.contracts.schemas import ContextCandidate
+from CognitiveRAG.crag.context_selection.compatibility import (
+    NLIBackedCompatibilityEngine,
+    resolve_compatibility_engine,
+)
 from CognitiveRAG.crag.context_selection.policies import get_policy
 from CognitiveRAG.crag.context_selection.selector import select_context
 from CognitiveRAG.crag.context_selection.utility import score_candidate
@@ -139,6 +143,81 @@ def test_conflict_behavior_is_deterministic_across_repeated_runs():
             total_budget=60,
             reserved_tokens=0,
             intent_family=IntentFamily.INVESTIGATIVE,
+        )
+        runs.append(([c.id for c, _ in selected], [(c.id, reason) for c, reason in dropped]))
+
+    assert runs[0] == runs[1] == runs[2]
+
+
+class _MockNLIAdapter:
+    def __init__(self, conflict_pairs: set[tuple[str, str]] | None = None):
+        self._pairs = conflict_pairs or set()
+
+    def contradiction_score(self, left: str, right: str) -> float:
+        key = (left.strip().lower(), right.strip().lower())
+        return 0.92 if key in self._pairs else 0.12
+
+
+def test_engine_selection_defaults_and_nli_fallback():
+    heuristic_engine = resolve_compatibility_engine(mode="heuristic")
+    assert heuristic_engine.name == "heuristic"
+
+    # NLI mode without adapter must stay safe and deterministic via heuristic fallback.
+    nli_engine = resolve_compatibility_engine(mode="nli", adapter=None)
+    assert nli_engine.name == "nli"
+    assert isinstance(nli_engine, NLIBackedCompatibilityEngine)
+
+
+def test_selector_nli_mode_can_block_conflict_heuristic_would_allow():
+    policy = get_policy(IntentFamily.INVESTIGATIVE)
+    policy.lane_maxima[RetrievalLane.CORPUS.value] = 10
+
+    # No claim-key conflict and little lexical overlap: heuristic permits both.
+    a = _cand("a", text="alpha release checklist approved", risk=0.1, lex=0.8, sem=0.8)
+    b = _cand("b", text="beta rollback process denied", risk=0.1, lex=0.8, sem=0.8)
+
+    selected_h, dropped_h, _ = select_context(
+        candidates=[a, b],
+        policy=policy,
+        total_budget=100,
+        reserved_tokens=0,
+        intent_family=IntentFamily.INVESTIGATIVE,
+    )
+    assert {c.id for c, _ in selected_h} == {"a", "b"}
+    assert dropped_h == []
+
+    adapter = _MockNLIAdapter(conflict_pairs={(a.text.lower(), b.text.lower())})
+    nli_engine = resolve_compatibility_engine(mode="nli", adapter=adapter, contradiction_threshold=0.75)
+    selected_nli, dropped_nli, _ = select_context(
+        candidates=[a, b],
+        policy=policy,
+        total_budget=100,
+        reserved_tokens=0,
+        intent_family=IntentFamily.INVESTIGATIVE,
+        compatibility_engine=nli_engine,
+    )
+    assert [c.id for c, _ in selected_nli] == ["a"]
+    assert {c.id: reason for c, reason in dropped_nli}["b"] == "compatibility_conflict_nli"
+
+
+def test_selector_nli_mode_is_deterministic_across_repeated_runs():
+    policy = get_policy(IntentFamily.INVESTIGATIVE)
+    policy.lane_maxima[RetrievalLane.CORPUS.value] = 10
+
+    a = _cand("a", text="service A availability confirmed", risk=0.1, lex=0.8, sem=0.8)
+    b = _cand("b", text="service A availability denied", risk=0.1, lex=0.8, sem=0.8)
+    adapter = _MockNLIAdapter(conflict_pairs={(a.text.lower(), b.text.lower())})
+    nli_engine = resolve_compatibility_engine(mode="nli", adapter=adapter, contradiction_threshold=0.75)
+
+    runs = []
+    for _ in range(3):
+        selected, dropped, _ = select_context(
+            candidates=[a, b],
+            policy=policy,
+            total_budget=100,
+            reserved_tokens=0,
+            intent_family=IntentFamily.INVESTIGATIVE,
+            compatibility_engine=nli_engine,
         )
         runs.append(([c.id for c, _ in selected], [(c.id, reason) for c, reason in dropped]))
 
