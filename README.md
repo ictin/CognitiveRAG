@@ -80,14 +80,13 @@ Markdown mirrors are integration artifacts, not the full memory system.
 Epic B parity status:
 - B1 typed candidate coverage: `FULLY_BUILT`
 - B2 scoring and token-budget rules: `FULLY_BUILT`
-- B3 contradiction/compatibility filtering: `PARTLY_BUILT`
+- B3 contradiction/compatibility filtering: `FULLY_BUILT`
 - B4 reorder and explanation output: `FULLY_BUILT`
 
-NLI-level compatibility completeness remains partial until Epic B parity closes it.
-Current B3 behavior includes deterministic contradiction threshold drops, heuristic pairwise compatibility gating, and a runtime-configured NLI backend path with deterministic fallback when the backend is unavailable.
+Current B3 behavior includes deterministic contradiction threshold drops, heuristic pairwise compatibility gating, a runtime-configured transformers-backed NLI path, and deterministic fallback when the backend is unavailable.
 The backend now includes explicit optional dependency wiring for real NLI mode (`pip install .[nli]`, including `transformers` + `torch`), machine-readable runtime fallback diagnostics, and an environment-gated real transformers compatibility test path that runs only when local model assets are available.
 Use `tools/check_b3_nli_env.py` for a machine-readable environment feasibility probe before attempting real-NLI runtime proof.
-Current active Epic B step is B3 (contradiction and compatibility filtering).
+Epic B parity is closed in repo code/tests; current active phase is Epic C bootstrap (metrics/smoke/regression safety).
 
 ## What is later
 
@@ -110,4 +109,5 @@ python3 -m pytest CognitiveRAG/tests/retrieval -q
 python3 -m pytest CognitiveRAG/tests -q
 python3 tools/check_b3_nli_env.py
 ./tools/run_b3_validation_seq.sh
+./tools/run_epic_c_bootstrap_seq.sh
 ```
