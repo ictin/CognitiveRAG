@@ -1,42 +1,47 @@
 # CognitiveRAG
 
-CognitiveRAG is the intelligence backend that helps an OpenClaw agent remember what matters, choose better evidence, and explain its context decisions under real token and runtime constraints.
+**CognitiveRAG is a multi-layer memory and context-construction backend for OpenClaw.**
+It helps an agent remember what matters, choose better evidence for the current turn, reuse prior reasoning and promoted knowledge, incorporate local files and web evidence, and explain why specific context was selected.
 
-## What This Does For An OpenClaw Agent
+## What this does for an OpenClaw agent
 
-CognitiveRAG improves agent behavior in ways users feel directly:
-- better continuity across long sessions instead of fragile short-term chat memory
-- better turn-level evidence selection instead of raw context stuffing
-- better reuse of promoted knowledge and reasoning outcomes
-- better integration of local corpus evidence and web evidence
-- better explainability of why specific context was selected
+CognitiveRAG is built to improve the things that break first in ordinary agent systems:
 
-## Why It Is Different From Ordinary RAG
+- **Memory continuity**: important conclusions, workflows, and prior reasoning do not disappear when the chat gets long.
+- **Better evidence selection**: the system assembles the best context under budget, not just nearest-text or newest-text dumps.
+- **Reasoning reuse**: useful prior reasoning and promoted knowledge are brought back when relevant.
+- **First-class evidence lanes**: local corpus data, promoted memory, episodic memory, reasoning memory, and web evidence can all contribute in controlled ways.
+- **Explainable context construction**: the system can expose what was selected, what was dropped, and why.
+- **Bounded discovery**: it can explore useful adjacent evidence without uncontrolled search.
 
-Ordinary RAG often means top-k retrieval plus prompt append. CognitiveRAG is a memory-aware context-construction system:
-- multiple retrieval/memory lanes feed typed candidates
-- candidates are pruned/scored with policy and budget constraints
-- selected context is reordered for long-context utility
-- explanation artifacts are emitted as first-class outputs
+## Why this is different from ordinary RAG
 
-## Core Benefits
+CognitiveRAG is **not** just:
+- vector search over chunks,
+- chat-memory summarization,
+- top-k prompt stuffing,
+- or a thin plugin that injects a larger prompt.
 
-- higher-quality context under token pressure
-- stronger recoverability for important memory
-- safer source-class and truthfulness boundaries
-- reusable promoted knowledge instead of repeated rediscovery
-- bounded discovery support for deeper investigative turns
+It is a backend intelligence layer for OpenClaw that combines multi-layer memory, retrieval lanes, typed candidates, budget-aware selection, promoted knowledge, reasoning reuse, and explainable context assembly.
 
-## Current Architecture
+## Core benefits
+
+- Better turn quality under token constraints.
+- Better long-session reliability and recoverability.
+- Better reuse of high-value prior knowledge.
+- Better evidence grounding across local and web sources.
+- Better auditability of context decisions.
+
+## Current architecture
 
 Primary backend surfaces:
 - API and routes: `CognitiveRAG/main_server.py`, `CognitiveRAG/api/routes/*`
-- Retrieval lanes/router: `CognitiveRAG/crag/retrieval/*`
-- Context selection/explanations: `CognitiveRAG/crag/context_selection/*`
-- Session memory/compaction: `CognitiveRAG/session_memory/*`
-- Promoted/reasoning/web/skill memory: `CognitiveRAG/memory/*`, `CognitiveRAG/web_memory/*`, `CognitiveRAG/skill_memory/*`
+- Retrieval lanes and routing: `CognitiveRAG/crag/retrieval/*`
+- Context selection and explanation outputs: `CognitiveRAG/crag/context_selection/*`
+- Session memory compaction/recovery: `CognitiveRAG/session_memory/*`
+- Promoted/reasoning/web/skill memory layers: `CognitiveRAG/memory/*`, `CognitiveRAG/web_memory/*`, `CognitiveRAG/skill_memory/*`
 
-## Memory Taxonomy
+## Memory taxonomy
 
 Current layers include:
 - session and episodic memory
@@ -48,15 +53,18 @@ Current layers include:
 
 Markdown mirrors are integration artifacts, not the full memory system.
 
-## Current Implementation Status
+## What is already implemented
 
-Implemented baseline includes:
-- retrieval lane foundation
-- context-selection foundation with explanation output
-- promoted and reasoning memory slices
-- web evidence and promoted web slices
-- bounded discovery/controller slices
-- skill-memory execution/evaluation slices
+- retrieval lanes
+- context-selection foundation
+- durable promoted memory
+- reasoning memory and reuse
+- web evidence and promoted web memory
+- explanation artifacts
+- bounded discovery foundations
+- skill-memory execution/evaluation foundations
+
+## What is partial
 
 Epic B parity status:
 - B1 typed candidate coverage: `PARTLY_BUILT`
@@ -64,9 +72,9 @@ Epic B parity status:
 - B3 contradiction/compatibility filtering: `PARTLY_BUILT`
 - B4 reorder and explanation output: `FULLY_BUILT`
 
-NLI-level compatibility completeness remains partial until Epic B closes it.
+NLI-level compatibility completeness remains partial until Epic B parity closes it.
 
-## Current Phase
+## What is next
 
 Current order:
 1. Epic A done
@@ -76,7 +84,7 @@ Current order:
 
 Graph is planned and explicitly not presented as current implementation.
 
-## Setup / Run / Test
+## Setup / run / test
 
 ```bash
 cd /home/ictin_claw/.openclaw/workspace/CognitiveRAG
