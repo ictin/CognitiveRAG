@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily, RetrievalLane
@@ -172,6 +173,9 @@ def test_fast_lanes_distinguish_installation_workspace_and_global(tmp_path: Path
 
 def test_fast_lane_metadata_preserves_freshness_and_contradiction_truth(tmp_path: Path):
     store = WebPromotedMemoryStore(tmp_path / "web_promoted_memory.sqlite3")
+    now = datetime.now(timezone.utc)
+    fresh_validated_at = (now - timedelta(hours=1)).isoformat().replace("+00:00", "Z")
+    stale_validated_at = (now - timedelta(hours=200)).isoformat().replace("+00:00", "Z")
 
     _seed_promoted(
         tmp_path,
@@ -180,6 +184,7 @@ def test_fast_lane_metadata_preserves_freshness_and_contradiction_truth(tmp_path
         tier=WebPromotedMemoryStore.TIER_GLOBAL,
         lifecycle=WebPromotedMemoryStore.FRESHNESS_FRESH,
         metadata={"claim_key": "rollout_status", "claim_value": "enabled", "source_class": "web_promoted"},
+        last_validated_at=fresh_validated_at,
     )
     _seed_promoted(
         tmp_path,
@@ -188,7 +193,7 @@ def test_fast_lane_metadata_preserves_freshness_and_contradiction_truth(tmp_path
         tier=WebPromotedMemoryStore.TIER_GLOBAL,
         lifecycle=WebPromotedMemoryStore.FRESHNESS_STALE,
         metadata={"claim_key": "feature_flag_enabled", "claim_value": "true", "source_class": "local_durable"},
-        last_validated_at="2026-03-20T00:00:00Z",
+        last_validated_at=stale_validated_at,
     )
     _seed_promoted(
         tmp_path,
@@ -197,7 +202,7 @@ def test_fast_lane_metadata_preserves_freshness_and_contradiction_truth(tmp_path
         tier=WebPromotedMemoryStore.TIER_GLOBAL,
         lifecycle=WebPromotedMemoryStore.FRESHNESS_STALE,
         metadata={"claim_key": "feature_flag_enabled", "claim_value": "false", "source_class": "web_promoted"},
-        last_validated_at="2026-03-20T00:00:00Z",
+        last_validated_at=stale_validated_at,
     )
 
     # Contradiction is recorded by deterministic claim key/value mismatch.
