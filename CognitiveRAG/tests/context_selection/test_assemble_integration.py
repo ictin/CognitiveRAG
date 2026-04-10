@@ -212,3 +212,80 @@ def test_assemble_context_runtime_nli_path_changes_selection_and_reports_engine(
     assert runtime_state["resolved_engine"] == "nli"
     assert runtime_state["backend_available"] is True
     assert runtime_state["fallback_active"] is False
+
+
+def test_assemble_context_runtime_nli_unavailable_falls_back_and_keeps_conflict_drop(monkeypatch, tmp_path):
+    session_id = "selector-nli-runtime-fallback-integ"
+    shutil.rmtree(WORKDIR, ignore_errors=True)
+    os.makedirs(WORKDIR, exist_ok=True)
+
+    raw_path = os.path.join(WORKDIR, f"raw_{session_id}.json")
+    raw = [{"index": i, "text": f"message {i}", "message_id": f"m{i}"} for i in range(8)]
+    with open(raw_path, "w", encoding="utf-8") as f:
+        json.dump(raw, f)
+
+    route_plan = RoutePlan(
+        intent_family=IntentFamily.INVESTIGATIVE,
+        lanes=[RetrievalLane.CORPUS],
+        reason="test-route",
+        metadata={},
+    )
+    a = ContextCandidate(
+        id="a",
+        lane=RetrievalLane.CORPUS,
+        memory_type=MemoryType.CORPUS_CHUNK,
+        text="Release policy marker alpha cohort enabled.",
+        tokens=20,
+        provenance={"source": "corpus", "claim_key": "feature_flag_all_users", "claim_value": "enabled"},
+        lexical_score=0.8,
+        semantic_score=0.8,
+        novelty_score=0.5,
+        cluster_id="cluster-a",
+    )
+    b = ContextCandidate(
+        id="b",
+        lane=RetrievalLane.CORPUS,
+        memory_type=MemoryType.CORPUS_CHUNK,
+        text="Rollback policy marker omega cohort disabled.",
+        tokens=20,
+        provenance={"source": "corpus", "claim_key": "feature_flag_all_users", "claim_value": "disabled"},
+        lexical_score=0.8,
+        semantic_score=0.8,
+        novelty_score=0.5,
+        cluster_id="cluster-b",
+    )
+    lane_candidates = [a, b]
+
+    monkeypatch.setenv("CRAG_COMPAT_ENGINE", "nli")
+    monkeypatch.setenv("CRAG_COMPAT_NLI_BACKEND", "transformers")
+    monkeypatch.setattr(
+        "CognitiveRAG.crag.context_selection.compatibility.TransformersNLIAdapter",
+        lambda model_name=None: (_ for _ in ()).throw(ImportError("missing transformers")),
+    )
+    monkeypatch.setattr(
+        "CognitiveRAG.session_memory.context_window.build_candidates_with_route",
+        lambda **_: (route_plan, lane_candidates),
+    )
+    monkeypatch.setattr(
+        "CognitiveRAG.session_memory.context_window.DiscoveryExecutor.run",
+        lambda self, **_: DiscoveryResult(budget_tokens=220, used_tokens=0, injected_discoveries=[]),
+    )
+
+    out = assemble_context(
+        session_id,
+        fresh_tail_count=0,
+        budget=320,
+        query="investigate conflicting evidence",
+        intent_family=IntentFamily.INVESTIGATIVE,
+    )
+
+    selected_ids = [block["id"] for block in out["selected_blocks"]]
+    dropped = {block["id"]: block["reason"] for block in out["dropped_blocks"]}
+    runtime_state = out["selector_metrics"]["decision_stats"]["compatibility_engine"]
+
+    assert selected_ids == ["a"]
+    assert dropped.get("b") == "compatibility_conflict"
+    assert runtime_state["resolved_engine"] == "nli"
+    assert runtime_state["backend_available"] is False
+    assert runtime_state["fallback_active"] is True
+    assert str(runtime_state["reason"]).startswith("adapter_unavailable:")
