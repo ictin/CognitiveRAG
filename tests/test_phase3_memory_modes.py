@@ -2,10 +2,42 @@ from __future__ import annotations
 import json
 import sqlite3
 from pathlib import Path
+from types import SimpleNamespace
+
 import chromadb
+import pytest
 from fastapi.testclient import TestClient
 from CognitiveRAG.app import app
 from CognitiveRAG.core.settings import settings
+
+
+class _FakeLLMClient:
+    async def ainvoke_text(self, system_prompt: str, user_prompt: str) -> str:
+        return "ok"
+
+    async def ainvoke_structured(self, system_prompt: str, user_prompt: str, schema):
+        name = getattr(schema, "__name__", "")
+        if name == "PlannerOutput":
+            return schema.model_validate({"objective": user_prompt, "steps": ["read context", "answer"]})
+        if name == "CriticOutput":
+            return schema.model_validate({"approved": True, "issues": []})
+        try:
+            return schema.model_validate({})
+        except Exception:
+            return schema()
+
+
+@pytest.fixture(autouse=True)
+def _stub_llm_clients(monkeypatch):
+    llm = _FakeLLMClient()
+    monkeypatch.setattr(
+        "CognitiveRAG.core.lifecycle.build_llm_clients",
+        lambda _settings: SimpleNamespace(
+            planner=llm,
+            synthesizer=llm,
+            critic=llm,
+        ),
+    )
 
 
 def _ensure_seed_document(client: TestClient) -> None:

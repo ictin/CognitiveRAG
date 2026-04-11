@@ -2,14 +2,45 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
+import pytest
 
 from CognitiveRAG.app import app
 from CognitiveRAG.core.settings import settings
 from CognitiveRAG.memory.profile_store import ProfileStore
 from CognitiveRAG.memory.reasoning_store import ReasoningStore
 from CognitiveRAG.memory.task_store import TaskStore
+
+
+class _FakeLLMClient:
+    async def ainvoke_text(self, system_prompt: str, user_prompt: str) -> str:
+        return "ok"
+
+    async def ainvoke_structured(self, system_prompt: str, user_prompt: str, schema):
+        name = getattr(schema, "__name__", "")
+        if name == "PlannerOutput":
+            return schema.model_validate({"objective": user_prompt, "steps": ["read context", "answer"]})
+        if name == "CriticOutput":
+            return schema.model_validate({"approved": True, "issues": []})
+        try:
+            return schema.model_validate({})
+        except Exception:
+            return schema()
+
+
+@pytest.fixture(autouse=True)
+def _stub_llm_clients(monkeypatch):
+    llm = _FakeLLMClient()
+    monkeypatch.setattr(
+        "CognitiveRAG.core.lifecycle.build_llm_clients",
+        lambda _settings: SimpleNamespace(
+            planner=llm,
+            synthesizer=llm,
+            critic=llm,
+        ),
+    )
 
 
 def test_task_profile_reasoning_included_in_task_memory():
