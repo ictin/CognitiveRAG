@@ -74,6 +74,7 @@ Markdown mirrors are integration artifacts, not the full memory system.
 - explanation artifacts
 - bounded discovery foundations
 - skill-memory execution/evaluation foundations
+- structured session export with message parts plus compaction lineage/raw-snapshot/quarantine sections
 
 ## What is partial
 

@@ -36,5 +36,12 @@ class ConversationStore:
 
     def get_messages(self, session_id: str):
         with self._connect() as conn:
-            rows = conn.execute('SELECT message_id, sender, text, created_at FROM conversations WHERE session_id=? ORDER BY created_at', (session_id,)).fetchall()
+            rows = conn.execute(
+                (
+                    "SELECT message_id, sender, text, created_at "
+                    "FROM conversations WHERE session_id=? "
+                    "ORDER BY created_at, rowid"
+                ),
+                (session_id,),
+            ).fetchall()
             return [{'message_id': r[0], 'sender': r[1], 'text': r[2], 'created_at': r[3]} for r in rows]
