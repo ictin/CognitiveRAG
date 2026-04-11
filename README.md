@@ -86,7 +86,11 @@ Epic B parity status:
 Current B3 behavior includes deterministic contradiction threshold drops, heuristic pairwise compatibility gating, a runtime-configured transformers-backed NLI path, and deterministic fallback when the backend is unavailable.
 The backend now includes explicit optional dependency wiring for real NLI mode (`pip install .[nli]`, including `transformers` + `torch`), machine-readable runtime fallback diagnostics, and an environment-gated real transformers compatibility test path that runs only when local model assets are available.
 Use `tools/check_b3_nli_env.py` for a machine-readable environment feasibility probe before attempting real-NLI runtime proof.
-Epic B parity is closed in repo code/tests; current active phase is Epic C bootstrap (metrics/smoke/regression safety).
+Epic B parity is closed in repo code/tests; Epic C is now in progress.
+Current Epic C implementation in this repo includes:
+- selector/lane metrics surfacing (including latency and discovery counters)
+- C2/C3 benchmark suite outputs with stable JSON + Markdown reporting
+- fast retrieval benchmark integration into a single Epic C runner (`tools/run_epic_c_suite.py`)
 
 ## What is later
 
@@ -110,4 +114,5 @@ python3 -m pytest CognitiveRAG/tests -q
 python3 tools/check_b3_nli_env.py
 ./tools/run_b3_validation_seq.sh
 ./tools/run_epic_c_bootstrap_seq.sh
+./tools/run_epic_c_suite.py
 ```
