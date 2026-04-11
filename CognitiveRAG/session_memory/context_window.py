@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from typing import Any, Callable, Dict, List, Optional
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily, RetrievalLane
@@ -206,6 +207,7 @@ def assemble_context(
     - preserves legacy top-level keys: fresh_tail, summaries
     - adds machine-readable selector explanation artifact
     """
+    t0_total = time.perf_counter()
     raw = sorted(_load_raw_messages(session_id), key=lambda m: int(m.get("index", 0)))
     summaries = _load_summaries(session_id)
     compaction_store = SessionCompactionStore(os.path.join(WORKDIR, "compaction.sqlite3"))
@@ -230,6 +232,7 @@ def assemble_context(
     )
 
     # Phase B + C + D + E + F + G + H
+    t0_build = time.perf_counter()
     route_plan, candidates = build_candidates_with_route(
         session_id=session_id,
         query=query or "",
@@ -239,6 +242,7 @@ def assemble_context(
         workdir=WORKDIR,
         intent_family=detected_intent,
     )
+    t1_build = time.perf_counter()
     pre_prune_count = len(candidates)
     pre_prune_lane_counts: Dict[str, int] = {}
     pre_prune_lane_tokens: Dict[str, int] = {}
@@ -247,17 +251,22 @@ def assemble_context(
         pre_prune_lane_counts[lane] = pre_prune_lane_counts.get(lane, 0) + 1
         pre_prune_lane_tokens[lane] = pre_prune_lane_tokens.get(lane, 0) + int(candidate.tokens)
 
+    t0_prune = time.perf_counter()
     pruned = prune_lane_local(candidates)
+    t1_prune = time.perf_counter()
     post_prune_count = len(pruned)
     pruned_count = max(0, pre_prune_count - post_prune_count)
 
     discovery_executor = DiscoveryExecutor()
+    t0_discovery = time.perf_counter()
     discovery_result = discovery_executor.run(plan=discovery_plan, candidate_pool=pruned)
+    t1_discovery = time.perf_counter()
     discovery_candidates = discovery_items_to_candidates(discovery_result.injected_discoveries)
     if discovery_candidates:
         pruned = pruned + discovery_candidates
 
     compatibility_engine, compatibility_state = load_runtime_compatibility_engine_from_env()
+    t0_select = time.perf_counter()
     selected_pairs, dropped, explanation = select_context(
         candidates=pruned,
         policy=policy,
@@ -266,6 +275,7 @@ def assemble_context(
         intent_family=detected_intent,
         compatibility_engine=compatibility_engine,
     )
+    t1_select = time.perf_counter()
 
     selected_candidates = [candidate for candidate, _ in selected_pairs]
     selected_lane_counts: Dict[str, int] = {}
@@ -288,6 +298,8 @@ def assemble_context(
     discovery_count = len(discovery_result.injected_discoveries)
     discovery_tokens = sum(int(item.tokens) for item in discovery_result.injected_discoveries)
     available_budget = max(0, int(budget) - int(reserved_tokens))
+
+    t1_total = time.perf_counter()
 
     # Compatibility mapping for existing consumers.
     selected_fresh = []
@@ -363,6 +375,13 @@ def assemble_context(
             "discovery": {
                 "injected_count": discovery_count,
                 "injected_tokens": discovery_tokens,
+            },
+            "latency_ms": {
+                "total": round((t1_total - t0_total) * 1000.0, 3),
+                "build_candidates": round((t1_build - t0_build) * 1000.0, 3),
+                "prune_lane_local": round((t1_prune - t0_prune) * 1000.0, 3),
+                "discovery": round((t1_discovery - t0_discovery) * 1000.0, 3),
+                "select_context": round((t1_select - t0_select) * 1000.0, 3),
             },
         },
         "discovery_plan": discovery_plan.model_dump(mode="json"),

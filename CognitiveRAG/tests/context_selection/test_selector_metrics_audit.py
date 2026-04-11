@@ -88,6 +88,7 @@ def test_selector_metrics_output_shape_stable_keys():
         "budget",
         "decision_stats",
         "discovery",
+        "latency_ms",
     }
 
     assert set(metrics["candidate_counts"].keys()) == {"pre_prune", "post_prune", "pruned", "selected", "dropped"}
@@ -119,3 +120,11 @@ def test_selector_metrics_output_shape_stable_keys():
         "diagnostics",
     }
     assert set(metrics["discovery"].keys()) == {"injected_count", "injected_tokens"}
+    assert set(metrics["latency_ms"].keys()) == {
+        "total",
+        "build_candidates",
+        "prune_lane_local",
+        "discovery",
+        "select_context",
+    }
+    assert all(float(v) >= 0.0 for v in metrics["latency_ms"].values())
