@@ -127,3 +127,85 @@ def test_exact_recall_prefers_exact_span_and_avoids_summary_noise():
     assert "episodic:int5:m1" in selected_ids
     assert any("checksum 9247A" in text for text in selected_texts)
     assert not any((b.get("lane") == "session_summary") for b in selected)
+
+
+def test_task_state_query_prefers_session_grounded_evidence_over_stale_promoted():
+    session_id = "int6"
+    shutil.rmtree(WORKDIR, ignore_errors=True)
+    os.makedirs(WORKDIR, exist_ok=True)
+    with open(os.path.join(WORKDIR, f"raw_{session_id}.json"), "w", encoding="utf-8") as f:
+        json.dump(
+            [
+                {"index": 0, "text": "Task kickoff: stabilize phase3 runtime proof.", "message_id": "m0"},
+                {
+                    "index": 1,
+                    "text": "Current blocker: gateway timeout on heavy benchmark and mirror-heavy task-state answer.",
+                    "message_id": "m1",
+                },
+                {
+                    "index": 2,
+                    "text": "Next step: prioritize session-grounded task-state retrieval and rerun canary.",
+                    "message_id": "m2",
+                },
+                {
+                    "index": 3,
+                    "text": "Acceptance criteria: task-state answer must cite blocker and next step.",
+                    "message_id": "m3",
+                },
+            ],
+            f,
+        )
+    with open(os.path.join(WORKDIR, f"summaries_{session_id}.json"), "w", encoding="utf-8") as f:
+        json.dump([{"chunk_index": 0, "summary": "generic mirror summary old blocker legacy query path"}], f)
+
+    import sqlite3
+
+    with sqlite3.connect(os.path.join(WORKDIR, "reasoning.sqlite3")) as conn:
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS reasoning_patterns ("
+            "pattern_id TEXT PRIMARY KEY, problem_signature TEXT, reasoning_steps_json TEXT, "
+            "solution_summary TEXT, confidence REAL, provenance_json TEXT, memory_subtype TEXT, normalized_text TEXT, "
+            "freshness_state TEXT, reuse_count INTEGER, canonical_pattern_id TEXT, near_duplicate_of TEXT, "
+            "success_signal_count INTEGER, failure_signal_count INTEGER, success_confidence REAL, success_basis_json TEXT)"
+        )
+        conn.execute(
+            "INSERT OR REPLACE INTO reasoning_patterns("
+            "pattern_id, problem_signature, reasoning_steps_json, solution_summary, confidence, provenance_json, "
+            "memory_subtype, normalized_text, freshness_state, reuse_count, success_signal_count, failure_signal_count, "
+            "success_confidence, success_basis_json"
+            ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "p_stale",
+                "legacy-path",
+                "[]",
+                "Current blocker: legacy /query path. Next step: generic fix.",
+                0.9,
+                "[]",
+                "workflow",
+                "current blocker legacy query path",
+                "fresh",
+                2,
+                2,
+                0,
+                0.8,
+                "{}",
+            ),
+        )
+        conn.commit()
+
+    out = assemble_context(
+        session_id,
+        query="What is the current task state in this session, what changed, and what are blockers?",
+        budget=420,
+        fresh_tail_count=2,
+    )
+    selected = out.get("selected_blocks", [])
+    selected_texts = [str(b.get("text") or "") for b in selected]
+
+    assert out["retrieval_route"]["intent_family"] == "planning"
+    assert out["discovery_plan"]["discovery_mode"] == "off"
+    assert out["selector_metrics"]["discovery"]["injected_count"] == 0
+    assert any("gateway timeout" in text for text in selected_texts)
+    assert any("prioritize session-grounded task-state retrieval" in text for text in selected_texts)
+    assert not any((b.get("lane") == "session_summary") for b in selected)
+    assert out.get("summaries") == []

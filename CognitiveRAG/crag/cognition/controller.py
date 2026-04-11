@@ -156,7 +156,9 @@ class CognitiveController:
             return IntentFamily.MEMORY_SUMMARY
         if any(token in q for token in ('what can you tell me about', 'synopsis', 'book', 'corpus')):
             return IntentFamily.CORPUS_OVERVIEW
-        if any(token in q for token in ('plan', 'next step', 'roadmap', 'sequence')):
+        if any(token in q for token in ('current task state', 'what changed', 'blocker', 'blockers', 'next step', 'next steps')):
+            return IntentFamily.PLANNING
+        if any(token in q for token in ('plan', 'roadmap', 'sequence')):
             return IntentFamily.PLANNING
         return IntentFamily.INVESTIGATIVE
 
@@ -177,7 +179,7 @@ class CognitiveController:
             IntentFamily.MEMORY_SUMMARY: [RetrievalLane.PROMOTED, RetrievalLane.EPISODIC, RetrievalLane.SEMANTIC],
             IntentFamily.ARCHITECTURE_EXPLANATION: [RetrievalLane.PROMOTED, RetrievalLane.EPISODIC],
             IntentFamily.CORPUS_OVERVIEW: [RetrievalLane.CORPUS, RetrievalLane.LARGE_FILE, RetrievalLane.LEXICAL],
-            IntentFamily.PLANNING: [RetrievalLane.PROMOTED, RetrievalLane.EPISODIC, RetrievalLane.SEMANTIC],
+            IntentFamily.PLANNING: [RetrievalLane.EPISODIC, RetrievalLane.LEXICAL, RetrievalLane.PROMOTED, RetrievalLane.SEMANTIC],
             IntentFamily.INVESTIGATIVE: [
                 RetrievalLane.SEMANTIC,
                 RetrievalLane.LEXICAL,
@@ -199,7 +201,7 @@ class CognitiveController:
         return filtered or lanes
 
     def _discovery_mode(self, intent: IntentFamily, web_sensitive: bool, local_evidence_count: int) -> DiscoveryMode:
-        if intent in {IntentFamily.EXACT_RECALL, IntentFamily.ARCHITECTURE_EXPLANATION}:
+        if intent in {IntentFamily.EXACT_RECALL, IntentFamily.ARCHITECTURE_EXPLANATION, IntentFamily.PLANNING}:
             return DiscoveryMode.OFF
         if intent == IntentFamily.INVESTIGATIVE and local_evidence_count <= 0:
             return DiscoveryMode.ACTIVE

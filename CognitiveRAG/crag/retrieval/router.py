@@ -70,10 +70,10 @@ class LaneRouter:
             return RoutePlan(intent_family=intent_family, lanes=lanes, reason="corpus_overview_prefers_corpus_lanes")
 
         if intent_family == IntentFamily.PLANNING:
-            lanes = [RetrievalLane.PROMOTED, RetrievalLane.EPISODIC, RetrievalLane.SEMANTIC]
+            lanes = [RetrievalLane.EPISODIC, RetrievalLane.LEXICAL, RetrievalLane.PROMOTED, RetrievalLane.SEMANTIC]
             if web_sensitive:
                 lanes.append(RetrievalLane.WEB)
-            return RoutePlan(intent_family=intent_family, lanes=lanes, reason="planning_prefers_promoted_and_recent")
+            return RoutePlan(intent_family=intent_family, lanes=lanes, reason="planning_prefers_session_grounded_state")
 
         # INVESTIGATIVE mixed mode.
         lanes = [
@@ -108,6 +108,7 @@ LANE_HANDLERS = {
     ),
     RetrievalLane.EPISODIC: lambda **kw: episodic_lane.retrieve(
         session_id=kw["session_id"],
+        query=kw["query"],
         fresh_tail=kw["fresh_tail"],
         older_raw=kw["older_raw"],
         summaries=kw["summaries"],

@@ -41,3 +41,12 @@ def test_discovery_plan_schema_validation_is_stable():
     assert parsed.intent_family == plan.intent_family
     assert len(parsed.query_variants) <= 6
     assert len(parsed.adjacent_topics) <= 8
+
+
+def test_task_state_query_routes_to_planning_and_disables_discovery():
+    controller = CognitiveController()
+    plan = controller.build_plan(query='What is the current task state and blockers in this session?')
+
+    assert plan.intent_family == IntentFamily.PLANNING
+    assert plan.discovery_mode == DiscoveryMode.OFF
+    assert plan.expected_lanes[:2] == [RetrievalLane.EPISODIC, RetrievalLane.LEXICAL]

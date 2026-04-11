@@ -6,9 +6,22 @@ from CognitiveRAG.crag.contracts.enums import MemoryType, RetrievalLane
 from CognitiveRAG.crag.retrieval.models import LaneHit
 
 
+def _norm(text: str) -> str:
+    return " ".join((text or "").lower().split())
+
+
+def _overlap(query: str, text: str) -> float:
+    q = set(_norm(query).split())
+    t = set(_norm(text).split())
+    if not q or not t:
+        return 0.0
+    return float(len(q & t)) / float(max(1, len(q)))
+
+
 def retrieve(
     *,
     session_id: str,
+    query: str = "",
     fresh_tail: Iterable[Dict[str, Any]],
     older_raw: Iterable[Dict[str, Any]],
     summaries: Iterable[Dict[str, Any]] | None = None,
@@ -22,6 +35,7 @@ def retrieve(
         text = msg.get("text") or ""
         if not text:
             continue
+        overlap = _overlap(query, text)
         rec = 1.0 - float(total_tail - i - 1) / float(total_tail)
         msg_id = str(msg.get("message_id") or msg.get("index") or i)
         hits.append(
@@ -31,8 +45,8 @@ def retrieve(
                 memory_type=MemoryType.EPISODIC_RAW,
                 text=text,
                 provenance={"session_id": session_id, "message": msg},
-                lexical_score=0.45,
-                semantic_score=0.5,
+                lexical_score=min(1.0, 0.30 + overlap),
+                semantic_score=min(1.0, 0.40 + (overlap * 0.8)),
                 recency_score=rec,
                 freshness_score=0.95,
                 trust_score=0.8,
@@ -50,6 +64,7 @@ def retrieve(
         text = msg.get("text") or ""
         if not text:
             continue
+        overlap = _overlap(query, text)
         rec = 1.0 - float(total_old - i) / float(total_old + 1)
         msg_id = str(msg.get("message_id") or msg.get("index") or i)
         hits.append(
@@ -59,8 +74,8 @@ def retrieve(
                 memory_type=MemoryType.EPISODIC_RAW,
                 text=text,
                 provenance={"session_id": session_id, "message": msg},
-                lexical_score=0.35,
-                semantic_score=0.45,
+                lexical_score=min(1.0, 0.20 + overlap),
+                semantic_score=min(1.0, 0.30 + (overlap * 0.7)),
                 recency_score=max(0.05, rec),
                 freshness_score=0.7,
                 trust_score=0.8,
@@ -76,6 +91,7 @@ def retrieve(
         text = summary.get("summary") or summary.get("text") or ""
         if not text:
             continue
+        overlap = _overlap(query, text)
         chunk = summary.get("chunk_index", i)
         hits.append(
             LaneHit(
@@ -84,8 +100,8 @@ def retrieve(
                 memory_type=MemoryType.SUMMARY,
                 text=text,
                 provenance={"session_id": session_id, "summary": summary},
-                lexical_score=0.2,
-                semantic_score=0.35,
+                lexical_score=min(1.0, 0.05 + overlap),
+                semantic_score=min(1.0, 0.15 + (overlap * 0.6)),
                 recency_score=0.3,
                 freshness_score=0.6,
                 trust_score=0.75,

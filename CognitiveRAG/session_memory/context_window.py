@@ -56,6 +56,8 @@ def _detect_intent_family(query: str | None) -> IntentFamily:
         return IntentFamily.MEMORY_SUMMARY
     if "what did we say" in q or "earlier" in q or "quote" in q:
         return IntentFamily.EXACT_RECALL
+    if any(token in q for token in ("current task state", "what changed", "blocker", "blockers", "next step", "next steps")):
+        return IntentFamily.PLANNING
     if "investigate" in q or "investigation" in q:
         return IntentFamily.INVESTIGATIVE
     if "memory organized" in q or "architecture" in q:
@@ -257,10 +259,24 @@ def assemble_context(
     post_prune_count = len(pruned)
     pruned_count = max(0, pre_prune_count - post_prune_count)
 
-    discovery_executor = DiscoveryExecutor()
-    t0_discovery = time.perf_counter()
-    discovery_result = discovery_executor.run(plan=discovery_plan, candidate_pool=pruned)
-    t1_discovery = time.perf_counter()
+    if str(discovery_plan.discovery_mode.value) == "off":
+        from CognitiveRAG.crag.contracts.schemas import DiscoveryResult, DiscoveryLedgerSnapshot
+
+        t0_discovery = time.perf_counter()
+        discovery_result = DiscoveryResult(
+            bounded=True,
+            budget_tokens=0,
+            used_tokens=0,
+            injected_discoveries=[],
+            contradictions=[],
+            ledger=DiscoveryLedgerSnapshot(),
+        )
+        t1_discovery = time.perf_counter()
+    else:
+        discovery_executor = DiscoveryExecutor()
+        t0_discovery = time.perf_counter()
+        discovery_result = discovery_executor.run(plan=discovery_plan, candidate_pool=pruned)
+        t1_discovery = time.perf_counter()
     discovery_candidates = discovery_items_to_candidates(discovery_result.injected_discoveries)
     if discovery_candidates:
         pruned = pruned + discovery_candidates
@@ -313,7 +329,7 @@ def assemble_context(
     if not selected_fresh:
         # Always preserve minimal fresh tail visibility contract.
         selected_fresh = fresh_tail[-max(1, policy.minimal_fresh_tail) :]
-    if not selected_summaries and summaries:
+    if not selected_summaries and summaries and detected_intent not in {IntentFamily.PLANNING, IntentFamily.EXACT_RECALL}:
         # Preserve pre-existing fallback behavior: surfaced summaries remain visible
         # even when selector excludes summary-lane blocks from final selection.
         selected_summaries = summaries[:1]

@@ -104,14 +104,19 @@ def get_policy(intent_family: IntentFamily | str) -> ContextSelectionPolicy:
     elif intent == IntentFamily.PLANNING:
         policy.per_intent_weights = IntentWeights(
             relevance=1.05,
-            provenance=0.75,
+            provenance=0.85,
             recency=0.8,
             freshness_trust=0.55,
-            novelty=0.6,
-            intent_fit=0.95,
+            novelty=0.45,
+            intent_fit=1.15,
             redundancy_penalty=0.7,
             contradiction_penalty=0.8,
         )
+        policy.lane_minima[RetrievalLane.EPISODIC.value] = 1
+        policy.lane_maxima[RetrievalLane.SESSION_SUMMARY.value] = 0
+        policy.lane_maxima[RetrievalLane.CORPUS.value] = 2
+        policy.lane_maxima[RetrievalLane.LARGE_FILE.value] = 1
+        policy.lane_maxima[RetrievalLane.PROMOTED.value] = 2
 
     elif intent == IntentFamily.INVESTIGATIVE:
         policy.per_intent_weights = IntentWeights(

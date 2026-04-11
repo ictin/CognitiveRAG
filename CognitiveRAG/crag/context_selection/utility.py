@@ -35,9 +35,15 @@ def _intent_fit(candidate: ContextCandidate, intent: IntentFamily) -> float:
         return 0.2
 
     if intent == IntentFamily.PLANNING:
-        if lane in {RetrievalLane.PROMOTED, RetrievalLane.SESSION_SUMMARY, RetrievalLane.FRESH_TAIL}:
-            return 0.9
-        return 0.4
+        if lane in {RetrievalLane.FRESH_TAIL, RetrievalLane.EPISODIC}:
+            return 1.0
+        if lane == RetrievalLane.LEXICAL:
+            return 0.8
+        if lane == RetrievalLane.PROMOTED:
+            return 0.65
+        if lane == RetrievalLane.SESSION_SUMMARY:
+            return 0.25
+        return 0.35
 
     # investigative
     if lane in {RetrievalLane.CORPUS, RetrievalLane.LARGE_FILE, RetrievalLane.PROMOTED, RetrievalLane.EPISODIC}:
