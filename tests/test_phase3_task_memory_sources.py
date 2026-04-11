@@ -7,9 +7,17 @@ from fastapi.testclient import TestClient
 
 from CognitiveRAG.app import app
 from CognitiveRAG.core.settings import settings
+from CognitiveRAG.memory.profile_store import ProfileStore
+from CognitiveRAG.memory.reasoning_store import ReasoningStore
+from CognitiveRAG.memory.task_store import TaskStore
 
 
 def test_task_profile_reasoning_included_in_task_memory():
+    # Ensure schema exists before direct inserts.
+    TaskStore(settings.store.task_db_path)
+    ProfileStore(settings.store.profile_db_path)
+    ReasoningStore(settings.store.reasoning_db_path)
+
     # insert one task, one profile fact, one reasoning pattern directly into DBs
     tdb = str(settings.store.task_db_path)
     conn = sqlite3.connect(tdb)

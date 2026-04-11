@@ -90,3 +90,40 @@ def test_router_to_selector_mixed_investigative_produces_mixed_pool():
     lanes = {b["lane"] for b in out["selected_blocks"]}
     assert "episodic" in lanes
     assert ("corpus" in lanes) or ("large_file" in lanes)
+
+
+def test_exact_recall_prefers_exact_span_and_avoids_summary_noise():
+    session_id = "int5"
+    shutil.rmtree(WORKDIR, ignore_errors=True)
+    os.makedirs(WORKDIR, exist_ok=True)
+    with open(os.path.join(WORKDIR, f"raw_{session_id}.json"), "w", encoding="utf-8") as f:
+        json.dump(
+            [
+                {"index": 0, "text": "generic mirror summary boilerplate", "message_id": "m0"},
+                {
+                    "index": 1,
+                    "text": "Exact quote anchor: checksum 9247A and deploy window Friday 10:00 UTC.",
+                    "message_id": "m1",
+                },
+                {"index": 2, "text": "another generic mirror-ish line", "message_id": "m2"},
+                {"index": 3, "text": "recent filler line", "message_id": "m3"},
+            ],
+            f,
+        )
+    with open(os.path.join(WORKDIR, f"summaries_{session_id}.json"), "w", encoding="utf-8") as f:
+        json.dump([{"chunk_index": 0, "summary": "summary generic mirror text"}], f)
+
+    out = assemble_context(
+        session_id,
+        query="quote the exact earlier span with checksum 9247A",
+        budget=420,
+        fresh_tail_count=1,
+    )
+    selected = out.get("selected_blocks", [])
+    selected_ids = [b.get("id") for b in selected]
+    selected_texts = [str(b.get("text") or "") for b in selected]
+
+    assert out["retrieval_route"]["intent_family"] == "exact_recall"
+    assert "episodic:int5:m1" in selected_ids
+    assert any("checksum 9247A" in text for text in selected_texts)
+    assert not any((b.get("lane") == "session_summary") for b in selected)

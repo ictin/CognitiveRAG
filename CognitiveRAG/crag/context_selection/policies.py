@@ -49,7 +49,11 @@ def get_policy(intent_family: IntentFamily | str) -> ContextSelectionPolicy:
             redundancy_penalty=0.75,
             contradiction_penalty=0.8,
         )
+        # Exact recall should prioritize quote-ready episodic evidence and avoid
+        # over-anchoring to unrelated fresh tail / compressed summaries.
+        policy.lane_minima[RetrievalLane.FRESH_TAIL.value] = 1
         policy.lane_minima[RetrievalLane.EPISODIC.value] = 2
+        policy.lane_maxima[RetrievalLane.SESSION_SUMMARY.value] = 0
         policy.lane_maxima[RetrievalLane.CORPUS.value] = 3
         policy.lane_maxima[RetrievalLane.LEXICAL.value] = 4
         policy.lane_maxima[RetrievalLane.SEMANTIC.value] = 4

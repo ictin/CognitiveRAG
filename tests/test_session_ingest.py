@@ -19,6 +19,9 @@ def test_session_append_message_endpoint_uses_durable_store(tmp_path, monkeypatc
         'sender': 'user',
         'text': 'Hello world',
     }
+    fallback_file = Path.cwd() / 'data' / 'session_memory' / 'raw_ingest_sess.json'
+    if fallback_file.exists():
+        fallback_file.unlink()
 
     resp = client.post('/session_append_message', json=payload)
     assert resp.status_code == 200
@@ -34,5 +37,4 @@ def test_session_append_message_endpoint_uses_durable_store(tmp_path, monkeypatc
             'created_at': None,
         }
     ]
-    assert not (Path.cwd() / 'data' / 'session_memory' / 'raw_ingest_sess.json').exists()
-    assert not (Path.cwd() / 'data' / 'session_memory' / 'raw_ingest_sess.json').exists()
+    assert not fallback_file.exists()

@@ -101,16 +101,16 @@ class HybridRetriever:
             try:
                 c.with_policy_defaults()
             except Exception:
-                if not getattr(c, provenance, None):
+                if not getattr(c, "provenance", None):
                     try:
                         c.provenance = {
-                            chunk_id: getattr(c, chunk_id, None),
-                            document_id: getattr(c, document_id, None),
-                            source_type: getattr(c, source_type, None),
+                            "chunk_id": getattr(c, "chunk_id", None),
+                            "document_id": getattr(c, "document_id", None),
+                            "source_type": getattr(c, "source_type", None),
                         }
                     except Exception:
                         pass
-                if getattr(c, exactness, derived) == exact:
+                if getattr(c, "exactness", "derived") == "exact":
                     try:
                         c.summarizable = False
                     except Exception:
@@ -162,16 +162,16 @@ class HybridRetriever:
         else:
             reason = "web not requested by plan"
 
-        final_chunks = [c.with_policy_defaults() if hasattr(c, with_policy_defaults) else c for c in final_chunks]
+        final_chunks = [c.with_policy_defaults() if hasattr(c, "with_policy_defaults") else c for c in final_chunks]
 
         return RetrievalBundle(
             query=query,
             intent=plan.intent,
             chunks=final_chunks,
             provenance={
-                query: query,
-                intent: plan.intent,
-                chunk_count: len(final_chunks),
+                "query": query,
+                "intent": plan.intent,
+                "chunk_count": len(final_chunks),
             },
             augmentation_decision={
                 "considered": considered,

@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, List
+import json
 
 from CognitiveRAG.schemas.retrieval import RetrievedChunk
 
 import chromadb
-from chromadb.config import Settings as ChromaSettings
 from chromadb.utils import embedding_functions
 import logging
 
@@ -21,44 +21,73 @@ class VectorStore:
 
     COLLECTION_NAME = "cognitive_chunks"
 
+    @staticmethod
+    def _sanitize_metadata_for_chroma(metadata: dict[str, Any]) -> dict[str, Any]:
+        sanitized: dict[str, Any] = {}
+        for key, value in (metadata or {}).items():
+            if isinstance(value, (str, int, float, bool)) or value is None:
+                sanitized[key] = value
+                continue
+            if isinstance(value, list):
+                # Keep only primitive-compatible list items for Chroma metadata.
+                if all(isinstance(v, (str, int, float, bool)) or v is None for v in value):
+                    sanitized[key] = value
+                else:
+                    sanitized[key] = json.dumps(value, ensure_ascii=False, sort_keys=True)
+                continue
+            # Nested dict/object values are serialized to preserve provenance without failing upsert.
+            sanitized[key] = json.dumps(value, ensure_ascii=False, sort_keys=True)
+        return sanitized
+
     def __init__(self, path: Path, embedding_model: str | None = None, backing_impl: str | None = None):
         self.path = path
         self.path.mkdir(parents=True, exist_ok=True)
         self.embedding_model = embedding_model
         self.backing_impl = backing_impl or "duckdb+parquet"
-        # Try modern PersistentClient first (newer chroma), fall back to Client with settings
+        # Prefer modern PersistentClient. Avoid deprecated legacy settings fallback.
         try:
-            # Prefer PersistentClient when available
             self._client = chromadb.PersistentClient(path=str(self.path))
             logging.info('VectorStore: using chromadb.PersistentClient with path=%s', str(self.path))
-            # If collection exists, get it and DO NOT create embedding function yet (avoid heavy init)
             try:
                 self._collection = self._client.get_collection(self.COLLECTION_NAME)
                 logging.info('VectorStore: existing collection found; not changing embedding function')
             except Exception:
                 logging.info('VectorStore: collection missing; will create with embedding function')
-                # build embedding function from model name only when needed
-                embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=self.embedding_model) if self.embedding_model else None
+                embedding_fn = self._build_embedding_function()
                 self._collection = self._client.create_collection(name=self.COLLECTION_NAME, embedding_function=embedding_fn)
-        except Exception:
+        except Exception as exc:
+            logging.warning("VectorStore: PersistentClient init failed; falling back to in-process client: %s", exc)
+            self._client = chromadb.Client()
             try:
-                settings = ChromaSettings(persist_directory=str(self.path), chroma_db_impl=self.backing_impl)
-                self._client = chromadb.Client(settings)
-                logging.info('VectorStore: using chromadb.Client with settings persist_directory=%s backing_impl=%s', str(self.path), self.backing_impl)
-                try:
-                    self._collection = self._client.get_collection(self.COLLECTION_NAME)
-                except Exception:
-                    # create collection with embedding function if available
-                    embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=self.embedding_model) if self.embedding_model else None
-                    self._collection = self._client.create_collection(name=self.COLLECTION_NAME, embedding_function=embedding_fn)
-            except Exception as exc:
-                raise
+                self._collection = self._client.get_collection(self.COLLECTION_NAME)
+            except Exception:
+                self._collection = self._client.create_collection(
+                    name=self.COLLECTION_NAME,
+                    embedding_function=self._build_embedding_function(),
+                )
+
+    def _build_embedding_function(self):
+        if not self.embedding_model:
+            return None
+        try:
+            return embedding_functions.SentenceTransformerEmbeddingFunction(model_name=self.embedding_model)
+        except Exception as exc:
+            logging.warning(
+                "VectorStore: sentence-transformers embedding unavailable for '%s'; using default embedding: %s",
+                self.embedding_model,
+                exc,
+            )
+            try:
+                return embedding_functions.DefaultEmbeddingFunction()
+            except Exception as default_exc:
+                logging.warning("VectorStore: default embedding init failed; continuing without explicit embedding fn: %s", default_exc)
+                return None
 
     def upsert_chunks(self, chunks: List[dict[str, Any]]) -> None:
         # Each chunk dict: {chunk_id, document_id, text, metadata}
         ids = [c["chunk_id"] for c in chunks]
         documents = [c["text"] for c in chunks]
-        metadatas = [c.get("metadata", {}) for c in chunks]
+        metadatas = [self._sanitize_metadata_for_chroma(c.get("metadata", {})) for c in chunks]
         # Store document-level metadata plus document_id for lookup
         for m, c in zip(metadatas, chunks):
             m.setdefault("document_id", c.get("document_id"))

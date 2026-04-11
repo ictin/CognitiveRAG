@@ -14,7 +14,7 @@ def _intent_fit(candidate: ContextCandidate, intent: IntentFamily) -> float:
         if lane in {RetrievalLane.EPISODIC, RetrievalLane.FRESH_TAIL}:
             return 1.0
         if mtype == MemoryType.SUMMARY:
-            return 0.4
+            return 0.1
         return 0.2
 
     if intent == IntentFamily.MEMORY_SUMMARY:

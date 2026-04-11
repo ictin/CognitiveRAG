@@ -34,6 +34,36 @@ class ConversationStore:
                 (session_id, message_id, sender, text, created_at)
             )
 
+    def add_message(self, session_id: str, message: dict):
+        return self.upsert_message(
+            session_id=session_id,
+            message_id=str(message.get("message_id") or ""),
+            sender=str(message.get("sender") or ""),
+            text=str(message.get("text") or ""),
+            created_at=message.get("created_at"),
+        )
+
+    def upsert_message(self, session_id: str, message_id: str, sender: str, text: str, created_at: str | None = None) -> bool:
+        """Idempotent insert/update used by runtime ingest endpoints.
+
+        Returns True when inserted, False when updated.
+        """
+        with self._connect() as conn:
+            existing = conn.execute(
+                "SELECT 1 FROM conversations WHERE session_id=? AND message_id=? LIMIT 1",
+                (session_id, message_id),
+            ).fetchone()
+            conn.execute(
+                (
+                    "INSERT INTO conversations(session_id, message_id, sender, text, created_at) "
+                    "VALUES (?, ?, ?, ?, ?) "
+                    "ON CONFLICT(session_id, message_id) DO UPDATE SET "
+                    "sender=excluded.sender, text=excluded.text, created_at=excluded.created_at"
+                ),
+                (session_id, message_id, sender, text, created_at),
+            )
+            return existing is None
+
     def get_messages(self, session_id: str):
         with self._connect() as conn:
             rows = conn.execute(

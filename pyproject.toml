@@ -19,6 +19,10 @@ nli = [
 ]
 dev = [
   "pytest>=8.0",
+  "fastapi>=0.110",
+  "chromadb>=1.0",
+  "rank_bm25>=0.2",
+  "python-multipart>=0.0.9",
 ]
 
 [tool.setuptools.packages.find]

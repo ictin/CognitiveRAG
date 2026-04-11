@@ -41,11 +41,37 @@ class FactPinned(MemoryItem):
 
 
 class EpisodicEvent(MemoryItem):
+    item_id: str = ""
     item_type: str = "episodic_event"
     summarizable: bool = True
     exactness: str = "derived"
+    event_id: str | None = None
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    goal: str | None = None
     event_type: str | None = None
     result: str | None = None
+    success_score: float | None = None
+
+    @model_validator(mode="after")
+    def _ensure_legacy_and_memory_fields(self):
+        # Keep legacy episodic contract stable while preserving MemoryItem shape.
+        eid = (self.event_id or "").strip()
+        iid = (self.item_id or "").strip()
+        if not eid and iid:
+            eid = iid
+        if not iid and eid:
+            iid = eid
+        if not eid:
+            eid = f"evt:{hashlib.sha1((self.content or '').encode('utf-8')).hexdigest()[:16]}"
+        if not iid:
+            iid = eid
+        self.event_id = eid
+        self.item_id = iid
+        if not self.goal and self.content:
+            self.goal = self.content
+        if not self.content and self.goal:
+            self.content = self.goal
+        return self
 
 
 class TaskState(MemoryItem):

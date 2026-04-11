@@ -1,10 +1,12 @@
 import json
+import os
 from fastapi.testclient import TestClient
-from CognitiveRAG import main_server
 
-client = TestClient(main_server.app)
+os.environ.setdefault("COGNITIVERAG_SKIP_KB", "1")
 
 def test_openclaw_mirror_write_endtoend(tmp_path):
+    from CognitiveRAG import main_server
+    client = TestClient(main_server.app)
     session_id = 'sess-mw-1'
     message_id = 'm-1'
 

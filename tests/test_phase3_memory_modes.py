@@ -7,6 +7,15 @@ from fastapi.testclient import TestClient
 from CognitiveRAG.app import app
 from CognitiveRAG.core.settings import settings
 
+
+def _ensure_seed_document(client: TestClient) -> None:
+    p = Path("data/source_documents/phase3_memory_modes_seed.txt")
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text("Phase3 seed document for retrieval mode assertions.\n", encoding="utf-8")
+    r = client.post("/ingest", json={"path": str(p.resolve()), "recursive": False})
+    assert r.status_code == 200, r.text
+
+
 def _post_query(client: TestClient, retrieval_mode: str) -> dict:
     r = client.post(
         "/query",
@@ -18,6 +27,7 @@ def _post_query(client: TestClient, retrieval_mode: str) -> dict:
 
 def test_documents_only_returns_only_doc_ids():
     with TestClient(app) as client:
+        _ensure_seed_document(client)
         resp = _post_query(client, "documents_only")
         summary = resp.get("trace", {}).get("retrieval_summary", [])
         assert summary, resp
@@ -26,6 +36,7 @@ def test_documents_only_returns_only_doc_ids():
 
 def test_regression_test_returns_only_doc_ids():
     with TestClient(app) as client:
+        _ensure_seed_document(client)
         resp = _post_query(client, "regression_test")
         summary = resp.get("trace", {}).get("retrieval_summary", [])
         assert summary, resp
@@ -34,6 +45,7 @@ def test_regression_test_returns_only_doc_ids():
 
 def test_task_memory_returns_only_non_episodic_ids():
     with TestClient(app) as client:
+        _ensure_seed_document(client)
         resp = _post_query(client, "task_memory")
         summary = resp.get("trace", {}).get("retrieval_summary", [])
         assert summary, resp
@@ -42,6 +54,7 @@ def test_task_memory_returns_only_non_episodic_ids():
 
 def test_full_memory_returns_200():
     with TestClient(app) as client:
+        _ensure_seed_document(client)
         resp = _post_query(client, "full_memory")
         summary = resp.get("trace", {}).get("retrieval_summary", [])
         assert isinstance(summary, list), resp

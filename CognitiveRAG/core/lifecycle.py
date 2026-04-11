@@ -111,8 +111,13 @@ def build_services() -> Services:
     web_search = WebSearchClient(enabled=s.retrieval.web_search_enabled)
     logging.getLogger().info('STARTUP_STEP: after WebSearchClient')
 
-    # Create retriever instance and inject shared store instances so retriever reuses them
-    from CognitiveRAG.retriever import set_memory_stores as _set_memory_stores
+    # Create retriever instance and inject shared store instances so retriever reuses them.
+    # Keep optional to avoid hard import coupling on legacy/optional retriever dependencies.
+    _set_memory_stores = None
+    try:
+        from CognitiveRAG.retriever import set_memory_stores as _set_memory_stores  # type: ignore
+    except Exception as exc:
+        logging.getLogger().warning("STARTUP_STEP: retriever memory-store injection unavailable: %s", exc)
 
     retriever = HybridRetriever(
         settings=s,
@@ -128,10 +133,16 @@ def build_services() -> Services:
     )
 
     # provide injected store instances to the lightweight retriever module for reuse
-    try:
-        _set_memory_stores(task_store=task_store, profile_store=profile_store, reasoning_store=reasoning_store, episodic_store=episodic_store)
-    except Exception:
-        pass
+    if _set_memory_stores is not None:
+        try:
+            _set_memory_stores(
+                task_store=task_store,
+                profile_store=profile_store,
+                reasoning_store=reasoning_store,
+                episodic_store=episodic_store,
+            )
+        except Exception:
+            pass
     router = RetrievalRouter(settings=s)
     ingest_pipeline = IngestionPipeline(
         settings=s,
