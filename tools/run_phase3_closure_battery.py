@@ -271,13 +271,16 @@ def main() -> int:
         "status_command_ok": False,
         "explain_command_ok": False,
         "quote_exact_primary": False,
+        "quote_exact_sentence_match": False,
         "task_state_present": False,
+        "task_state_session_grounded": False,
         "blockers_present": False,
         "next_steps_present": False,
         "changed_present": False,
         "long_continuity_present": False,
         "stress_quote_exact_after_noise": False,
         "stress_continuity_present": False,
+        "memory_to_context_signal": False,
     }
 
     for row in transcript:
@@ -289,8 +292,10 @@ def main() -> int:
             checks["runtime_path_truth"] = "runtime entry path:" in txt_l and "runtime plugin root:" in txt_l
         elif step == "explain":
             checks["explain_command_ok"] = "cognitiverag memory architecture" in txt_l
+            checks["memory_to_context_signal"] = "context engine" in txt_l or "context layer" in txt_l
         elif step == "ask_task_state":
             checks["task_state_present"] = bool(txt.strip())
+            checks["task_state_session_grounded"] = ("session" in txt_l) and ("source" in txt_l or "ground" in txt_l)
         elif step == "ask_blockers":
             checks["blockers_present"] = bool(txt.strip())
         elif step == "ask_next_steps":
@@ -299,6 +304,7 @@ def main() -> int:
             checks["changed_present"] = bool(txt.strip())
         elif step == "ask_quote":
             checks["quote_exact_primary"] = quote_token.lower() in txt_l
+            checks["quote_exact_sentence_match"] = "appears in this exact sentence" in txt_l and quote_token.lower() in txt_l
         elif step == "long_continuity":
             checks["long_continuity_present"] = bool(txt.strip())
         elif step == "stress_requote":
@@ -307,6 +313,16 @@ def main() -> int:
             checks["stress_continuity_present"] = bool(txt.strip())
 
     passed = all(checks.values())
+    coverage = {
+        "runtime_path_truth": checks["runtime_path_truth"],
+        "status_surface": checks["status_command_ok"],
+        "explain_surface": checks["explain_command_ok"],
+        "quote_span_surface": checks["quote_exact_primary"] and checks["quote_exact_sentence_match"] and checks["stress_quote_exact_after_noise"],
+        "task_state_surface": checks["task_state_present"] and checks["task_state_session_grounded"],
+        "blockers_next_steps_surface": checks["blockers_present"] and checks["next_steps_present"] and checks["changed_present"],
+        "long_session_continuity_surface": checks["long_continuity_present"] and checks["stress_continuity_present"],
+        "memory_to_context_surface": checks["memory_to_context_signal"],
+    }
     summary = {
         "schemaVersion": "phase3_closure_battery.v1",
         "startedAt": stamp,
@@ -315,7 +331,10 @@ def main() -> int:
         "model": args.model,
         "quoteToken": quote_token,
         "artifactDir": str(outdir),
+        "instrumentRole": "phase3_closure_authoritative",
+        "heavyBenchmarkRole": "stress_telemetry_non_blocking",
         "checks": checks,
+        "coverage": coverage,
         "passed": passed,
         "notes": [
             "This closure battery is Phase-3 scoped and avoids restart-driven gateway lifecycle noise.",

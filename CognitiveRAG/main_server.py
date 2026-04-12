@@ -434,9 +434,62 @@ async def session_upsert_context_item(payload: dict):
             json.dump(item, f)
         return {'status': 'updated'}
 
+
+@app.post('/session_recall')
+async def session_recall(payload: dict):
+    """Search session memory across messages, parts, summaries, and compaction surfaces."""
+    session_id = payload.get('session_id')
+    query = payload.get('query')
+    top_k = int(payload.get('top_k', 10))
+    db_prefix = payload.get('db_prefix')
+    if not session_id or query is None:
+        raise HTTPException(status_code=400, detail='Missing required fields')
     try:
-        patterns = promote_session_summaries(request.session_id, dry_run=False)
-        ids = [p.pattern_id for p in patterns]
-        return PromoteResponse(promoted_count=len(ids), promoted_pattern_ids=ids)
+        from CognitiveRAG.session_memory.recall import search_session_memory
+        results = search_session_memory(session_id=session_id, query=str(query), db_prefix=db_prefix, top_k=top_k)
+        return {'results': results}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Promotion failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Session recall failed: {e}")
+
+
+@app.post('/session_describe_item')
+async def session_describe_item(payload: dict):
+    """Describe one recalled item with stable, source-aware fields."""
+    ref = payload.get('ref')
+    db_prefix = payload.get('db_prefix')
+    if not isinstance(ref, dict):
+        raise HTTPException(status_code=400, detail='Missing required fields')
+    try:
+        from CognitiveRAG.session_memory.recall import describe_session_item
+        return describe_session_item(ref=ref, db_prefix=db_prefix)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Session describe failed: {e}")
+
+
+@app.post('/session_expand_item')
+async def session_expand_item(payload: dict):
+    """Expand one recalled item into directly related memory items."""
+    ref = payload.get('ref')
+    db_prefix = payload.get('db_prefix')
+    if not isinstance(ref, dict):
+        raise HTTPException(status_code=400, detail='Missing required fields')
+    try:
+        from CognitiveRAG.session_memory.recall import expand_session_item
+        expanded = expand_session_item(ref=ref, db_prefix=db_prefix)
+        return {'expanded': expanded}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Session expand failed: {e}")
+
+
+@app.post('/session_structured_export')
+async def session_structured_export(payload: dict):
+    """Export deterministic structured session data (messages, parts, compaction lineage)."""
+    session_id = payload.get('session_id')
+    db_prefix = payload.get('db_prefix')
+    if not session_id:
+        raise HTTPException(status_code=400, detail='Missing required fields')
+    try:
+        from CognitiveRAG.session_memory.export import export_session_with_parts
+        return export_session_with_parts(session_id=str(session_id), db_prefix=db_prefix)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Structured export failed: {e}")
