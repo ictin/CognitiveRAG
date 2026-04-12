@@ -123,3 +123,6 @@ python3 tools/run_phase3_supplemental_readback.py
 
 Phase 3 runtime note: closure authority is defined in `docs/phase3_acceptance_matrix.md`.
 Use `tools/run_phase3_closure_battery.py` for Phase-3 closure-grade runtime checks and treat the plugin-heavy benchmark path as stress telemetry unless the matrix explicitly promotes it.
+Latest closure-grade artifacts (2026-04-12):
+- `forensics/20260412T_phase3_closure_battery_pkg3/summary.json` (authoritative battery pass)
+- `forensics/20260412T_phase3_readback_pkg3/summary.json` (supplemental runtime readback pass)

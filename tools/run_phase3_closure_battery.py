@@ -6,6 +6,8 @@ import datetime as dt
 import json
 import subprocess
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -74,6 +76,25 @@ def _gateway_call(
     }
 
 
+def _post_json(url: str, payload: dict[str, Any], timeout_s: int = 20) -> tuple[int, dict[str, Any] | None, str]:
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data, method="POST", headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout_s) as resp:
+            raw = resp.read().decode("utf-8", errors="replace")
+            body = json.loads(raw) if raw.strip() else {}
+            return int(resp.status), body, raw
+    except urllib.error.HTTPError as e:
+        raw = e.read().decode("utf-8", errors="replace")
+        try:
+            parsed = json.loads(raw) if raw.strip() else {}
+        except Exception:
+            parsed = None
+        return int(e.code), parsed, raw
+    except Exception as e:  # pragma: no cover - script-level failure path
+        return 0, None, str(e)
+
+
 def _text_of_message(msg: dict[str, Any] | None) -> str:
     if not msg:
         return ""
@@ -127,11 +148,12 @@ def _send_and_capture(
     assistant_count: int,
     calls: list[dict[str, Any]],
     transcript: list[dict[str, Any]],
+    wait_s: int,
 ) -> int:
     _, rec = _gateway_call("sessions.send", {"key": session_key, "message": prompt}, timeout_s=60, retries=3)
     rec["step"] = step_id
     calls.append(rec)
-    assistant_msg, poll_rec, next_count = _wait_new_assistant(session_key, assistant_count, wait_s=95)
+    assistant_msg, poll_rec, next_count = _wait_new_assistant(session_key, assistant_count, wait_s=wait_s)
     calls.append({"step": step_id, "poll": poll_rec})
     assistant_text = _text_of_message(assistant_msg)
     transcript.append(
@@ -150,6 +172,8 @@ def main() -> int:
     ap.add_argument("--outdir", default="", help="Optional artifact dir; defaults to forensics/<stamp>_phase3_closure_battery")
     ap.add_argument("--label", default="Phase3 closure battery")
     ap.add_argument("--model", default="gpt-5-mini")
+    ap.add_argument("--backend-base-url", default="http://127.0.0.1:8000")
+    ap.add_argument("--wait-seconds", type=int, default=60)
     args = ap.parse_args()
 
     stamp = _now_stamp()
@@ -161,6 +185,7 @@ def main() -> int:
     quote_token = f"EXACT-SPAN-CLOSURE-{int(time.time())}"
 
     calls: list[dict[str, Any]] = []
+    backend_calls: list[dict[str, Any]] = []
     transcript: list[dict[str, Any]] = []
 
     create_params = {"key": primary_key, "label": f"{args.label} {stamp}", "model": args.model}
@@ -202,6 +227,21 @@ def main() -> int:
         print(json.dumps(summary, indent=2))
         return 1
 
+    primary_session_id = str(created.get("sessionId") or "")
+    if not primary_session_id:
+        summary = {
+            "schemaVersion": "phase3_closure_battery.v1",
+            "passed": False,
+            "reason": "primary_session_id_missing",
+            "primarySessionKey": primary_key,
+            "model": args.model,
+            "artifactDir": str(outdir),
+        }
+        (outdir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        (outdir / "calls.json").write_text(json.dumps(calls, indent=2), encoding="utf-8")
+        print(json.dumps(summary, indent=2))
+        return 1
+
     assistant_count = 0
     steps: list[tuple[str, str]] = [
         ("status", "/crag_status"),
@@ -225,7 +265,7 @@ def main() -> int:
         ),
     ]
     for step_id, prompt in steps:
-        assistant_count = _send_and_capture(primary_key, step_id, prompt, assistant_count, calls, transcript)
+        assistant_count = _send_and_capture(primary_key, step_id, prompt, assistant_count, calls, transcript, wait_s=max(25, int(args.wait_seconds)))
 
     # Stress element: cross-session noise + second quote/state checks.
     noise_assistant_count = 0
@@ -242,6 +282,7 @@ def main() -> int:
             noise_assistant_count,
             calls,
             transcript,
+            wait_s=max(25, int(args.wait_seconds)),
         )
 
     assistant_count = _send_and_capture(
@@ -251,6 +292,7 @@ def main() -> int:
         assistant_count,
         calls,
         transcript,
+        wait_s=max(25, int(args.wait_seconds)),
     )
     assistant_count = _send_and_capture(
         primary_key,
@@ -259,6 +301,7 @@ def main() -> int:
         assistant_count,
         calls,
         transcript,
+        wait_s=max(25, int(args.wait_seconds)),
     )
 
     primary_obj, rec = _gateway_call("sessions.get", {"key": primary_key}, timeout_s=45, retries=2)
@@ -281,7 +324,81 @@ def main() -> int:
         "stress_quote_exact_after_noise": False,
         "stress_continuity_present": False,
         "memory_to_context_signal": False,
+        "trajectory_export_ok": False,
+        "trajectory_message_count_ok": False,
+        "summary_lineage_runtime_ok": False,
+        "long_session_recoverability_runtime_ok": False,
     }
+
+    backend = args.backend_base_url.rstrip("/")
+
+    def backend_call(path: str, payload: dict[str, Any], timeout_s: int = 25) -> tuple[int, dict[str, Any] | None]:
+        status, body, raw = _post_json(f"{backend}{path}", payload, timeout_s=timeout_s)
+        backend_calls.append({"path": path, "payload": payload, "status": status, "body": body, "raw": raw})
+        return status, body
+
+    # Runtime readback proof for trajectory.
+    st, body = backend_call("/session_structured_export", {"session_id": primary_session_id})
+    export_before = body if (st == 200 and isinstance(body, dict)) else None
+    if export_before is not None:
+        checks["trajectory_export_ok"] = True
+        msg_count = int((export_before.get("part_stats") or {}).get("message_count") or 0)
+        # 10 primary prompts + 2 stress prompts + assistant replies should comfortably exceed this floor.
+        checks["trajectory_message_count_ok"] = msg_count >= 12
+
+    # Dedicated compaction proof session: deterministic long-session + lineage/recoverability evidence.
+    proof_session_id = f"{primary_session_id}-compaction-proof"
+    appended_ok = True
+    for idx in range(26):
+        text = (
+            f"Compaction proof message {idx} for {proof_session_id}. "
+            f"Marker-LONG-RECOVERY-{idx:02d}. "
+            "This payload is intentionally verbose to avoid low-value quarantine heuristics."
+        )
+        st, _ = backend_call(
+            "/session_append_message",
+            {
+                "session_id": proof_session_id,
+                "message_id": f"proof-{idx}",
+                "sender": "user" if idx % 2 == 0 else "assistant",
+                "text": text,
+                "created_at": f"2026-04-12T10:{(idx % 60):02d}:00Z",
+            },
+        )
+        appended_ok = appended_ok and st == 200
+
+    seg_count = 0
+    if appended_ok:
+        st, _ = backend_call("/session_compact", {"session_id": proof_session_id, "older_than_index": 20})
+        if st == 200:
+            st, body = backend_call("/session_compaction_state", {"session_id": proof_session_id})
+            comp_state = body.get("state") if (st == 200 and isinstance(body, dict)) else None
+            seg_count = int(((comp_state or {}).get("stats") or {}).get("compacted_segments") or 0) if isinstance(comp_state, dict) else 0
+
+            st, body = backend_call("/session_structured_export", {"session_id": proof_session_id})
+            export_after = body if (st == 200 and isinstance(body, dict)) else None
+            if export_after is not None:
+                comp = export_after.get("compaction") or {}
+                segments = list(comp.get("segments") or [])
+                if seg_count > 0 and segments:
+                    first = segments[0]
+                    checks["summary_lineage_runtime_ok"] = len(list(first.get("lineage") or [])) >= 1
+                    # Recoverability signal: segment carries raw snapshot support.
+                    checks["long_session_recoverability_runtime_ok"] = len(list(first.get("raw_snapshot") or [])) >= 1
+                    # Stronger recoverability proof: expand compacted summary into message refs.
+                    summary_ref = {
+                        "item_type": "compacted_summary",
+                        "session_id": proof_session_id,
+                        "primary_id": str(first.get("segment_id") or ""),
+                    }
+                    if summary_ref["primary_id"]:
+                        st, body = backend_call("/session_expand_item", {"ref": summary_ref})
+                        expanded = list((body or {}).get("expanded") or []) if isinstance(body, dict) else []
+                        if not any(isinstance(item, dict) and item.get("item_type") == "message" for item in expanded):
+                            checks["long_session_recoverability_runtime_ok"] = False
+                else:
+                    checks["summary_lineage_runtime_ok"] = False
+                    checks["long_session_recoverability_runtime_ok"] = False
 
     for row in transcript:
         step = row.get("step")
@@ -322,6 +439,9 @@ def main() -> int:
         "blockers_next_steps_surface": checks["blockers_present"] and checks["next_steps_present"] and checks["changed_present"],
         "long_session_continuity_surface": checks["long_continuity_present"] and checks["stress_continuity_present"],
         "memory_to_context_surface": checks["memory_to_context_signal"],
+        "conversation_trajectory_surface": checks["trajectory_export_ok"] and checks["trajectory_message_count_ok"],
+        "summary_lineage_surface": checks["summary_lineage_runtime_ok"],
+        "long_session_recoverability_surface": checks["long_session_recoverability_runtime_ok"],
     }
     summary = {
         "schemaVersion": "phase3_closure_battery.v1",
@@ -344,6 +464,7 @@ def main() -> int:
 
     (outdir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     (outdir / "calls.json").write_text(json.dumps(calls, indent=2), encoding="utf-8")
+    (outdir / "backend_calls.json").write_text(json.dumps(backend_calls, indent=2), encoding="utf-8")
     (outdir / "transcript.json").write_text(json.dumps(transcript, indent=2), encoding="utf-8")
     (outdir / "primary_session_get.json").write_text(json.dumps(primary_obj or {}, indent=2), encoding="utf-8")
     (outdir / "noise_session_get.json").write_text(json.dumps(noise_obj or {}, indent=2), encoding="utf-8")

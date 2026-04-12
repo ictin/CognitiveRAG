@@ -28,13 +28,13 @@ Status buckets:
 
 | Surface | Repo proof required | Runtime proof required | Closure-grade proof required | Current status |
 |---|---|---|---|---|
-| Conversation store / full session trajectory preservation | session-memory ordering + append tests | live continuity run includes session history round-trip | closure battery continuity checks + session readback | PARTIAL |
+| Conversation store / full session trajectory preservation | session-memory ordering + append tests | live continuity run includes session history round-trip | closure battery continuity checks + session readback | DONE_REPO_AND_RUNTIME |
 | Exact recall and quote/span recovery | selector + recall tests for exact-span preference | live quote-span requests return seeded span | closure battery quote checks, including post-noise requote | DONE_REPO_AND_RUNTIME |
 | Task-state continuity | routing/selection tests prefer session-grounded task evidence | live task-state/blockers/next-steps/changed prompts remain session-grounded | closure battery task-state checks + stress continuity | DONE_REPO_AND_RUNTIME |
-| Message-part fidelity and tool-trace survival | message-parts store + endpoint tests | runtime readback of tool-trace parts from backend | supplemental runtime readback artifact | PARTIAL |
-| Summary lineage / additive compaction | compaction recoverability + deterministic tests | runtime readback where compaction data is surfaced | closure report includes lineage-capable surface | PARTIAL |
-| Structured export | structured export tests include parts+compaction fields | runtime export endpoint readback | supplemental runtime readback artifact | PARTIAL |
-| Long-session recoverability | compaction/recoverability tests | long continuity runtime pass under stress/noise | closure battery stress continuity + optional telemetry trend | PARTIAL |
+| Message-part fidelity and tool-trace survival | message-parts store + endpoint tests | runtime readback of tool-trace parts from backend | supplemental runtime readback artifact | DONE_REPO_AND_RUNTIME |
+| Summary lineage / additive compaction | compaction recoverability + deterministic tests | runtime readback where compaction data is surfaced | closure report includes lineage-capable surface | DONE_REPO_AND_RUNTIME |
+| Structured export | structured export tests include parts+compaction fields | runtime export endpoint readback | supplemental runtime readback artifact | DONE_REPO_AND_RUNTIME |
+| Long-session recoverability | compaction/recoverability tests | long continuity runtime pass under stress/noise | closure battery stress continuity + optional telemetry trend | DONE_REPO_AND_RUNTIME |
 | Memory powers context construction (not recall-only) | assemble-context / selector integration tests | live `/crag_explain_memory` + task/quote behavior show memory-to-context use | closure battery explain + continuity checks | DONE_REPO_AND_RUNTIME |
 
 ## Required artifacts for Phase 3 closure claim
@@ -47,3 +47,11 @@ Required for a top-level Phase-3 closure claim:
 
 Without all four, top-level Phase-3 closure remains open.
 
+## Fresh closure evidence (2026-04-12)
+
+- Authoritative closure battery pass:
+  - `forensics/20260412T_phase3_closure_battery_pkg3/summary.json`
+- Supplemental runtime readback pass:
+  - `forensics/20260412T_phase3_readback_pkg3/summary.json`
+- Heavy benchmark telemetry remains non-blocking and currently noisy due gateway/session lifecycle failures:
+  - `../openclaw-cognitiverag-memory/--outdir/forensics/forensics/20260412T_phase3_heavy_telemetry_pkg3/bench/memory_quality_benchmark_summary.json`

@@ -1,10 +1,10 @@
-import os, json
-from CognitiveRAG.session_memory.context_window import compact_session, assemble_context
+import os, json, uuid
+from CognitiveRAG.session_memory.context_window import WORKDIR, compact_session, assemble_context
 
 
 def test_compact_and_assemble(tmp_path):
-    session_id = 'sess-integ'
-    workdir = os.path.join(os.getcwd(), 'data', 'session_memory')
+    session_id = f"sess-integ-{uuid.uuid4().hex[:8]}"
+    workdir = WORKDIR
     os.makedirs(workdir, exist_ok=True)
     raw_path = os.path.join(workdir, f'raw_{session_id}.json')
 

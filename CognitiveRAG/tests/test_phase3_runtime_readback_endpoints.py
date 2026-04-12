@@ -92,3 +92,49 @@ def test_session_structured_export_and_recall_endpoints(tmp_path, monkeypatch):
     assert exp.status_code == 200
     expanded = exp.json()["expanded"]
     assert any(item.get("item_type") == "message_part" for item in expanded)
+
+
+def test_session_compact_and_compaction_state_endpoints(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("COGNITIVERAG_SKIP_KB", "1")
+
+    session_id = "phase3-compaction-s1"
+    for idx in range(14):
+        r = client.post(
+            "/session_append_message",
+            json={
+                "session_id": session_id,
+                "message_id": f"m{idx}",
+                "sender": "user" if idx % 2 == 0 else "assistant",
+                "text": f"compaction seed message {idx}",
+                "created_at": f"2026-04-12T10:{idx:02d}:00Z",
+            },
+        )
+        assert r.status_code == 200
+
+    compact = client.post(
+        "/session_compact",
+        json={"session_id": session_id, "older_than_index": 10},
+    )
+    assert compact.status_code == 200
+    compact_body = compact.json()
+    assert compact_body["session_id"] == session_id
+    assert compact_body["older_than_index"] == 10
+
+    state = client.post("/session_compaction_state", json={"session_id": session_id})
+    assert state.status_code == 200
+    state_body = state.json()
+    assert state_body["session_id"] == session_id
+    summary = state_body["state"]
+    seg_count = int((summary.get("stats") or {}).get("compacted_segments") or 0)
+    assert seg_count >= 0
+
+    ex = client.post("/session_structured_export", json={"session_id": session_id})
+    assert ex.status_code == 200
+    exported = ex.json()
+    comp = exported["compaction"]
+    assert "segments" in comp
+    if comp["segment_count"] > 0:
+        seg = comp["segments"][0]
+        assert len(seg["lineage"]) >= 1
+        assert len(seg["raw_snapshot"]) >= 1

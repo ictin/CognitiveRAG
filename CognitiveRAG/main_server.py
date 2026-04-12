@@ -493,3 +493,43 @@ async def session_structured_export(payload: dict):
         return export_session_with_parts(session_id=str(session_id), db_prefix=db_prefix)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Structured export failed: {e}")
+
+
+@app.post('/session_compact')
+async def session_compact(payload: dict):
+    """Run additive compaction policy for one session."""
+    session_id = payload.get('session_id')
+    older_than_index = payload.get('older_than_index')
+    if not session_id or older_than_index is None:
+        raise HTTPException(status_code=400, detail='Missing required fields')
+    try:
+        from CognitiveRAG.session_memory.context_window import compact_session
+        created = compact_session(session_id=str(session_id), older_than_index=int(older_than_index))
+        return {
+            'session_id': str(session_id),
+            'older_than_index': int(older_than_index),
+            'created_count': len(created),
+            'created': created,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Session compact failed: {e}")
+
+
+@app.post('/session_compaction_state')
+async def session_compaction_state(payload: dict):
+    """Return deterministic compaction state summary for one session."""
+    session_id = payload.get('session_id')
+    if not session_id:
+        raise HTTPException(status_code=400, detail='Missing required fields')
+    try:
+        from CognitiveRAG.session_memory.compaction import SessionCompactionStore, summarize_compaction_state
+        from CognitiveRAG.session_memory.context_window import WORKDIR
+
+        store = SessionCompactionStore(os.path.join(WORKDIR, "compaction.sqlite3"))
+        state = summarize_compaction_state(session_id=str(session_id), store=store)
+        return {
+            'session_id': str(session_id),
+            'state': state,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Compaction state failed: {e}")
