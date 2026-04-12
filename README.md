@@ -116,4 +116,9 @@ python3 tools/check_b3_nli_env.py
 ./tools/run_b3_validation_seq.sh
 ./tools/run_epic_c_bootstrap_seq.sh
 ./tools/run_epic_c_suite.py
+python3 tools/run_phase3_live_slice.py --model gpt-5-mini
+python3 tools/run_phase3_closure_battery.py --model gpt-5-mini
 ```
+
+Phase 3 runtime note: use `tools/run_phase3_closure_battery.py` as the Phase-3-scoped closure battery.
+The plugin-heavy benchmark path remains useful as stress telemetry, but includes gateway restart lifecycle noise that is broader than Phase 3 memory correctness.
