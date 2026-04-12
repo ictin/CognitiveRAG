@@ -11,3 +11,8 @@ def test_extractors_capture_proposition_and_prescription():
     assert any("prefer" in p.lower() for p in props)
     assert any(("workflow" in p.lower()) or ("->" in p) for p in presc)
 
+
+def test_extractors_skip_ephemeral_temporal_statements():
+    text = "Temporary canary token for today is EPHEMERAL-12345."
+    assert extract_propositions(text) == []
+    assert extract_prescriptions(text) == []

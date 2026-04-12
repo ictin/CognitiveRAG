@@ -24,6 +24,8 @@ def _to_reasoning_pattern(unit: DurableUnit, *, session_id: str, source_summary:
         "memory_subtype": unit.memory_subtype,
         "normalized_key": unit.normalized_key,
         "source_summary": source_summary[:400],
+        "source_refs": list(unit.source_refs or []),
+        "source_class": "promoted_memory",
         **dict(unit.provenance or {}),
     }
     return ReasoningPattern(
@@ -44,6 +46,7 @@ def _to_reasoning_pattern(unit: DurableUnit, *, session_id: str, source_summary:
                 "canonical_text": unit.canonical_text,
                 "normalized_key": unit.normalized_key,
                 "freshness_state": unit.freshness_state,
+                "source_refs": list(unit.source_refs or []),
             }
         },
         tags=[unit.kind, unit.memory_subtype],
@@ -59,17 +62,31 @@ def promote_summaries_to_patterns(session_id: str, summaries: Iterable[Dict[str,
         if not text:
             continue
         chunk_index = summary.get("chunk_index")
-        provenance = {"session_id": session_id, "summary_chunk_index": chunk_index}
+        provenance = {
+            "session_id": session_id,
+            "summary_chunk_index": chunk_index,
+            "created_at": summary.get("created_at"),
+            "source": "session_summary",
+        }
 
         prescriptions = extract_prescriptions(text)
         propositions = extract_propositions(text)
-        picked: DurableUnit | None = None
-        if prescriptions:
-            picked = normalize_prescription(prescriptions[0], provenance=provenance)
-        elif propositions:
-            picked = normalize_proposition(propositions[0], provenance=provenance)
-        if picked is not None:
-            raw_units.append((picked, text, int(chunk_index) if chunk_index is not None else None))
+        for sentence in prescriptions:
+            raw_units.append(
+                (
+                    normalize_prescription(sentence, provenance=provenance),
+                    text,
+                    int(chunk_index) if chunk_index is not None else None,
+                )
+            )
+        for sentence in propositions:
+            raw_units.append(
+                (
+                    normalize_proposition(sentence, provenance=provenance),
+                    text,
+                    int(chunk_index) if chunk_index is not None else None,
+                )
+            )
 
     deduped = dedup_units(unit for unit, _, __ in raw_units)
     by_key = {unit.normalized_key: unit for unit in deduped}
@@ -90,4 +107,3 @@ def promote_summaries_to_patterns(session_id: str, summaries: Iterable[Dict[str,
             )
         )
     return patterns
-

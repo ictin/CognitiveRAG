@@ -54,6 +54,8 @@ def promote_session_summaries(session_id: str, reasoning_store=None, dry_run: bo
                 {
                     "chunk_index": getattr(s, "chunk_index", None),
                     "summary": getattr(s, "summary", None),
+                    "created_at": getattr(s, "created_at", None),
+                    "text": getattr(s, "text", None),
                 }
             )
     patterns = promote_summaries_to_patterns(session_id, normalized)

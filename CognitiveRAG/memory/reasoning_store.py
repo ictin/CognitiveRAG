@@ -110,6 +110,21 @@ class ReasoningStore:
             return []
 
     @staticmethod
+    def _parse_provenance_payload(payload: str | None) -> list:
+        rows = ReasoningStore._parse_json_list(payload)
+        out: list = []
+        for row in rows:
+            if isinstance(row, str):
+                try:
+                    decoded = json.loads(row)
+                    out.append(decoded if isinstance(decoded, dict) else row)
+                except Exception:
+                    out.append(row)
+            else:
+                out.append(row)
+        return out
+
+    @staticmethod
     def _merge_unique(existing: list, incoming: list) -> list:
         out = list(existing or [])
         for item in incoming or []:
@@ -293,10 +308,7 @@ class ReasoningStore:
                 return {}
             pattern_id, solution_summary, provenance_json, memory_subtype, normalized_text, freshness_state, reuse_count, canonical_pattern_id, near_duplicate_of, success_signal_count, failure_signal_count, success_confidence, success_basis_json = row
             meta = {}
-            try:
-                meta['provenance'] = json.loads(provenance_json) if provenance_json else []
-            except Exception:
-                meta['provenance'] = []
+            meta['provenance'] = self._parse_provenance_payload(provenance_json)
             if memory_subtype:
                 meta['memory_subtype'] = memory_subtype
             if normalized_text:
@@ -407,10 +419,7 @@ class ReasoningStore:
                 score = len(qtokens & tokens)
                 if score > 0:
                     meta = {}
-                    try:
-                        meta['provenance'] = json.loads(provenance_json) if provenance_json else []
-                    except Exception:
-                        meta['provenance'] = []
+                    meta['provenance'] = self._parse_provenance_payload(provenance_json)
                     if memory_subtype:
                         meta['memory_subtype'] = memory_subtype
                     if normalized_text:
@@ -444,3 +453,91 @@ class ReasoningStore:
             if lc:
                 out = [lc]
         return out
+
+    def list_promoted(self, *, query: str = "", top_k: int = 20, memory_subtype: str | None = None) -> list[dict]:
+        qtokens = set(str(query or "").lower().split())
+        rows_out: list[tuple[float, dict]] = []
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT pattern_id, problem_signature, solution_summary, confidence, provenance_json, "
+                "memory_subtype, normalized_text, freshness_state, canonical_pattern_id, near_duplicate_of, reuse_count "
+                "FROM reasoning_patterns"
+            ).fetchall()
+        for (
+            pattern_id,
+            problem_signature,
+            solution_summary,
+            confidence,
+            provenance_json,
+            subtype,
+            normalized_text,
+            freshness_state,
+            canonical_pattern_id,
+            near_duplicate_of,
+            reuse_count,
+        ) in rows:
+            if memory_subtype and str(subtype or "") != str(memory_subtype):
+                continue
+            hay = " ".join([str(problem_signature or ""), str(solution_summary or ""), str(normalized_text or ""), str(subtype or "")]).lower()
+            score = float(sum(1 for tok in qtokens if tok in hay)) if qtokens else 1.0
+            if qtokens and score <= 0:
+                continue
+            rows_out.append(
+                (
+                    score,
+                    {
+                        "pattern_id": pattern_id,
+                        "problem_signature": problem_signature,
+                        "solution_summary": solution_summary,
+                        "confidence": float(confidence or 0.0),
+                        "memory_subtype": subtype or "generic",
+                        "normalized_text": normalized_text or "",
+                        "freshness_state": freshness_state or "unknown",
+                        "canonical_pattern_id": canonical_pattern_id,
+                        "near_duplicate_of": near_duplicate_of,
+                        "reuse_count": int(reuse_count or 1),
+                        "source_class": "promoted_memory",
+                        "provenance": self._parse_provenance_payload(provenance_json),
+                    },
+                )
+            )
+        rows_out.sort(key=lambda pair: (-pair[0], pair[1]["pattern_id"]))
+        return [row for _, row in rows_out[: max(1, int(top_k))]]
+
+    def get_promoted(self, *, pattern_id: str) -> dict | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT pattern_id, problem_signature, solution_summary, confidence, provenance_json, "
+                "memory_subtype, normalized_text, freshness_state, canonical_pattern_id, near_duplicate_of, reuse_count "
+                "FROM reasoning_patterns WHERE pattern_id=? LIMIT 1",
+                (str(pattern_id),),
+            ).fetchone()
+        if not row:
+            return None
+        (
+            pid,
+            problem_signature,
+            solution_summary,
+            confidence,
+            provenance_json,
+            subtype,
+            normalized_text,
+            freshness_state,
+            canonical_pattern_id,
+            near_duplicate_of,
+            reuse_count,
+        ) = row
+        return {
+            "pattern_id": pid,
+            "problem_signature": problem_signature,
+            "solution_summary": solution_summary,
+            "confidence": float(confidence or 0.0),
+            "memory_subtype": subtype or "generic",
+            "normalized_text": normalized_text or "",
+            "freshness_state": freshness_state or "unknown",
+            "canonical_pattern_id": canonical_pattern_id,
+            "near_duplicate_of": near_duplicate_of,
+            "reuse_count": int(reuse_count or 1),
+            "source_class": "promoted_memory",
+            "provenance": self._parse_provenance_payload(provenance_json),
+        }

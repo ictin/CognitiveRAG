@@ -11,8 +11,8 @@ from CognitiveRAG.crag.retrieval.models import LaneHit
 from CognitiveRAG.memory.reasoning_success import refresh_reasoning_success_signals
 
 
-def _load_reasoning(workdir: str, limit: int = 10):
-    db_path = os.path.join(workdir, "reasoning.sqlite3")
+def _load_reasoning(workdir: str, limit: int = 10, db_path: str | None = None):
+    db_path = str(db_path or os.path.join(workdir, "reasoning.sqlite3"))
     if not os.path.exists(db_path):
         return []
     with sqlite3.connect(db_path) as conn:
@@ -33,11 +33,19 @@ def _load_reasoning(workdir: str, limit: int = 10):
                 ).fetchall()
                 return [(*row, 0, 0, 0.0, None) for row in rows]
             except sqlite3.OperationalError:
-                rows = conn.execute(
-                    "SELECT pattern_id, solution_summary, confidence, provenance_json FROM reasoning_patterns ORDER BY rowid DESC LIMIT ?",
-                    (int(limit),),
-                ).fetchall()
-                return [(*row, None, None, None, 1, None, None, 0, 0, 0.0, None) for row in rows]
+                try:
+                    rows = conn.execute(
+                        "SELECT pattern_id, solution_summary, confidence, provenance_json, memory_subtype, normalized_text, freshness_state "
+                        "FROM reasoning_patterns ORDER BY rowid DESC LIMIT ?",
+                        (int(limit),),
+                    ).fetchall()
+                    return [(*row, 1, None, None, 0, 0, 0.0, None) for row in rows]
+                except sqlite3.OperationalError:
+                    rows = conn.execute(
+                        "SELECT pattern_id, solution_summary, confidence, provenance_json FROM reasoning_patterns ORDER BY rowid DESC LIMIT ?",
+                        (int(limit),),
+                    ).fetchall()
+                    return [(*row, None, None, None, 1, None, None, 0, 0, 0.0, None) for row in rows]
 
 
 def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: int = 6) -> List[LaneHit]:
@@ -47,7 +55,14 @@ def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: in
         refresh_reasoning_success_signals(workdir=workdir)
     except Exception:
         pass
-    rows = _load_reasoning(workdir, limit=max(8, top_k))
+    db_path = None
+    try:
+        from CognitiveRAG.core.settings import settings as _settings
+
+        db_path = str(getattr(_settings.store, "reasoning_db_path", "") or "")
+    except Exception:
+        db_path = None
+    rows = _load_reasoning(workdir, limit=max(8, top_k), db_path=db_path)
     graph = GraphRetrievalEnricher(workdir)
     signature_matches = graph.find_problem_signature_matches(query=query, max_matches=5)
     graph_bonus_by_pattern: dict[str, float] = {}
@@ -77,6 +92,8 @@ def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: in
             provenance = {"reasoning_provenance": json.loads(provenance_json) if provenance_json else []}
         except Exception:
             provenance = {"reasoning_provenance": []}
+        provenance["source_class"] = "promoted_memory"
+        provenance["source_store"] = "reasoning_store"
         if memory_subtype:
             provenance["memory_subtype"] = memory_subtype
         if freshness_state:

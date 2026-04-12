@@ -201,6 +201,15 @@ class PromoteResponse(BaseModel):
     promoted_count: int
     promoted_pattern_ids: list[str]
 
+class PromotedSearchRequest(BaseModel):
+    query: str = ""
+    top_k: int = 20
+    memory_subtype: str | None = None
+
+
+class PromotedGetRequest(BaseModel):
+    pattern_id: str
+
 
 class AssembleContextRequest(BaseModel):
     session_id: str
@@ -219,6 +228,16 @@ class AssembleContextResponse(BaseModel):
     discovery: dict | None = None
 
 
+def _resolve_reasoning_store():
+    from CognitiveRAG.memory.reasoning_store import ReasoningStore
+    try:
+        from CognitiveRAG.core.settings import settings as _settings
+        db_path = Path(getattr(_settings.store, "reasoning_db_path", Path(os.getcwd()) / "data" / "session_memory" / "reasoning.sqlite3"))
+    except Exception:
+        db_path = Path(os.getcwd()) / "data" / "session_memory" / "reasoning.sqlite3"
+    return ReasoningStore(db_path)
+
+
 @app.post('/promote_session', response_model=PromoteResponse)
 async def promote_session(request: PromoteRequest):
     """Operator endpoint: promote session summaries into durable reasoning memory.
@@ -232,6 +251,43 @@ async def promote_session(request: PromoteRequest):
         return PromoteResponse(promoted_count=len(ids), promoted_pattern_ids=ids)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Promotion failed: {e}")
+
+
+@app.post('/promoted_search')
+async def promoted_search(request: PromotedSearchRequest):
+    """Readback endpoint for durable promoted memory records."""
+    try:
+        rs = _resolve_reasoning_store()
+        items = rs.list_promoted(
+            query=str(request.query or ""),
+            top_k=int(request.top_k),
+            memory_subtype=request.memory_subtype,
+        )
+        return {
+            "query": str(request.query or ""),
+            "top_k": int(request.top_k),
+            "memory_subtype": request.memory_subtype,
+            "count": len(items),
+            "items": items,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Promoted search failed: {e}")
+
+
+@app.post('/promoted_get')
+async def promoted_get(request: PromotedGetRequest):
+    """Read one durable promoted memory record by pattern_id."""
+    try:
+        rs = _resolve_reasoning_store()
+        item = rs.get_promoted(pattern_id=request.pattern_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Promoted item not found")
+        return item
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Promoted get failed: {e}")
+
 
 @app.post('/session_assemble_context', response_model=AssembleContextResponse)
 async def session_assemble_context(request: AssembleContextRequest):

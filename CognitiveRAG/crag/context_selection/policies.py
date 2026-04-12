@@ -70,6 +70,7 @@ def get_policy(intent_family: IntentFamily | str) -> ContextSelectionPolicy:
             contradiction_penalty=0.85,
         )
         policy.lane_minima[RetrievalLane.SESSION_SUMMARY.value] = 2
+        policy.lane_minima[RetrievalLane.PROMOTED.value] = 1
         policy.lane_maxima[RetrievalLane.EPISODIC.value] = 3
         policy.lane_maxima[RetrievalLane.LEXICAL.value] = 3
 

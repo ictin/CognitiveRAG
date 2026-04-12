@@ -126,3 +126,8 @@ Use `tools/run_phase3_closure_battery.py` for Phase-3 closure-grade runtime chec
 Latest closure-grade artifacts (2026-04-12):
 - `forensics/20260412T_phase3_closure_battery_pkg3/summary.json` (authoritative battery pass)
 - `forensics/20260412T_phase3_readback_pkg3/summary.json` (supplemental runtime readback pass)
+
+Phase 4 runtime note: durable promoted-memory closure authority is defined in `docs/phase4_acceptance_matrix.md`.
+Use `tools/run_phase4_promoted_closure.py` as the authoritative runtime battery for promotion bridge/readback/truthfulness checks.
+Latest Phase-4 artifact in this package:
+- `forensics/20260412T_phase4_promoted_closure_pkg8/summary.json`

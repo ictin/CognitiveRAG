@@ -16,3 +16,8 @@ def test_required_profiles_exist():
         assert p.hard_reservation_tokens > 0
         assert p.front_anchor_budget >= 1
         assert p.back_anchor_budget >= 1
+
+
+def test_memory_summary_requires_promoted_lane_minimum():
+    p = get_policy(IntentFamily.MEMORY_SUMMARY)
+    assert int(p.lane_minima.get("promoted", 0)) >= 1

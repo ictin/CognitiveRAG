@@ -1,4 +1,5 @@
 import os, json
+import uuid
 from pathlib import Path
 from CognitiveRAG.session_memory.context_window import compact_session
 from CognitiveRAG.session_memory.promotion_bridge import promote_session_summaries
@@ -6,7 +7,7 @@ from CognitiveRAG.memory.reasoning_store import ReasoningStore
 
 
 def test_compact_then_promote(tmp_path):
-    session_id = 'prom_integ'
+    session_id = f"prom_integ_{uuid.uuid4().hex[:8]}"
     workdir = Path(os.getcwd()) / 'data' / 'session_memory'
     workdir.mkdir(parents=True, exist_ok=True)
     raw_path = workdir / f'raw_{session_id}.json'

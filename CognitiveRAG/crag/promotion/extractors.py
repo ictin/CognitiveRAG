@@ -16,10 +16,39 @@ def _sentences(text: str) -> list[str]:
     return out
 
 
+def _is_ephemeral_sentence(sentence: str) -> bool:
+    s = sentence.lower()
+    return any(
+        token in s
+        for token in [
+            "temporary",
+            "for today",
+            "today only",
+            "ephemeral",
+            "canary token",
+            "right now",
+            "this session only",
+        ]
+    )
+
+
 def extract_propositions(text: str) -> List[str]:
     out: list[str] = []
     for sentence in _sentences(text):
+        if _is_ephemeral_sentence(sentence):
+            continue
         s = sentence.lower()
+        looks_procedural = (
+            "workflow" in s
+            or "procedure" in s
+            or "step " in s
+            or " -> " in sentence
+            or "→" in sentence
+            or "then " in s
+            or "run " in s
+        )
+        if looks_procedural:
+            continue
         if any(
             key in s
             for key in [
@@ -35,14 +64,29 @@ def extract_propositions(text: str) -> List[str]:
         ):
             out.append(sentence)
     if not out:
-        first = _sentences(text)[:1]
-        out.extend(first)
+        for sentence in _sentences(text)[:1]:
+            if _is_ephemeral_sentence(sentence):
+                continue
+            s = sentence.lower()
+            if (
+                "workflow" in s
+                or "procedure" in s
+                or "step " in s
+                or " -> " in sentence
+                or "→" in sentence
+                or "then " in s
+                or "run " in s
+            ):
+                continue
+            out.append(sentence)
     return out
 
 
 def extract_prescriptions(text: str) -> List[str]:
     out: list[str] = []
     for sentence in _sentences(text):
+        if _is_ephemeral_sentence(sentence):
+            continue
         s = sentence.lower()
         if (
             "workflow" in s
@@ -56,4 +100,3 @@ def extract_prescriptions(text: str) -> List[str]:
         ):
             out.append(sentence)
     return out
-
