@@ -52,6 +52,28 @@ def test_compaction_policy_creates_lineage_and_preserves_raw(tmp_path: Path):
     assert first["status"] == "compacted"
 
 
+def test_compaction_trigger_threshold_is_explicit_and_non_destructive(tmp_path: Path):
+    session_id = "cmp-trigger"
+    shutil.rmtree(WORKDIR, ignore_errors=True)
+    rows = _seed_messages(session_id, count=10)
+    _write_raw(session_id, rows)
+
+    meta = compact_session(
+        session_id,
+        older_than_index=6,
+        trigger_config={"min_compactable_count": 50, "chunk_size": 5},
+        return_meta=True,
+    )
+    assert isinstance(meta, dict)
+    assert meta["created"] == []
+    trigger = dict(meta["trigger"])
+    assert trigger["trigger_fired"] is False
+    assert trigger["trigger_reason"] == "min_compactable_count_threshold_not_met"
+    with open(os.path.join(WORKDIR, f"raw_{session_id}.json"), "r", encoding="utf-8") as handle:
+        loaded = json.load(handle)
+    assert loaded == rows
+
+
 def test_compaction_is_deterministic_and_idempotent(tmp_path: Path):
     session_id = "cmp2"
     shutil.rmtree(WORKDIR, ignore_errors=True)

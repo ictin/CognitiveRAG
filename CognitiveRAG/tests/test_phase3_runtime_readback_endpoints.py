@@ -114,12 +114,15 @@ def test_session_compact_and_compaction_state_endpoints(tmp_path, monkeypatch):
 
     compact = client.post(
         "/session_compact",
-        json={"session_id": session_id, "older_than_index": 10},
+        json={"session_id": session_id, "older_than_index": 10, "trigger_config": {"min_compactable_count": 3}},
     )
     assert compact.status_code == 200
     compact_body = compact.json()
     assert compact_body["session_id"] == session_id
     assert compact_body["older_than_index"] == 10
+    assert "trigger" in compact_body
+    assert compact_body["trigger"]["min_compactable_count"] == 3
+    assert "trigger_reason" in compact_body["trigger"]
 
     state = client.post("/session_compaction_state", json={"session_id": session_id})
     assert state.status_code == 200

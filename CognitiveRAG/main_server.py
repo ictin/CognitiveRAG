@@ -556,16 +556,25 @@ async def session_compact(payload: dict):
     """Run additive compaction policy for one session."""
     session_id = payload.get('session_id')
     older_than_index = payload.get('older_than_index')
+    trigger_config = payload.get('trigger_config') if isinstance(payload.get('trigger_config'), dict) else None
     if not session_id or older_than_index is None:
         raise HTTPException(status_code=400, detail='Missing required fields')
     try:
         from CognitiveRAG.session_memory.context_window import compact_session
-        created = compact_session(session_id=str(session_id), older_than_index=int(older_than_index))
+        out = compact_session(
+            session_id=str(session_id),
+            older_than_index=int(older_than_index),
+            trigger_config=trigger_config,
+            return_meta=True,
+        )
+        created = list((out or {}).get('created') or [])
+        trigger = dict((out or {}).get('trigger') or {})
         return {
             'session_id': str(session_id),
             'older_than_index': int(older_than_index),
             'created_count': len(created),
             'created': created,
+            'trigger': trigger,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Session compact failed: {e}")

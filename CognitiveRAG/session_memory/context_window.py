@@ -102,7 +102,9 @@ def compact_session(
     session_id: str,
     older_than_index: int,
     summarizer: Optional[Callable[[List[Dict[str, Any]]], Dict[str, Any]]] = None,
-) -> List[Dict[str, Any]]:
+    trigger_config: Optional[Dict[str, Any]] = None,
+    return_meta: bool = False,
+) -> List[Dict[str, Any]] | Dict[str, Any]:
     """Create additive derived summaries for older messages.
 
     This preserves raw history and only adds summary artifacts.
@@ -124,10 +126,33 @@ def compact_session(
         older_than_index=int(older_than_index),
         already_compacted_keys=already_compacted,
     )
-    if not compactable and not quarantined:
+    cfg = dict(trigger_config or {})
+    min_compactable_count = int(cfg.get("min_compactable_count", os.environ.get("CRAG_COMPACTION_MIN_COMPACTABLE_COUNT", "1")) or 1)
+    chunk_size = int(cfg.get("chunk_size", os.environ.get("CRAG_COMPACTION_CHUNK_SIZE", "20")) or 20)
+    if min_compactable_count < 1:
+        min_compactable_count = 1
+    if chunk_size < 1:
+        chunk_size = 1
+    trigger_fired = len(compactable) >= min_compactable_count
+    trigger_reason = (
+        "min_compactable_count_threshold_met"
+        if trigger_fired
+        else "min_compactable_count_threshold_not_met"
+    )
+    trigger = {
+        "trigger_fired": bool(trigger_fired),
+        "trigger_reason": trigger_reason,
+        "older_than_index": int(older_than_index),
+        "min_compactable_count": int(min_compactable_count),
+        "compactable_count": int(len(compactable)),
+        "quarantined_count": int(len(quarantined)),
+        "chunk_size": int(chunk_size),
+    }
+    if (not compactable and not quarantined) or (not trigger_fired):
+        if return_meta:
+            return {"created": [], "trigger": trigger}
         return []
 
-    chunk_size = 20
     chunks = [compactable[i : i + chunk_size] for i in range(0, len(compactable), chunk_size)]
 
     existing = _load_fallback_summaries(session_id)
@@ -159,6 +184,7 @@ def compact_session(
             metadata={
                 "older_than_index": int(older_than_index),
                 "created_by": "context_window.v3.compaction_policy",
+                "trigger": trigger,
             },
         )
         node = {
@@ -175,6 +201,7 @@ def compact_session(
                 "source_index_end": end_index,
                 "lineage_count": len(lineage),
                 "recoverability": "raw_or_snapshot",
+                "trigger": trigger,
             },
         }
         existing.append(node)
@@ -193,6 +220,8 @@ def compact_session(
         )
 
     _save_fallback_summaries(session_id, existing)
+    if return_meta:
+        return {"created": created, "trigger": trigger}
     return created
 
 
