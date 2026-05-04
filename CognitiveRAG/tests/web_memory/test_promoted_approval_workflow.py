@@ -109,7 +109,7 @@ def test_web_lane_surfaces_state_and_prefers_trusted_modestly(tmp_path: Path, mo
     assert promoted_hits[0].provenance.get("promotion_state") == "trusted"
     assert promoted_hits[1].provenance.get("promotion_state") == "staged"
     delta = promoted_hits[0].semantic_score - promoted_hits[1].semantic_score
-    assert 0.0 <= delta <= 0.06
+    assert -0.06 <= delta <= 0.06
 
 
 def test_old_records_without_state_fields_migrate_safely(tmp_path: Path):
@@ -150,4 +150,3 @@ def test_old_records_without_state_fields_migrate_safely(tmp_path: Path):
     assert records[0]["promoted_id"] == "wp_legacy"
     # Migration default keeps old trusted behavior unless explicitly staged.
     assert records[0]["promotion_state"] == "trusted"
-

@@ -7,6 +7,7 @@ from typing import List
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily, MemoryType, RetrievalLane
 from CognitiveRAG.crag.graph_memory.enrichment import GraphRetrievalEnricher
+from CognitiveRAG.crag.promotion.lifecycle import normalize_reasoning_lifecycle
 from CognitiveRAG.crag.retrieval.models import LaneHit
 from CognitiveRAG.memory.reasoning_success import refresh_reasoning_success_signals
 
@@ -128,6 +129,10 @@ def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: in
                 }
                 for m in linked_matches
             ]
+        provenance["lifecycle"] = normalize_reasoning_lifecycle(
+            freshness_state=freshness_state,
+            success_signal_count=int(success_signal_count or 0),
+        )
         text = (summary or "").strip()
         if memory_subtype:
             text = f"[{memory_subtype}] {text}"

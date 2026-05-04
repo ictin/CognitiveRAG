@@ -7,6 +7,7 @@ from typing import List
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily, MemoryType, RetrievalLane
 from CognitiveRAG.crag.graph_memory.enrichment import GraphRetrievalEnricher
+from CognitiveRAG.crag.promotion.lifecycle import normalize_web_lifecycle
 from CognitiveRAG.crag.retrieval.models import LaneHit
 from CognitiveRAG.crag.web_memory.evidence_store import WebEvidenceStore
 from CognitiveRAG.crag.web_memory.fetch import WebFetcher
@@ -129,6 +130,14 @@ def retrieve(
             first_source = next((origin.get("source_url") for origin in graph_origins if origin.get("source_url")), None)
             if first_source:
                 provenance["source_url"] = first_source
+        lifecycle = normalize_web_lifecycle(
+            promotion_state=str(item.get("promotion_state") or "staged"),
+            freshness_lifecycle_state=str(item.get("freshness_lifecycle_state") or "stale"),
+            approved_at=item.get("approved_at"),
+            last_validated_at=item.get("last_validated_at"),
+            revalidation_requested_at=item.get("revalidation_requested_at"),
+        )
+        provenance["lifecycle"] = lifecycle
         state = str(item.get("promotion_state") or "staged")
         lifecycle = str(item.get("freshness_lifecycle_state") or "stale")
         tier = str(item.get("promotion_tier") or "local")

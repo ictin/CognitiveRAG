@@ -39,6 +39,9 @@ def test_promoted_retrieval_surfaces_normalized_units(tmp_path: Path, monkeypatc
     assert top.provenance.get("memory_subtype") == "profile_preference"
     assert top.provenance.get("normalized_text")
     assert top.provenance.get("source_class") == "promoted_memory"
+    lifecycle = dict(top.provenance.get("lifecycle") or {})
+    assert lifecycle.get("lifecycle_state") in {"approved", "revalidated", "stale"}
+    assert lifecycle.get("approval_state") == "approved"
 
 
 def test_promoted_retrieval_prefers_settings_reasoning_db(tmp_path: Path, monkeypatch):

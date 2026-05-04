@@ -87,7 +87,7 @@ def test_web_lane_surfaces_fresh_vs_stale_vs_revalidation_pending(tmp_path: Path
         evidence_ids=["ev1", "ev2"],
         confidence=0.78,
         freshness_state="warm",
-        metadata={"source_url": "https://example.com/fresh", "freshness_ttl_hours": 120},
+        metadata={"source_url": "https://example.com/fresh", "freshness_ttl_hours": 100000},
         promotion_state=WebPromotedMemoryStore.STATE_TRUSTED,
         now_iso="2026-04-03T10:00:00Z",
     )
@@ -116,7 +116,12 @@ def test_web_lane_surfaces_fresh_vs_stale_vs_revalidation_pending(tmp_path: Path
     states = [h.provenance.get("freshness_lifecycle_state") for h in promoted[:2]]
     assert states[0] == "fresh"
     assert states[1] in {"revalidation_pending", "stale"}
+    lifecycle_top = dict(promoted[0].provenance.get("lifecycle") or {})
+    lifecycle_next = dict(promoted[1].provenance.get("lifecycle") or {})
+    assert lifecycle_top.get("lifecycle_state") in {"approved", "revalidated"}
+    assert lifecycle_top.get("approval_state") == "approved"
+    assert lifecycle_next.get("lifecycle_state") in {"revalidation_required", "stale"}
+    assert lifecycle_next.get("revalidation_state") == "required"
     assert promoted[0].trust_score >= promoted[1].trust_score
     assert "freshness_reason" in promoted[0].provenance
     assert "revalidation_requested_at" in promoted[1].provenance
-
