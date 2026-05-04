@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import os
 import re
 import time
 from collections import OrderedDict
@@ -614,12 +615,23 @@ def route_and_retrieve(
         RetrievalLane.WORKSPACE_FAST: -2,
         RetrievalLane.INSTALLATION_FAST: -1,
     }
-    hits.sort(
-        key=lambda h: (
-            fast_lane_order.get(h.lane, plan.lanes.index(h.lane) if h.lane in plan.lanes else 999),
-            h.id,
+    # F-017: hot-path safe optimization.
+    # Preserve deterministic semantics while avoiding repeated O(n) lane index lookups.
+    if os.getenv("CRAG_F017_LEGACY_SORT", "").strip() == "1":
+        hits.sort(
+            key=lambda h: (
+                fast_lane_order.get(h.lane, plan.lanes.index(h.lane) if h.lane in plan.lanes else 999),
+                h.id,
+            )
         )
-    )
+    else:
+        lane_rank = {lane: idx for idx, lane in enumerate(plan.lanes)}
+        hits.sort(
+            key=lambda h: (
+                fast_lane_order.get(h.lane, lane_rank.get(h.lane, 999)),
+                h.id,
+            )
+        )
 
     rerank = rerank_hits(
         query=query,
