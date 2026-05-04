@@ -12,10 +12,13 @@ _WORD_RE = re.compile(r"\W+")
 TYPE_PRIORITY: Dict[str, int] = {
     "principle": 70,
     "template": 60,
+    "execution_lesson": 57,
+    "evaluation_lesson": 56,
     "example": 50,
     "rubric": 40,
     "anti_pattern": 30,
     "workflow": 20,
+    "style_note": 15,
     "style_gist": 15,
     "raw_chunk": 1,
 }
@@ -88,4 +91,3 @@ def score_artifact(artifact: SkillArtifact, request: SkillPackRequest) -> Ranked
 def rank_artifacts(artifacts: Iterable[SkillArtifact], request: SkillPackRequest) -> List[RankedArtifact]:
     ranked = [score_artifact(artifact, request) for artifact in artifacts]
     return sorted(ranked, key=lambda r: (-r.score, r.artifact.artifact_id))
-

@@ -12,6 +12,8 @@ SkillNamespace = Literal[
     "craft_antipatterns",
     "craft_workflows",
     "style_profiles",
+    "craft_execution_lessons",
+    "craft_evaluation_lessons",
     "content_books_raw",
 ]
 
@@ -35,7 +37,12 @@ def namespace_for(*, source_kind: str, artifact_type: str) -> SkillNamespace:
         return "craft_antipatterns"
     if at == "workflow":
         return "craft_workflows"
+    if at == "execution_lesson":
+        return "craft_execution_lessons"
+    if at == "evaluation_lesson":
+        return "craft_evaluation_lessons"
+    if at == "style_note":
+        return "style_profiles"
     if at == "style_gist":
         return "style_profiles"
     return "craft_raw"
-
