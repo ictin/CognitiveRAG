@@ -14,6 +14,7 @@ from CognitiveRAG.crag.graph_memory.category_graph import (
     decide_query_category_routing,
     record_category_relations_for_hits,
 )
+from CognitiveRAG.crag.graph_memory.clustering import annotate_hits_with_clusters
 from CognitiveRAG.crag.graph_memory.topic_graph import (
     decide_query_topic_bridge,
     record_topic_relations_for_hits,
@@ -496,6 +497,14 @@ def _attach_topic_graph_metadata(*, workdir: str, hits: list[LaneHit]) -> list[L
     return out
 
 
+def _attach_clustering_helper_metadata(*, hits: list[LaneHit]) -> list[LaneHit]:
+    if not hits:
+        return []
+    if os.getenv("CRAG_DISABLE_CLUSTERING_HELPER", "").strip() == "1":
+        return [hit.model_copy(deep=True) for hit in hits]
+    return annotate_hits_with_clusters(hits)
+
+
 def _category_ids(hit: LaneHit) -> set[str]:
     cg = dict((hit.provenance or {}).get("category_graph") or {})
     rows = list(cg.get("categories") or [])
@@ -599,6 +608,12 @@ def route_and_retrieve(
             "score": float(topic_score),
             "reason": topic_reason,
         },
+        "clustering_helper": {
+            "helper_enabled": os.getenv("CRAG_DISABLE_CLUSTERING_HELPER", "").strip() != "1",
+            "helper_only": True,
+            "authoritative": False,
+            "cluster_map_available": False,
+        },
         "route_cache": {
             "hit": bool(route_hit),
             "key_terms": list(route_key),
@@ -617,6 +632,7 @@ def route_and_retrieve(
     )
     fast_hits = _attach_category_graph_metadata(workdir=workdir, hits=fast_hits)
     fast_hits = _attach_topic_graph_metadata(workdir=workdir, hits=fast_hits)
+    fast_hits = _attach_clustering_helper_metadata(hits=fast_hits)
     hits.extend(fast_hits)
 
     expensive_lanes = {RetrievalLane.CORPUS, RetrievalLane.LARGE_FILE, RetrievalLane.WEB}
@@ -639,6 +655,7 @@ def route_and_retrieve(
         )
         lane_hits = _attach_category_graph_metadata(workdir=workdir, hits=list(lane_hits or []))
         lane_hits = _attach_topic_graph_metadata(workdir=workdir, hits=lane_hits)
+        lane_hits = _attach_clustering_helper_metadata(hits=lane_hits)
 
         if category_strong and lane in expensive_lanes and lane_hits:
             hinted = set(category_hints)
@@ -688,8 +705,15 @@ def route_and_retrieve(
         category_strong=bool(category_strong),
     )
     hits = list(rerank.hits)
+    cluster_ids = sorted({str(h.cluster_id or "") for h in hits if str(h.cluster_id or "")})
     plan.metadata = {
         **dict(plan.metadata or {}),
+        "clustering_helper": {
+            **dict((plan.metadata or {}).get("clustering_helper") or {}),
+            "cluster_map_available": bool(cluster_ids),
+            "cluster_ids": cluster_ids,
+            "cluster_count": len(cluster_ids),
+        },
         "rerank": dict(rerank.metadata or {}),
     }
 
