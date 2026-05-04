@@ -448,6 +448,8 @@ def _graph_store(workdir: str) -> GraphMemoryStore:
 def _attach_category_graph_metadata(*, workdir: str, hits: list[LaneHit]) -> list[LaneHit]:
     if not hits:
         return []
+    if os.getenv("CRAG_DISABLE_CATEGORY_GRAPH", "").strip() == "1":
+        return [hit.model_copy(deep=True) for hit in hits]
     store = _graph_store(workdir)
     # Persist deterministic category edges for reusable routing/filtering.
     record_category_relations_for_hits(store, hits=hits)
@@ -542,6 +544,7 @@ def route_and_retrieve(
     plan.metadata = {
         **dict(plan.metadata or {}),
         "category_routing": {
+            "helper_enabled": os.getenv("CRAG_DISABLE_CATEGORY_GRAPH", "").strip() != "1",
             "hinted_categories": list(category_hints),
             "strong_signal": bool(category_strong),
             "score": float(category_score),

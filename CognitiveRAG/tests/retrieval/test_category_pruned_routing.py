@@ -154,3 +154,40 @@ def test_category_pruned_routing_strong_signal_fallback_when_no_matches(tmp_path
     assert route_meta["strong_signal"] is True
     assert RetrievalLane.CORPUS.value in set(route_meta["fallback_lanes"])
     assert "corpus:only_marketing" in {h.id for h in hits}
+
+
+def test_category_graph_helper_can_be_disabled_without_breaking_core_path(tmp_path: Path, monkeypatch):
+    clear_hot_cache()
+
+    from CognitiveRAG.crag.retrieval import router as r
+
+    def fake_fast(**_kw):
+        return []
+
+    def fake_corpus(**_kw):
+        return [
+            _hit(hid="corpus:a", lane=RetrievalLane.CORPUS, text="postgres migration schema rollback"),
+            _hit(hid="corpus:b", lane=RetrievalLane.CORPUS, text="youtube retention hooks cta"),
+        ]
+
+    monkeypatch.setattr(r.fast_lanes, "retrieve_fast_lanes", fake_fast)
+    monkeypatch.setitem(r.LANE_HANDLERS, RetrievalLane.CORPUS, fake_corpus)
+    monkeypatch.setenv("CRAG_DISABLE_CATEGORY_GRAPH", "1")
+
+    plan, hits = route_and_retrieve(
+        query="postgres migration schema rollback",
+        intent_family=IntentFamily.CORPUS_OVERVIEW,
+        session_id="cat-disabled",
+        fresh_tail=[],
+        older_raw=[],
+        summaries=[],
+        workdir=str(tmp_path),
+        top_k_per_lane=8,
+    )
+
+    route_meta = dict((plan.metadata or {}).get("category_routing") or {})
+    assert route_meta["helper_enabled"] is False
+    assert hits
+    # Selector/routing still chooses core corpus lane order even when helper is disabled.
+    assert plan.lanes[0] == RetrievalLane.CORPUS
+    assert all("category_graph" not in (h.provenance or {}) for h in hits)
