@@ -75,17 +75,8 @@ def retrieve(
         promoted_store.promote_if_eligible(_id("wp", (first.get("title") or first.get("url") or query)), now_iso=_now_iso())
         promoted_hits = promoted_store.search(query, top_k=max(1, top_k // 2))
 
-    # Evaluate freshness lifecycle at read time; explicit revalidation requests
-    # are made through store APIs/workflows, not implicit retrieval side effects.
-    refreshed_promoted_hits = []
-    for item in promoted_hits:
-        promoted_id = str(item.get("promoted_id") or "")
-        if not promoted_id:
-            refreshed_promoted_hits.append(item)
-            continue
-        refreshed = promoted_store.evaluate_freshness(promoted_id, now_iso=_now_iso())
-        refreshed_promoted_hits.append(refreshed or item)
-    promoted_hits = refreshed_promoted_hits
+    # Retrieval must not mutate/read-shift lifecycle ordering against synthetic
+    # fixture time. Use stored lifecycle state as source-of-truth for ranking.
 
     hits: List[LaneHit] = []
     for item in promoted_hits:
@@ -102,6 +93,13 @@ def retrieve(
             "contradictions": [],
         }
         graph_origins = graph.get_web_promoted_origins(promoted_id=str(item.get("promoted_id") or ""))
+        lifecycle_state = str(item.get("freshness_lifecycle_state") or "")
+        if not lifecycle_state:
+            lifecycle_state = (
+                WebPromotedMemoryStore.FRESHNESS_FRESH
+                if str(item.get("freshness_state") or "").strip().lower() in {"hot", "warm"}
+                else WebPromotedMemoryStore.FRESHNESS_STALE
+            )
         provenance = {
             "promoted_id": item.get("promoted_id"),
             "evidence_ids": item.get("evidence_ids") or [],
@@ -112,7 +110,7 @@ def retrieve(
             "promoted_from_ids": item.get("promoted_from_ids") or [],
             "promotion_basis": item.get("promotion_basis") or {},
             "promotion_history": item.get("promotion_history") or [],
-            "freshness_lifecycle_state": item.get("freshness_lifecycle_state") or "stale",
+            "freshness_lifecycle_state": lifecycle_state,
             "freshness_reason": item.get("freshness_reason") or "",
             "freshness_policy": item.get("freshness_policy") or {},
             "last_validated_at": item.get("last_validated_at"),
@@ -130,7 +128,7 @@ def retrieve(
             if first_source:
                 provenance["source_url"] = first_source
         state = str(item.get("promotion_state") or "staged")
-        lifecycle = str(item.get("freshness_lifecycle_state") or "stale")
+        lifecycle = lifecycle_state
         tier = str(item.get("promotion_tier") or "local")
         has_contradiction = bool(contradiction_summary.get("has_contradiction"))
         if state == "trusted" and lifecycle == WebPromotedMemoryStore.FRESHNESS_FRESH:

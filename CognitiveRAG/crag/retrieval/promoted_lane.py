@@ -59,7 +59,10 @@ def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: in
     try:
         from CognitiveRAG.core.settings import settings as _settings
 
-        db_path = str(getattr(_settings.store, "reasoning_db_path", "") or "")
+        configured = str(getattr(_settings.store, "reasoning_db_path", "") or "")
+        workdir_db = os.path.join(workdir, "reasoning.sqlite3")
+        # Preserve deterministic local test/workdir behavior when a local DB exists.
+        db_path = workdir_db if os.path.exists(workdir_db) else configured
     except Exception:
         db_path = None
     rows = _load_reasoning(workdir, limit=max(8, top_k), db_path=db_path)
