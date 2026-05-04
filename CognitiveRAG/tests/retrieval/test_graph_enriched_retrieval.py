@@ -3,6 +3,7 @@ import sqlite3
 from pathlib import Path
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily, MemoryType
+from CognitiveRAG.core.settings import settings
 from CognitiveRAG.crag.graph_memory.relations import (
     record_problem_signature_resolved_by,
     record_reasoning_pattern_supported_by,
@@ -64,7 +65,8 @@ def _pattern(pattern_id: str, signature: str) -> ReasoningPattern:
     )
 
 
-def test_promoted_lane_surfaces_graph_support_links_and_problem_signature_reuse(tmp_path: Path):
+def test_promoted_lane_surfaces_graph_support_links_and_problem_signature_reuse(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(settings.store, "reasoning_db_path", tmp_path / "reasoning.sqlite3")
     _seed_reasoning_db(tmp_path)
     store = GraphMemoryStore(tmp_path / "graph.sqlite3")
     record_reasoning_pattern_supported_by(
@@ -92,9 +94,13 @@ def test_promoted_lane_surfaces_graph_support_links_and_problem_signature_reuse(
     assert top.provenance["graph_support_links"][0]["source_key"] == "https://docs.example/debug-timeout"
     assert top.provenance.get("graph_problem_signature_matches")
     assert top.provenance["graph_problem_signature_matches"][0]["problem_signature"] == "debug timeout handling"
+    assert top.provenance.get("graph_helper_signal", {}).get("mode") == "helper_only"
+    assert top.provenance.get("graph_helper_signal", {}).get("selector_authority_preserved") is True
+    assert top.provenance.get("graph_helper_signal", {}).get("graph_required") is False
 
 
-def test_promoted_lane_graph_enrichment_fallback_without_graph_db(tmp_path: Path):
+def test_promoted_lane_graph_enrichment_fallback_without_graph_db(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(settings.store, "reasoning_db_path", tmp_path / "reasoning.sqlite3")
     _seed_reasoning_db(tmp_path)
     hits = retrieve_promoted(
         workdir=str(tmp_path),
@@ -139,6 +145,9 @@ def test_web_lane_surfaces_graph_source_origin_for_promoted_web(tmp_path: Path, 
     assert top.provenance.get("graph_source_origin_count") == 1
     assert top.provenance["graph_source_origins"][0]["source_url"] == "https://example.com/btc"
     assert top.provenance.get("source_url") == "https://example.com/btc"
+    assert top.provenance.get("graph_helper_signal", {}).get("mode") == "helper_only"
+    assert top.provenance.get("graph_helper_signal", {}).get("selector_authority_preserved") is True
+    assert top.provenance.get("graph_helper_signal", {}).get("graph_required") is False
 
 
 def test_web_lane_graph_origin_fallback_without_graph_db(tmp_path: Path, monkeypatch):

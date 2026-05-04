@@ -126,6 +126,12 @@ def retrieve(
         if graph_origins:
             provenance["graph_source_origins"] = graph_origins
             provenance["graph_source_origin_count"] = len(graph_origins)
+            provenance["graph_helper_signal"] = {
+                "mode": "helper_only",
+                "origin_link_count": len(graph_origins),
+                "selector_authority_preserved": True,
+                "graph_required": False,
+            }
             first_source = next((origin.get("source_url") for origin in graph_origins if origin.get("source_url")), None)
             if first_source:
                 provenance["source_url"] = first_source

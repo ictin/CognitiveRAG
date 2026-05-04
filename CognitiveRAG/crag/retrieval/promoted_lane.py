@@ -128,6 +128,16 @@ def retrieve(*, workdir: str, intent_family: IntentFamily, query: str, top_k: in
                 }
                 for m in linked_matches
             ]
+        graph_bonus = float(graph_bonus_by_pattern.get(pattern_id, 0.0))
+        if support_links or linked_matches or graph_bonus > 0.0:
+            provenance["graph_helper_signal"] = {
+                "mode": "helper_only",
+                "helper_bonus_applied": graph_bonus,
+                "support_link_count": len(support_links),
+                "problem_signature_match_count": len(linked_matches),
+                "selector_authority_preserved": True,
+                "graph_required": False,
+            }
         text = (summary or "").strip()
         if memory_subtype:
             text = f"[{memory_subtype}] {text}"
