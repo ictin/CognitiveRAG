@@ -1,7 +1,17 @@
 # CognitiveRAG/retriever.py
-from typing import List
-from langchain_core.documents import Document
-from duckduckgo_search import DDGS
+from dataclasses import dataclass, field
+from typing import Any, Dict, List
+try:
+    from langchain_core.documents import Document
+except Exception:
+    @dataclass
+    class Document:
+        page_content: str
+        metadata: Dict[str, Any] = field(default_factory=dict)
+try:
+    from duckduckgo_search import DDGS
+except Exception:
+    DDGS = None
 from . import config
 from . import utils
 from .knowledge_base import kb
@@ -73,7 +83,7 @@ class HybridRetriever:
         # 3. Web Retrieval (External) — stage as web_evidence
         web_results = []
         try:
-            if config.WEB_SEARCH_ENABLED:
+            if config.WEB_SEARCH_ENABLED and DDGS is not None:
                 with DDGS() as ddgs:
                     search_results = list(ddgs.text(query, max_results=top_k))
                     web_results = [
