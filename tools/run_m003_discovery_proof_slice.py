@@ -63,6 +63,7 @@ def _synthesize_answer(out: dict) -> str:
     weak_signal_count = len(list((discovery.get("ledger") or {}).get("rejected_branches", []))) + len(
         list((discovery.get("ledger") or {}).get("unresolved_questions", []))
     )
+    next_suggestions = list((discovery.get("ledger") or {}).get("next_branch_suggestions", []))
     if not findings:
         findings = ["No non-obvious finding passed bounded discovery thresholds."]
     lines = ["Bounded discovery findings:"]
@@ -70,6 +71,8 @@ def _synthesize_answer(out: dict) -> str:
     lines.append(f"- {contradiction_note}")
     if weak_signal_count > 0:
         lines.append(f"- Weak-signal artifact: {weak_signal_count} bounded branch/review warning(s) surfaced.")
+    if next_suggestions:
+        lines.append(f"- Suggested next branch: {next_suggestions[0]}")
     return "\n".join(lines)
 
 
@@ -109,6 +112,8 @@ def main() -> int:
         "contradiction_count": len(discovery.get("contradictions", [])),
         "weak_signal_artifacts": {
             "rejected_branches": list((discovery.get("ledger") or {}).get("rejected_branches", [])),
+            "weak_branch_abandonments": list((discovery.get("ledger") or {}).get("weak_branch_abandonments", [])),
+            "next_branch_suggestions": list((discovery.get("ledger") or {}).get("next_branch_suggestions", [])),
             "unresolved_questions": list((discovery.get("ledger") or {}).get("unresolved_questions", [])),
             "weak_signal_count": len(list((discovery.get("ledger") or {}).get("rejected_branches", [])))
             + len(list((discovery.get("ledger") or {}).get("unresolved_questions", []))),
@@ -125,6 +130,16 @@ def main() -> int:
         "discovery": discovery,
         "selector_metrics_discovery": (out.get("selector_metrics") or {}).get("discovery", {}),
         "selected_discovery_blocks": selected_discovery_blocks,
+        "branch_control": {
+            "rejected_branch_count": len(list((discovery.get("ledger") or {}).get("rejected_branches", [])),
+            ),
+            "weak_branch_abandonment_count": len(
+                list((discovery.get("ledger") or {}).get("weak_branch_abandonments", []))
+            ),
+            "next_branch_suggestion_count": len(
+                list((discovery.get("ledger") or {}).get("next_branch_suggestions", []))
+            ),
+        },
         "bounded_check": {
             "bounded": bool(discovery.get("bounded", False)),
             "used_tokens": int(discovery.get("used_tokens", 0)),
@@ -154,6 +169,12 @@ def main() -> int:
         "within_budget": discovery_trace_payload["bounded_check"]["within_budget"],
         "contradiction_count": contradiction_payload["contradiction_count"],
         "weak_signal_count": contradiction_payload["weak_signal_artifacts"]["weak_signal_count"],
+        "weak_branch_abandonment_count": len(
+            contradiction_payload["weak_signal_artifacts"]["weak_branch_abandonments"]
+        ),
+        "next_branch_suggestion_count": len(
+            contradiction_payload["weak_signal_artifacts"]["next_branch_suggestions"]
+        ),
         "selected_discovery_block_count": len(selected_discovery_blocks),
     }
     _write_json(out_dir / "summary.json", summary)

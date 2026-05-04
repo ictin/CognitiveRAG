@@ -58,6 +58,10 @@ def test_tc004_tc006_discovery_slice_is_bounded_contradiction_aware_and_truthful
     unresolved = list(ledger.get("unresolved_questions") or [])
     weak_signal_count = len(rejected) + len(unresolved)
     assert contradiction_count >= 1 or weak_signal_count >= 1
+    weak_abandonments = list(ledger.get("weak_branch_abandonments") or [])
+    next_suggestions = list(ledger.get("next_branch_suggestions") or [])
+    assert weak_abandonments, "Weak branches must be explicitly marked as abandoned."
+    assert next_suggestions, "Discovery must surface next-branch suggestions for rejected weak paths."
 
     injected_items = [str(item.get("text", "")).strip().lower() for item in discovery["injected_discoveries"]]
     assert any(item and item != query.lower().strip() for item in injected_items)

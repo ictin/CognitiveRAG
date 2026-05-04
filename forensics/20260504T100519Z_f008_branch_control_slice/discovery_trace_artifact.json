@@ -1,0 +1,606 @@
+{
+  "prompt": "What else matters here that I may not be asking?",
+  "discovery_plan": {
+    "plan_version": "m9-mvp",
+    "intent_family": "investigative",
+    "discovery_mode": "active",
+    "web_sensitive": false,
+    "risk_mode": "normal",
+    "bounded": true,
+    "query_variants": [
+      "What else matters here that I may not be asking?",
+      "what else matters here that i may not be asking"
+    ],
+    "adjacent_topics": [
+      "else",
+      "matters",
+      "here",
+      "asking"
+    ],
+    "expected_lanes": [
+      "semantic",
+      "lexical",
+      "episodic",
+      "promoted",
+      "corpus",
+      "large_file"
+    ],
+    "contradiction_probes": [
+      {
+        "role": "skeptic",
+        "prompt": "[skeptic] Find evidence that conflicts with the current strongest claim. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "purpose": "Find evidence that conflicts with the current strongest claim.",
+        "expected_lanes": [
+          "semantic",
+          "lexical",
+          "episodic",
+          "promoted",
+          "corpus",
+          "large_file"
+        ],
+        "priority": 1
+      }
+    ],
+    "novelty_probes": [
+      {
+        "role": "domain specialist",
+        "prompt": "[domain specialist] Find one high-value angle not already captured in obvious evidence. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "purpose": "Find one high-value angle not already captured in obvious evidence.",
+        "expected_lanes": [
+          "semantic",
+          "lexical",
+          "episodic",
+          "promoted",
+          "corpus",
+          "large_file"
+        ],
+        "priority": 1
+      },
+      {
+        "role": "ops reviewer",
+        "prompt": "[ops reviewer] Find practical edge-cases or operational implications missing from the baseline view. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "purpose": "Find practical edge-cases or operational implications missing from the baseline view.",
+        "expected_lanes": [
+          "semantic",
+          "lexical",
+          "episodic",
+          "promoted",
+          "corpus",
+          "large_file"
+        ],
+        "priority": 2
+      }
+    ],
+    "role_conditioned_probes": [
+      {
+        "role": "skeptic",
+        "prompt": "[skeptic] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "purpose": "Generate a bounded retrieval probe from this role perspective.",
+        "expected_lanes": [
+          "semantic",
+          "lexical",
+          "episodic",
+          "promoted",
+          "corpus",
+          "large_file"
+        ],
+        "priority": 1
+      },
+      {
+        "role": "domain specialist",
+        "prompt": "[domain specialist] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "purpose": "Generate a bounded retrieval probe from this role perspective.",
+        "expected_lanes": [
+          "semantic",
+          "lexical",
+          "episodic",
+          "promoted",
+          "corpus",
+          "large_file"
+        ],
+        "priority": 2
+      },
+      {
+        "role": "security auditor",
+        "prompt": "[security auditor] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "purpose": "Generate a bounded retrieval probe from this role perspective.",
+        "expected_lanes": [
+          "semantic",
+          "lexical",
+          "episodic",
+          "promoted",
+          "corpus",
+          "large_file"
+        ],
+        "priority": 3
+      },
+      {
+        "role": "ops reviewer",
+        "prompt": "[ops reviewer] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "purpose": "Generate a bounded retrieval probe from this role perspective.",
+        "expected_lanes": [
+          "semantic",
+          "lexical",
+          "episodic",
+          "promoted",
+          "corpus",
+          "large_file"
+        ],
+        "priority": 4
+      }
+    ],
+    "notes": [
+      "m9-controller: structured planning only",
+      "m10-discovery-loop not executed here"
+    ]
+  },
+  "discovery": {
+    "bounded": true,
+    "budget_tokens": 220,
+    "used_tokens": 113,
+    "injected_discoveries": [
+      {
+        "discovery_id": "discovery:branch-01:lex:fresh:f008-branch-control:1",
+        "text": "Feature flag is not enabled in production for all users.",
+        "tokens": 14,
+        "score": 0.412963,
+        "source_evidence_ids": [
+          "branch-01:lex:fresh:f008-branch-control:1"
+        ],
+        "provenance": {
+          "message": {
+            "index": 1,
+            "text": "Feature flag is not enabled in production for all users."
+          },
+          "recency": 0.9,
+          "category_graph": {
+            "categories": [],
+            "category_count": 0
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.165,
+            "lane_priority": 0.93,
+            "lexical_fit": 0.1,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.01,
+            "final_score": 0.33325
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          },
+          "branch_id": "branch-01",
+          "lane": "lexical",
+          "memory_type": "episodic_raw"
+        }
+      },
+      {
+        "discovery_id": "discovery:branch-01:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b",
+        "text": "[workflow_pattern] reusable procedure seed proc-1776001594: ingest -> validate -> deploy then run smoke tests\n[workflow_pattern] reusable procedure seed proc-1776001948: ingest -> validate -> deploy then run smoke tests",
+        "tokens": 55,
+        "score": 0.4,
+        "source_evidence_ids": [
+          "branch-01:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+        ],
+        "provenance": {
+          "reasoning_provenance": [
+            "{\"session_id\": \"7ff4a2b7-8ae8-442d-85a9-9e0a0a61908b\", \"summary_chunk_index\": 0, \"source\": \"session_summary\", \"kind\": \"prescription\", \"memory_subtype\": \"workflow_pattern\", \"normalized_key\": \"prescription:reusable procedure seed proc-1776001594: ingest -> validate -> deploy then run smoke tests\", \"source_summary\": \"Stable fact seed: deployment window is Tuesday 14:00 UTC (FACT-1776001594).\\nReusable procedure seed PROC-1776001594: ingest -> validate -> deploy; then run smoke tests.\\nEpisodic seed: temporary canary\", \"source_refs\": [{\"session_id\": \"7ff4a2b7-8ae8-442d-85a9-9e0a0a61908b\", \"summary_chunk_index\": 0, \"created_at\": null, \"source\": \"session_summary\"}], \"source_class\": \"promoted_memory\", \"created_at\": null}"
+          ],
+          "source_class": "promoted_memory",
+          "source_store": "reasoning_store",
+          "memory_subtype": "workflow_pattern",
+          "freshness_state": "unknown",
+          "normalized_text": "prescription:reusable procedure seed proc-1776001594: ingest -> validate -> deploy then run smoke tests",
+          "reuse_count": 1,
+          "canonical_pattern_id": "prom:prescription:0643e97c1f010733",
+          "success_signal_count": 0,
+          "failure_signal_count": 0,
+          "success_confidence": 0.0,
+          "success_basis": {},
+          "category_graph": {
+            "categories": [
+              {
+                "category": "ai_memory",
+                "score": 0.5,
+                "matched_keywords": [
+                  "memory"
+                ],
+                "edge_id": "ge:7569fc246f062e5cdc",
+                "node_id": "gn:reasoning_pattern:7d3e8e0d3e50f155"
+              },
+              {
+                "category": "engineering_db",
+                "score": 0.5,
+                "matched_keywords": [
+                  "index"
+                ],
+                "edge_id": "ge:d11bdb2fc4fd69c2af",
+                "node_id": "gn:reasoning_pattern:7d3e8e0d3e50f155"
+              }
+            ],
+            "category_count": 2
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.3805,
+            "lane_priority": 0.79,
+            "lexical_fit": 0.0,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.0,
+            "final_score": 0.406775
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          },
+          "branch_id": "branch-01",
+          "lane": "promoted",
+          "memory_type": "promoted_fact"
+        }
+      },
+      {
+        "discovery_id": "discovery:branch-02:promoted:prom:proposition:d65504ef9cccda7d+promoted:prom:proposition:ef1e0a79b87bb5ec",
+        "text": "[stable_fact] stable fact seed: deployment window is tuesday 14:00 utc fact-1776001795\n[stable_fact] stable fact seed: deployment window is tuesday 14:00 utc fact-1776001442",
+        "tokens": 44,
+        "score": 0.372727,
+        "source_evidence_ids": [
+          "branch-02:promoted:prom:proposition:d65504ef9cccda7d+promoted:prom:proposition:ef1e0a79b87bb5ec"
+        ],
+        "provenance": {
+          "reasoning_provenance": [
+            "{\"session_id\": \"a401e8eb-205c-484a-ad12-c02dd8c1df2c\", \"summary_chunk_index\": 0, \"source\": \"session_summary\", \"kind\": \"proposition\", \"memory_subtype\": \"stable_fact\", \"normalized_key\": \"proposition:stable fact seed: deployment window is tuesday 14:00 utc fact-1776001795\", \"source_summary\": \"Stable fact seed: deployment window is Tuesday 14:00 UTC (FACT-1776001795).\\nReusable procedure seed PROC-1776001795: ingest -> validate -> deploy; then run smoke tests.\\nEpisodic seed: temporary canary\", \"source_refs\": [{\"session_id\": \"a401e8eb-205c-484a-ad12-c02dd8c1df2c\", \"summary_chunk_index\": 0, \"created_at\": null, \"source\": \"session_summary\"}], \"source_class\": \"promoted_memory\", \"created_at\": null}"
+          ],
+          "source_class": "promoted_memory",
+          "source_store": "reasoning_store",
+          "memory_subtype": "stable_fact",
+          "freshness_state": "unknown",
+          "normalized_text": "proposition:stable fact seed: deployment window is tuesday 14:00 utc fact-1776001795",
+          "reuse_count": 1,
+          "canonical_pattern_id": "prom:proposition:d65504ef9cccda7d",
+          "success_signal_count": 0,
+          "failure_signal_count": 0,
+          "success_confidence": 0.0,
+          "success_basis": {},
+          "category_graph": {
+            "categories": [
+              {
+                "category": "ai_memory",
+                "score": 0.5,
+                "matched_keywords": [
+                  "memory"
+                ],
+                "edge_id": "ge:b4b7eca477d3742556",
+                "node_id": "gn:reasoning_pattern:c10e693ec90ca1d3"
+              },
+              {
+                "category": "engineering_db",
+                "score": 0.5,
+                "matched_keywords": [
+                  "index"
+                ],
+                "edge_id": "ge:c651c0eaba4d726bf3",
+                "node_id": "gn:reasoning_pattern:c10e693ec90ca1d3"
+              }
+            ],
+            "category_count": 2
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.3505,
+            "lane_priority": 0.79,
+            "lexical_fit": 0.0,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.0,
+            "final_score": 0.390275
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          },
+          "branch_id": "branch-02",
+          "lane": "promoted",
+          "memory_type": "promoted_fact"
+        }
+      }
+    ],
+    "contradictions": [],
+    "ledger": {
+      "explored_branches": [
+        {
+          "branch_id": "branch-01",
+          "query": "[skeptic] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+          "status": "explored",
+          "score": 0.408642,
+          "evidence_ids": [
+            "branch-01:lex:fresh:f008-branch-control:1",
+            "branch-01:sem:fresh:f008-branch-control:1",
+            "branch-01:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+          ],
+          "reason": null,
+          "abandoned": false
+        },
+        {
+          "branch_id": "branch-02",
+          "query": "[domain specialist] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+          "status": "explored",
+          "score": 0.27987,
+          "evidence_ids": [
+            "branch-02:promoted:prom:proposition:d65504ef9cccda7d+promoted:prom:proposition:ef1e0a79b87bb5ec",
+            "branch-02:promoted:prom:proposition:14108b4c274f4eb8+promoted:prom:proposition:74044f5291ecebcb",
+            "branch-02:promoted:prom:prescription:4ed8ee76a89c4c77+promoted:prom:prescription:5901f0dc88e2822e"
+          ],
+          "reason": null,
+          "abandoned": false
+        }
+      ],
+      "rejected_branches": [
+        {
+          "branch_id": "branch-05",
+          "query": "[skeptic] Find evidence that conflicts with the current strongest claim. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+          "status": "rejected",
+          "score": 0.108642,
+          "evidence_ids": [
+            "branch-05:lex:fresh:f008-branch-control:1",
+            "branch-05:sem:fresh:f008-branch-control:1",
+            "branch-05:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+          ],
+          "reason": "low_score",
+          "abandoned": true
+        },
+        {
+          "branch_id": "branch-03",
+          "query": "[security auditor] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+          "status": "rejected",
+          "score": 0.108333,
+          "evidence_ids": [
+            "branch-03:lex:fresh:f008-branch-control:1",
+            "branch-03:sem:fresh:f008-branch-control:1",
+            "branch-03:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+          ],
+          "reason": "low_score",
+          "abandoned": true
+        },
+        {
+          "branch_id": "branch-04",
+          "query": "[ops reviewer] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+          "status": "rejected",
+          "score": 0.108333,
+          "evidence_ids": [
+            "branch-04:lex:fresh:f008-branch-control:1",
+            "branch-04:sem:fresh:f008-branch-control:1",
+            "branch-04:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+          ],
+          "reason": "low_score",
+          "abandoned": true
+        },
+        {
+          "branch_id": "branch-06",
+          "query": "[domain specialist] Find one high-value angle not already captured in obvious evidence. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+          "status": "rejected",
+          "score": 0.108046,
+          "evidence_ids": [
+            "branch-06:lex:fresh:f008-branch-control:1",
+            "branch-06:sem:fresh:f008-branch-control:1",
+            "branch-06:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+          ],
+          "reason": "low_score",
+          "abandoned": true
+        },
+        {
+          "branch_id": "branch-07",
+          "query": "[ops reviewer] Find practical edge-cases or operational implications missing from the baseline view. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+          "status": "rejected",
+          "score": 0.107527,
+          "evidence_ids": [
+            "branch-07:lex:fresh:f008-branch-control:1",
+            "branch-07:sem:fresh:f008-branch-control:1",
+            "branch-07:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+          ],
+          "reason": "low_score",
+          "abandoned": true
+        }
+      ],
+      "evidence_bundles": {
+        "branch-01": [
+          "branch-01:lex:fresh:f008-branch-control:1",
+          "branch-01:sem:fresh:f008-branch-control:1",
+          "branch-01:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+        ],
+        "branch-02": [
+          "branch-02:promoted:prom:proposition:d65504ef9cccda7d+promoted:prom:proposition:ef1e0a79b87bb5ec",
+          "branch-02:promoted:prom:proposition:14108b4c274f4eb8+promoted:prom:proposition:74044f5291ecebcb",
+          "branch-02:promoted:prom:prescription:4ed8ee76a89c4c77+promoted:prom:prescription:5901f0dc88e2822e"
+        ]
+      },
+      "contradictions": [],
+      "unresolved_questions": [],
+      "weak_branch_abandonments": [
+        "branch-05",
+        "branch-03",
+        "branch-04",
+        "branch-06",
+        "branch-07"
+      ],
+      "next_branch_suggestions": [
+        "Reframe from [skeptic] Find evidence that conflicts with the current strongest claim. Query: What else matters here that I may not be asking?. Target lan with narrower lane constraints or higher-evidence terms.",
+        "Reframe from [security auditor] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. T with narrower lane constraints or higher-evidence terms.",
+        "Reframe from [ops reviewer] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Targe with narrower lane constraints or higher-evidence terms.",
+        "Reframe from [domain specialist] Find one high-value angle not already captured in obvious evidence. Query: What else matters here that I may not be aski with narrower lane constraints or higher-evidence terms.",
+        "Reframe from [ops reviewer] Find practical edge-cases or operational implications missing from the baseline view. Query: What else matters here that I ma with narrower lane constraints or higher-evidence terms."
+      ]
+    }
+  },
+  "selector_metrics_discovery": {
+    "injected_count": 3,
+    "injected_tokens": 113
+  },
+  "selected_discovery_blocks": [
+    {
+      "id": "discovery:branch-02:promoted:prom:proposition:d65504ef9cccda7d+promoted:prom:proposition:ef1e0a79b87bb5ec",
+      "lane": "discovery",
+      "memory_type": "summary",
+      "tokens": 44,
+      "utility": 1.933863,
+      "order_index": 11,
+      "contradiction_risk": 0.0,
+      "cluster_id": "discovery",
+      "provenance": {
+        "reasoning_provenance": [
+          "{\"session_id\": \"a401e8eb-205c-484a-ad12-c02dd8c1df2c\", \"summary_chunk_index\": 0, \"source\": \"session_summary\", \"kind\": \"proposition\", \"memory_subtype\": \"stable_fact\", \"normalized_key\": \"proposition:stable fact seed: deployment window is tuesday 14:00 utc fact-1776001795\", \"source_summary\": \"Stable fact seed: deployment window is Tuesday 14:00 UTC (FACT-1776001795).\\nReusable procedure seed PROC-1776001795: ingest -> validate -> deploy; then run smoke tests.\\nEpisodic seed: temporary canary\", \"source_refs\": [{\"session_id\": \"a401e8eb-205c-484a-ad12-c02dd8c1df2c\", \"summary_chunk_index\": 0, \"created_at\": null, \"source\": \"session_summary\"}], \"source_class\": \"promoted_memory\", \"created_at\": null}"
+        ],
+        "source_class": "promoted_memory",
+        "source_store": "reasoning_store",
+        "memory_subtype": "stable_fact",
+        "freshness_state": "unknown",
+        "normalized_text": "proposition:stable fact seed: deployment window is tuesday 14:00 utc fact-1776001795",
+        "reuse_count": 1,
+        "canonical_pattern_id": "prom:proposition:d65504ef9cccda7d",
+        "success_signal_count": 0,
+        "failure_signal_count": 0,
+        "success_confidence": 0.0,
+        "success_basis": {},
+        "category_graph": {
+          "categories": [
+            {
+              "category": "ai_memory",
+              "score": 0.5,
+              "matched_keywords": [
+                "memory"
+              ],
+              "edge_id": "ge:b4b7eca477d3742556",
+              "node_id": "gn:reasoning_pattern:c10e693ec90ca1d3"
+            },
+            {
+              "category": "engineering_db",
+              "score": 0.5,
+              "matched_keywords": [
+                "index"
+              ],
+              "edge_id": "ge:c651c0eaba4d726bf3",
+              "node_id": "gn:reasoning_pattern:c10e693ec90ca1d3"
+            }
+          ],
+          "category_count": 2
+        },
+        "rerank": {
+          "strategy": "bounded_signal_rerank_v1",
+          "base_score": 0.3505,
+          "lane_priority": 0.79,
+          "lexical_fit": 0.0,
+          "category_fit": 0.0,
+          "graph_support": 0.0,
+          "reuse_signal": 0.0,
+          "success_confidence": 0.0,
+          "tier_bonus": 0.0,
+          "freshness_penalty": 0.0,
+          "contradiction_penalty": 0.0,
+          "helper_adjustment": 0.0,
+          "final_score": 0.390275
+        },
+        "fast_path": {
+          "agent_hot_cache_hit": false
+        },
+        "branch_id": "branch-02",
+        "lane": "promoted",
+        "memory_type": "promoted_fact"
+      }
+    },
+    {
+      "id": "discovery:branch-01:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b",
+      "lane": "discovery",
+      "memory_type": "summary",
+      "tokens": 55,
+      "utility": 1.77,
+      "order_index": 12,
+      "contradiction_risk": 0.0,
+      "cluster_id": "discovery",
+      "provenance": {
+        "reasoning_provenance": [
+          "{\"session_id\": \"7ff4a2b7-8ae8-442d-85a9-9e0a0a61908b\", \"summary_chunk_index\": 0, \"source\": \"session_summary\", \"kind\": \"prescription\", \"memory_subtype\": \"workflow_pattern\", \"normalized_key\": \"prescription:reusable procedure seed proc-1776001594: ingest -> validate -> deploy then run smoke tests\", \"source_summary\": \"Stable fact seed: deployment window is Tuesday 14:00 UTC (FACT-1776001594).\\nReusable procedure seed PROC-1776001594: ingest -> validate -> deploy; then run smoke tests.\\nEpisodic seed: temporary canary\", \"source_refs\": [{\"session_id\": \"7ff4a2b7-8ae8-442d-85a9-9e0a0a61908b\", \"summary_chunk_index\": 0, \"created_at\": null, \"source\": \"session_summary\"}], \"source_class\": \"promoted_memory\", \"created_at\": null}"
+        ],
+        "source_class": "promoted_memory",
+        "source_store": "reasoning_store",
+        "memory_subtype": "workflow_pattern",
+        "freshness_state": "unknown",
+        "normalized_text": "prescription:reusable procedure seed proc-1776001594: ingest -> validate -> deploy then run smoke tests",
+        "reuse_count": 1,
+        "canonical_pattern_id": "prom:prescription:0643e97c1f010733",
+        "success_signal_count": 0,
+        "failure_signal_count": 0,
+        "success_confidence": 0.0,
+        "success_basis": {},
+        "category_graph": {
+          "categories": [
+            {
+              "category": "ai_memory",
+              "score": 0.5,
+              "matched_keywords": [
+                "memory"
+              ],
+              "edge_id": "ge:7569fc246f062e5cdc",
+              "node_id": "gn:reasoning_pattern:7d3e8e0d3e50f155"
+            },
+            {
+              "category": "engineering_db",
+              "score": 0.5,
+              "matched_keywords": [
+                "index"
+              ],
+              "edge_id": "ge:d11bdb2fc4fd69c2af",
+              "node_id": "gn:reasoning_pattern:7d3e8e0d3e50f155"
+            }
+          ],
+          "category_count": 2
+        },
+        "rerank": {
+          "strategy": "bounded_signal_rerank_v1",
+          "base_score": 0.3805,
+          "lane_priority": 0.79,
+          "lexical_fit": 0.0,
+          "category_fit": 0.0,
+          "graph_support": 0.0,
+          "reuse_signal": 0.0,
+          "success_confidence": 0.0,
+          "tier_bonus": 0.0,
+          "freshness_penalty": 0.0,
+          "contradiction_penalty": 0.0,
+          "helper_adjustment": 0.0,
+          "final_score": 0.406775
+        },
+        "fast_path": {
+          "agent_hot_cache_hit": false
+        },
+        "branch_id": "branch-01",
+        "lane": "promoted",
+        "memory_type": "promoted_fact"
+      }
+    }
+  ],
+  "branch_control": {
+    "rejected_branch_count": 5,
+    "weak_branch_abandonment_count": 5,
+    "next_branch_suggestion_count": 5
+  },
+  "bounded_check": {
+    "bounded": true,
+    "used_tokens": 113,
+    "budget_tokens": 220,
+    "within_budget": true
+  }
+}

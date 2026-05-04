@@ -1,0 +1,214 @@
+{
+  "contradictions": [],
+  "ledger": {
+    "explored_branches": [
+      {
+        "branch_id": "branch-01",
+        "query": "[skeptic] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "status": "explored",
+        "score": 0.408642,
+        "evidence_ids": [
+          "branch-01:lex:fresh:f008-branch-control:1",
+          "branch-01:sem:fresh:f008-branch-control:1",
+          "branch-01:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+        ],
+        "reason": null,
+        "abandoned": false
+      },
+      {
+        "branch_id": "branch-02",
+        "query": "[domain specialist] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "status": "explored",
+        "score": 0.27987,
+        "evidence_ids": [
+          "branch-02:promoted:prom:proposition:d65504ef9cccda7d+promoted:prom:proposition:ef1e0a79b87bb5ec",
+          "branch-02:promoted:prom:proposition:14108b4c274f4eb8+promoted:prom:proposition:74044f5291ecebcb",
+          "branch-02:promoted:prom:prescription:4ed8ee76a89c4c77+promoted:prom:prescription:5901f0dc88e2822e"
+        ],
+        "reason": null,
+        "abandoned": false
+      }
+    ],
+    "rejected_branches": [
+      {
+        "branch_id": "branch-05",
+        "query": "[skeptic] Find evidence that conflicts with the current strongest claim. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "status": "rejected",
+        "score": 0.108642,
+        "evidence_ids": [
+          "branch-05:lex:fresh:f008-branch-control:1",
+          "branch-05:sem:fresh:f008-branch-control:1",
+          "branch-05:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+        ],
+        "reason": "low_score",
+        "abandoned": true
+      },
+      {
+        "branch_id": "branch-03",
+        "query": "[security auditor] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "status": "rejected",
+        "score": 0.108333,
+        "evidence_ids": [
+          "branch-03:lex:fresh:f008-branch-control:1",
+          "branch-03:sem:fresh:f008-branch-control:1",
+          "branch-03:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+        ],
+        "reason": "low_score",
+        "abandoned": true
+      },
+      {
+        "branch_id": "branch-04",
+        "query": "[ops reviewer] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "status": "rejected",
+        "score": 0.108333,
+        "evidence_ids": [
+          "branch-04:lex:fresh:f008-branch-control:1",
+          "branch-04:sem:fresh:f008-branch-control:1",
+          "branch-04:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+        ],
+        "reason": "low_score",
+        "abandoned": true
+      },
+      {
+        "branch_id": "branch-06",
+        "query": "[domain specialist] Find one high-value angle not already captured in obvious evidence. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "status": "rejected",
+        "score": 0.108046,
+        "evidence_ids": [
+          "branch-06:lex:fresh:f008-branch-control:1",
+          "branch-06:sem:fresh:f008-branch-control:1",
+          "branch-06:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+        ],
+        "reason": "low_score",
+        "abandoned": true
+      },
+      {
+        "branch_id": "branch-07",
+        "query": "[ops reviewer] Find practical edge-cases or operational implications missing from the baseline view. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "status": "rejected",
+        "score": 0.107527,
+        "evidence_ids": [
+          "branch-07:lex:fresh:f008-branch-control:1",
+          "branch-07:sem:fresh:f008-branch-control:1",
+          "branch-07:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+        ],
+        "reason": "low_score",
+        "abandoned": true
+      }
+    ],
+    "evidence_bundles": {
+      "branch-01": [
+        "branch-01:lex:fresh:f008-branch-control:1",
+        "branch-01:sem:fresh:f008-branch-control:1",
+        "branch-01:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+      ],
+      "branch-02": [
+        "branch-02:promoted:prom:proposition:d65504ef9cccda7d+promoted:prom:proposition:ef1e0a79b87bb5ec",
+        "branch-02:promoted:prom:proposition:14108b4c274f4eb8+promoted:prom:proposition:74044f5291ecebcb",
+        "branch-02:promoted:prom:prescription:4ed8ee76a89c4c77+promoted:prom:prescription:5901f0dc88e2822e"
+      ]
+    },
+    "contradictions": [],
+    "unresolved_questions": [],
+    "weak_branch_abandonments": [
+      "branch-05",
+      "branch-03",
+      "branch-04",
+      "branch-06",
+      "branch-07"
+    ],
+    "next_branch_suggestions": [
+      "Reframe from [skeptic] Find evidence that conflicts with the current strongest claim. Query: What else matters here that I may not be asking?. Target lan with narrower lane constraints or higher-evidence terms.",
+      "Reframe from [security auditor] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. T with narrower lane constraints or higher-evidence terms.",
+      "Reframe from [ops reviewer] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Targe with narrower lane constraints or higher-evidence terms.",
+      "Reframe from [domain specialist] Find one high-value angle not already captured in obvious evidence. Query: What else matters here that I may not be aski with narrower lane constraints or higher-evidence terms.",
+      "Reframe from [ops reviewer] Find practical edge-cases or operational implications missing from the baseline view. Query: What else matters here that I ma with narrower lane constraints or higher-evidence terms."
+    ]
+  },
+  "contradiction_count": 0,
+  "weak_signal_artifacts": {
+    "rejected_branches": [
+      {
+        "branch_id": "branch-05",
+        "query": "[skeptic] Find evidence that conflicts with the current strongest claim. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "status": "rejected",
+        "score": 0.108642,
+        "evidence_ids": [
+          "branch-05:lex:fresh:f008-branch-control:1",
+          "branch-05:sem:fresh:f008-branch-control:1",
+          "branch-05:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+        ],
+        "reason": "low_score",
+        "abandoned": true
+      },
+      {
+        "branch_id": "branch-03",
+        "query": "[security auditor] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "status": "rejected",
+        "score": 0.108333,
+        "evidence_ids": [
+          "branch-03:lex:fresh:f008-branch-control:1",
+          "branch-03:sem:fresh:f008-branch-control:1",
+          "branch-03:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+        ],
+        "reason": "low_score",
+        "abandoned": true
+      },
+      {
+        "branch_id": "branch-04",
+        "query": "[ops reviewer] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "status": "rejected",
+        "score": 0.108333,
+        "evidence_ids": [
+          "branch-04:lex:fresh:f008-branch-control:1",
+          "branch-04:sem:fresh:f008-branch-control:1",
+          "branch-04:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+        ],
+        "reason": "low_score",
+        "abandoned": true
+      },
+      {
+        "branch_id": "branch-06",
+        "query": "[domain specialist] Find one high-value angle not already captured in obvious evidence. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "status": "rejected",
+        "score": 0.108046,
+        "evidence_ids": [
+          "branch-06:lex:fresh:f008-branch-control:1",
+          "branch-06:sem:fresh:f008-branch-control:1",
+          "branch-06:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+        ],
+        "reason": "low_score",
+        "abandoned": true
+      },
+      {
+        "branch_id": "branch-07",
+        "query": "[ops reviewer] Find practical edge-cases or operational implications missing from the baseline view. Query: What else matters here that I may not be asking?. Target lanes: semantic, lexical, episodic, promoted, corpus, large_file.",
+        "status": "rejected",
+        "score": 0.107527,
+        "evidence_ids": [
+          "branch-07:lex:fresh:f008-branch-control:1",
+          "branch-07:sem:fresh:f008-branch-control:1",
+          "branch-07:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b"
+        ],
+        "reason": "low_score",
+        "abandoned": true
+      }
+    ],
+    "weak_branch_abandonments": [
+      "branch-05",
+      "branch-03",
+      "branch-04",
+      "branch-06",
+      "branch-07"
+    ],
+    "next_branch_suggestions": [
+      "Reframe from [skeptic] Find evidence that conflicts with the current strongest claim. Query: What else matters here that I may not be asking?. Target lan with narrower lane constraints or higher-evidence terms.",
+      "Reframe from [security auditor] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. T with narrower lane constraints or higher-evidence terms.",
+      "Reframe from [ops reviewer] Generate a bounded retrieval probe from this role perspective. Query: What else matters here that I may not be asking?. Targe with narrower lane constraints or higher-evidence terms.",
+      "Reframe from [domain specialist] Find one high-value angle not already captured in obvious evidence. Query: What else matters here that I may not be aski with narrower lane constraints or higher-evidence terms.",
+      "Reframe from [ops reviewer] Find practical edge-cases or operational implications missing from the baseline view. Query: What else matters here that I ma with narrower lane constraints or higher-evidence terms."
+    ],
+    "unresolved_questions": [],
+    "weak_signal_count": 5
+  }
+}

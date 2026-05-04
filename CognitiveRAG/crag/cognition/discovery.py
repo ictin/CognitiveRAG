@@ -117,6 +117,7 @@ class DiscoveryExecutor:
             )
 
         for branch, reason in rejected:
+            abandoned = reason in {"low_score", "low_evidence"}
             ledger.record_rejected(
                 DiscoveryBranchRecord(
                     branch_id=branch.branch_id,
@@ -125,8 +126,13 @@ class DiscoveryExecutor:
                     score=branch.score,
                     evidence_ids=[item.evidence_id for item in evidence_by_branch.get(branch.branch_id, [])],
                     reason=reason,
+                    abandoned=abandoned,
                 )
             )
+            if abandoned:
+                ledger.add_next_suggestion(
+                    f"Reframe from {branch.query[:140]} with narrower lane constraints or higher-evidence terms."
+                )
 
         # Contradictions are first-class signals and should be surfaced from the
         # bounded discovery evidence set even if some branches are later rejected.

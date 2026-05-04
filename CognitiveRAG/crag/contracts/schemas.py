@@ -218,6 +218,7 @@ class DiscoveryBranchRecord(BaseModel):
     score: float = 0.0
     evidence_ids: List[str] = Field(default_factory=list)
     reason: str | None = None
+    abandoned: bool = False
 
 
 class DiscoveryLedgerSnapshot(BaseModel):
@@ -226,6 +227,8 @@ class DiscoveryLedgerSnapshot(BaseModel):
     evidence_bundles: Dict[str, List[str]] = Field(default_factory=dict)
     contradictions: List[ContradictionRecord] = Field(default_factory=list)
     unresolved_questions: List[str] = Field(default_factory=list)
+    weak_branch_abandonments: List[str] = Field(default_factory=list)
+    next_branch_suggestions: List[str] = Field(default_factory=list)
 
 
 class InjectedDiscovery(BaseModel):

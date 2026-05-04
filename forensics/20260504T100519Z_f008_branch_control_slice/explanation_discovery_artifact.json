@@ -1,0 +1,745 @@
+{
+  "prompt": "What else matters here that I may not be asking?",
+  "explanation": {
+    "intent_family": "investigative",
+    "total_budget": 1400,
+    "reserved_tokens": 442,
+    "selected_blocks": [
+      {
+        "id": "fresh:f008-branch-control:7",
+        "lane": "fresh_tail",
+        "memory_type": "episodic_raw",
+        "tokens": 16,
+        "utility": 2.806667,
+        "order_index": 0,
+        "contradiction_risk": 0.0,
+        "cluster_id": "fresh_tail",
+        "provenance": {
+          "session_id": "f008-branch-control",
+          "message": {
+            "index": 7,
+            "text": "Operator requested bounded discovery with explicit provenance."
+          },
+          "category_graph": {
+            "categories": [],
+            "category_count": 0
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.445,
+            "lane_priority": 0.0,
+            "lexical_fit": 0.0,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.0,
+            "final_score": 0.24475
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          }
+        }
+      },
+      {
+        "id": "fresh:f008-branch-control:0",
+        "lane": "fresh_tail",
+        "memory_type": "episodic_raw",
+        "tokens": 13,
+        "utility": 2.773333,
+        "order_index": 1,
+        "contradiction_risk": 0.0,
+        "cluster_id": "fresh_tail",
+        "provenance": {
+          "session_id": "f008-branch-control",
+          "message": {
+            "index": 0,
+            "text": "Feature flag is enabled in production for all users."
+          },
+          "category_graph": {
+            "categories": [],
+            "category_count": 0
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.445,
+            "lane_priority": 0.0,
+            "lexical_fit": 0.0,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.0,
+            "final_score": 0.24475
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          }
+        }
+      },
+      {
+        "id": "promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b",
+        "lane": "promoted",
+        "memory_type": "promoted_fact",
+        "tokens": 55,
+        "utility": 3.184393,
+        "order_index": 2,
+        "contradiction_risk": 0.0,
+        "cluster_id": "workflow_pattern",
+        "provenance": {
+          "reasoning_provenance": [
+            "{\"session_id\": \"7ff4a2b7-8ae8-442d-85a9-9e0a0a61908b\", \"summary_chunk_index\": 0, \"source\": \"session_summary\", \"kind\": \"prescription\", \"memory_subtype\": \"workflow_pattern\", \"normalized_key\": \"prescription:reusable procedure seed proc-1776001594: ingest -> validate -> deploy then run smoke tests\", \"source_summary\": \"Stable fact seed: deployment window is Tuesday 14:00 UTC (FACT-1776001594).\\nReusable procedure seed PROC-1776001594: ingest -> validate -> deploy; then run smoke tests.\\nEpisodic seed: temporary canary\", \"source_refs\": [{\"session_id\": \"7ff4a2b7-8ae8-442d-85a9-9e0a0a61908b\", \"summary_chunk_index\": 0, \"created_at\": null, \"source\": \"session_summary\"}], \"source_class\": \"promoted_memory\", \"created_at\": null}"
+          ],
+          "source_class": "promoted_memory",
+          "source_store": "reasoning_store",
+          "memory_subtype": "workflow_pattern",
+          "freshness_state": "unknown",
+          "normalized_text": "prescription:reusable procedure seed proc-1776001594: ingest -> validate -> deploy then run smoke tests",
+          "reuse_count": 1,
+          "canonical_pattern_id": "prom:prescription:0643e97c1f010733",
+          "success_signal_count": 0,
+          "failure_signal_count": 0,
+          "success_confidence": 0.0,
+          "success_basis": {},
+          "category_graph": {
+            "categories": [
+              {
+                "category": "ai_memory",
+                "score": 0.5,
+                "matched_keywords": [
+                  "memory"
+                ],
+                "edge_id": "ge:7569fc246f062e5cdc",
+                "node_id": "gn:reasoning_pattern:7d3e8e0d3e50f155"
+              },
+              {
+                "category": "engineering_db",
+                "score": 0.5,
+                "matched_keywords": [
+                  "index"
+                ],
+                "edge_id": "ge:d11bdb2fc4fd69c2af",
+                "node_id": "gn:reasoning_pattern:7d3e8e0d3e50f155"
+              }
+            ],
+            "category_count": 2
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.3805,
+            "lane_priority": 0.79,
+            "lexical_fit": 0.0,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.0,
+            "final_score": 0.406775
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          }
+        }
+      },
+      {
+        "id": "promoted:prom:proposition:14108b4c274f4eb8+promoted:prom:proposition:74044f5291ecebcb",
+        "lane": "promoted",
+        "memory_type": "promoted_fact",
+        "tokens": 44,
+        "utility": 3.13225,
+        "order_index": 3,
+        "contradiction_risk": 0.0,
+        "cluster_id": "stable_fact",
+        "provenance": {
+          "reasoning_provenance": [
+            "{\"session_id\": \"7ff4a2b7-8ae8-442d-85a9-9e0a0a61908b\", \"summary_chunk_index\": 0, \"source\": \"session_summary\", \"kind\": \"proposition\", \"memory_subtype\": \"stable_fact\", \"normalized_key\": \"proposition:stable fact seed: deployment window is tuesday 14:00 utc fact-1776001594\", \"source_summary\": \"Stable fact seed: deployment window is Tuesday 14:00 UTC (FACT-1776001594).\\nReusable procedure seed PROC-1776001594: ingest -> validate -> deploy; then run smoke tests.\\nEpisodic seed: temporary canary\", \"source_refs\": [{\"session_id\": \"7ff4a2b7-8ae8-442d-85a9-9e0a0a61908b\", \"summary_chunk_index\": 0, \"created_at\": null, \"source\": \"session_summary\"}], \"source_class\": \"promoted_memory\", \"created_at\": null}"
+          ],
+          "source_class": "promoted_memory",
+          "source_store": "reasoning_store",
+          "memory_subtype": "stable_fact",
+          "freshness_state": "unknown",
+          "normalized_text": "proposition:stable fact seed: deployment window is tuesday 14:00 utc fact-1776001594",
+          "reuse_count": 1,
+          "canonical_pattern_id": "prom:proposition:14108b4c274f4eb8",
+          "success_signal_count": 0,
+          "failure_signal_count": 0,
+          "success_confidence": 0.0,
+          "success_basis": {},
+          "category_graph": {
+            "categories": [
+              {
+                "category": "engineering_db",
+                "score": 0.5,
+                "matched_keywords": [
+                  "index"
+                ],
+                "edge_id": "ge:2728d66fad9cd940ee",
+                "node_id": "gn:reasoning_pattern:81a0007f75dc3d9b"
+              },
+              {
+                "category": "ai_memory",
+                "score": 0.5,
+                "matched_keywords": [
+                  "memory"
+                ],
+                "edge_id": "ge:ee60f4b91c834a2aa7",
+                "node_id": "gn:reasoning_pattern:81a0007f75dc3d9b"
+              }
+            ],
+            "category_count": 2
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.3505,
+            "lane_priority": 0.79,
+            "lexical_fit": 0.0,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.0,
+            "final_score": 0.390275
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          }
+        }
+      },
+      {
+        "id": "fresh:f008-branch-control:6",
+        "lane": "fresh_tail",
+        "memory_type": "episodic_raw",
+        "tokens": 19,
+        "utility": 2.773333,
+        "order_index": 4,
+        "contradiction_risk": 0.0,
+        "cluster_id": "fresh_tail",
+        "provenance": {
+          "session_id": "f008-branch-control",
+          "message": {
+            "index": 6,
+            "text": "Non-obvious risk: stale fallback assumptions can hide unresolved blockers."
+          },
+          "category_graph": {
+            "categories": [],
+            "category_count": 0
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.445,
+            "lane_priority": 0.0,
+            "lexical_fit": 0.0,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.0,
+            "final_score": 0.24475
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          }
+        }
+      },
+      {
+        "id": "fresh:f008-branch-control:5",
+        "lane": "fresh_tail",
+        "memory_type": "episodic_raw",
+        "tokens": 15,
+        "utility": 2.74,
+        "order_index": 5,
+        "contradiction_risk": 0.0,
+        "cluster_id": "fresh_tail",
+        "provenance": {
+          "session_id": "f008-branch-control",
+          "message": {
+            "index": 5,
+            "text": "Audit note: safety gate depends on contradiction visibility."
+          },
+          "category_graph": {
+            "categories": [],
+            "category_count": 0
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.445,
+            "lane_priority": 0.0,
+            "lexical_fit": 0.0,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.0,
+            "final_score": 0.24475
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          }
+        }
+      },
+      {
+        "id": "fresh:f008-branch-control:4",
+        "lane": "fresh_tail",
+        "memory_type": "episodic_raw",
+        "tokens": 14,
+        "utility": 2.620952,
+        "order_index": 6,
+        "contradiction_risk": 0.0,
+        "cluster_id": "fresh_tail",
+        "provenance": {
+          "session_id": "f008-branch-control",
+          "message": {
+            "index": 4,
+            "text": "Deployment looked successful in initial smoke checks."
+          },
+          "category_graph": {
+            "categories": [],
+            "category_count": 0
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.445,
+            "lane_priority": 0.0,
+            "lexical_fit": 0.0,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.0,
+            "final_score": 0.24475
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          }
+        }
+      },
+      {
+        "id": "fresh:f008-branch-control:2",
+        "lane": "fresh_tail",
+        "memory_type": "episodic_raw",
+        "tokens": 15,
+        "utility": 2.573333,
+        "order_index": 7,
+        "contradiction_risk": 0.0,
+        "cluster_id": "fresh_tail",
+        "provenance": {
+          "session_id": "f008-branch-control",
+          "message": {
+            "index": 2,
+            "text": "Rollback rehearsal was skipped in the last rollout drill."
+          },
+          "category_graph": {
+            "categories": [],
+            "category_count": 0
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.445,
+            "lane_priority": 0.0,
+            "lexical_fit": 0.0,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.0,
+            "final_score": 0.24475
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          }
+        }
+      },
+      {
+        "id": "promoted:prom:prescription:4ed8ee76a89c4c77+promoted:prom:prescription:5901f0dc88e2822e",
+        "lane": "promoted",
+        "memory_type": "promoted_fact",
+        "tokens": 55,
+        "utility": 2.512964,
+        "order_index": 8,
+        "contradiction_risk": 0.0,
+        "cluster_id": "workflow_pattern",
+        "provenance": {
+          "reasoning_provenance": [
+            "{\"session_id\": \"a401e8eb-205c-484a-ad12-c02dd8c1df2c\", \"summary_chunk_index\": 0, \"source\": \"session_summary\", \"kind\": \"prescription\", \"memory_subtype\": \"workflow_pattern\", \"normalized_key\": \"prescription:reusable procedure seed proc-1776001795: ingest -> validate -> deploy then run smoke tests\", \"source_summary\": \"Stable fact seed: deployment window is Tuesday 14:00 UTC (FACT-1776001795).\\nReusable procedure seed PROC-1776001795: ingest -> validate -> deploy; then run smoke tests.\\nEpisodic seed: temporary canary\", \"source_refs\": [{\"session_id\": \"a401e8eb-205c-484a-ad12-c02dd8c1df2c\", \"summary_chunk_index\": 0, \"created_at\": null, \"source\": \"session_summary\"}], \"source_class\": \"promoted_memory\", \"created_at\": null}"
+          ],
+          "source_class": "promoted_memory",
+          "source_store": "reasoning_store",
+          "memory_subtype": "workflow_pattern",
+          "freshness_state": "unknown",
+          "normalized_text": "prescription:reusable procedure seed proc-1776001795: ingest -> validate -> deploy then run smoke tests",
+          "reuse_count": 1,
+          "canonical_pattern_id": "prom:prescription:4ed8ee76a89c4c77",
+          "success_signal_count": 0,
+          "failure_signal_count": 0,
+          "success_confidence": 0.0,
+          "success_basis": {},
+          "category_graph": {
+            "categories": [
+              {
+                "category": "ai_memory",
+                "score": 0.5,
+                "matched_keywords": [
+                  "memory"
+                ],
+                "edge_id": "ge:a370062c22c47aad14",
+                "node_id": "gn:reasoning_pattern:a1091f1c92b776c0"
+              },
+              {
+                "category": "engineering_db",
+                "score": 0.5,
+                "matched_keywords": [
+                  "index"
+                ],
+                "edge_id": "ge:dc341de0c0cb7f857f",
+                "node_id": "gn:reasoning_pattern:a1091f1c92b776c0"
+              }
+            ],
+            "category_count": 2
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.3805,
+            "lane_priority": 0.79,
+            "lexical_fit": 0.0,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.0,
+            "final_score": 0.406775
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          }
+        }
+      },
+      {
+        "id": "fresh:f008-branch-control:3",
+        "lane": "fresh_tail",
+        "memory_type": "episodic_raw",
+        "tokens": 15,
+        "utility": 2.501905,
+        "order_index": 9,
+        "contradiction_risk": 0.0,
+        "cluster_id": "fresh_tail",
+        "provenance": {
+          "session_id": "f008-branch-control",
+          "message": {
+            "index": 3,
+            "text": "Missing rollback rehearsal increases latent incident risk."
+          },
+          "category_graph": {
+            "categories": [],
+            "category_count": 0
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.445,
+            "lane_priority": 0.0,
+            "lexical_fit": 0.0,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.0,
+            "final_score": 0.24475
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          }
+        }
+      },
+      {
+        "id": "promoted:prom:proposition:d65504ef9cccda7d+promoted:prom:proposition:ef1e0a79b87bb5ec",
+        "lane": "promoted",
+        "memory_type": "promoted_fact",
+        "tokens": 44,
+        "utility": 2.48225,
+        "order_index": 10,
+        "contradiction_risk": 0.0,
+        "cluster_id": "stable_fact",
+        "provenance": {
+          "reasoning_provenance": [
+            "{\"session_id\": \"a401e8eb-205c-484a-ad12-c02dd8c1df2c\", \"summary_chunk_index\": 0, \"source\": \"session_summary\", \"kind\": \"proposition\", \"memory_subtype\": \"stable_fact\", \"normalized_key\": \"proposition:stable fact seed: deployment window is tuesday 14:00 utc fact-1776001795\", \"source_summary\": \"Stable fact seed: deployment window is Tuesday 14:00 UTC (FACT-1776001795).\\nReusable procedure seed PROC-1776001795: ingest -> validate -> deploy; then run smoke tests.\\nEpisodic seed: temporary canary\", \"source_refs\": [{\"session_id\": \"a401e8eb-205c-484a-ad12-c02dd8c1df2c\", \"summary_chunk_index\": 0, \"created_at\": null, \"source\": \"session_summary\"}], \"source_class\": \"promoted_memory\", \"created_at\": null}"
+          ],
+          "source_class": "promoted_memory",
+          "source_store": "reasoning_store",
+          "memory_subtype": "stable_fact",
+          "freshness_state": "unknown",
+          "normalized_text": "proposition:stable fact seed: deployment window is tuesday 14:00 utc fact-1776001795",
+          "reuse_count": 1,
+          "canonical_pattern_id": "prom:proposition:d65504ef9cccda7d",
+          "success_signal_count": 0,
+          "failure_signal_count": 0,
+          "success_confidence": 0.0,
+          "success_basis": {},
+          "category_graph": {
+            "categories": [
+              {
+                "category": "ai_memory",
+                "score": 0.5,
+                "matched_keywords": [
+                  "memory"
+                ],
+                "edge_id": "ge:b4b7eca477d3742556",
+                "node_id": "gn:reasoning_pattern:c10e693ec90ca1d3"
+              },
+              {
+                "category": "engineering_db",
+                "score": 0.5,
+                "matched_keywords": [
+                  "index"
+                ],
+                "edge_id": "ge:c651c0eaba4d726bf3",
+                "node_id": "gn:reasoning_pattern:c10e693ec90ca1d3"
+              }
+            ],
+            "category_count": 2
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.3505,
+            "lane_priority": 0.79,
+            "lexical_fit": 0.0,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.0,
+            "final_score": 0.390275
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          }
+        }
+      },
+      {
+        "id": "discovery:branch-02:promoted:prom:proposition:d65504ef9cccda7d+promoted:prom:proposition:ef1e0a79b87bb5ec",
+        "lane": "discovery",
+        "memory_type": "summary",
+        "tokens": 44,
+        "utility": 1.933863,
+        "order_index": 11,
+        "contradiction_risk": 0.0,
+        "cluster_id": "discovery",
+        "provenance": {
+          "reasoning_provenance": [
+            "{\"session_id\": \"a401e8eb-205c-484a-ad12-c02dd8c1df2c\", \"summary_chunk_index\": 0, \"source\": \"session_summary\", \"kind\": \"proposition\", \"memory_subtype\": \"stable_fact\", \"normalized_key\": \"proposition:stable fact seed: deployment window is tuesday 14:00 utc fact-1776001795\", \"source_summary\": \"Stable fact seed: deployment window is Tuesday 14:00 UTC (FACT-1776001795).\\nReusable procedure seed PROC-1776001795: ingest -> validate -> deploy; then run smoke tests.\\nEpisodic seed: temporary canary\", \"source_refs\": [{\"session_id\": \"a401e8eb-205c-484a-ad12-c02dd8c1df2c\", \"summary_chunk_index\": 0, \"created_at\": null, \"source\": \"session_summary\"}], \"source_class\": \"promoted_memory\", \"created_at\": null}"
+          ],
+          "source_class": "promoted_memory",
+          "source_store": "reasoning_store",
+          "memory_subtype": "stable_fact",
+          "freshness_state": "unknown",
+          "normalized_text": "proposition:stable fact seed: deployment window is tuesday 14:00 utc fact-1776001795",
+          "reuse_count": 1,
+          "canonical_pattern_id": "prom:proposition:d65504ef9cccda7d",
+          "success_signal_count": 0,
+          "failure_signal_count": 0,
+          "success_confidence": 0.0,
+          "success_basis": {},
+          "category_graph": {
+            "categories": [
+              {
+                "category": "ai_memory",
+                "score": 0.5,
+                "matched_keywords": [
+                  "memory"
+                ],
+                "edge_id": "ge:b4b7eca477d3742556",
+                "node_id": "gn:reasoning_pattern:c10e693ec90ca1d3"
+              },
+              {
+                "category": "engineering_db",
+                "score": 0.5,
+                "matched_keywords": [
+                  "index"
+                ],
+                "edge_id": "ge:c651c0eaba4d726bf3",
+                "node_id": "gn:reasoning_pattern:c10e693ec90ca1d3"
+              }
+            ],
+            "category_count": 2
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.3505,
+            "lane_priority": 0.79,
+            "lexical_fit": 0.0,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.0,
+            "final_score": 0.390275
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          },
+          "branch_id": "branch-02",
+          "lane": "promoted",
+          "memory_type": "promoted_fact"
+        }
+      },
+      {
+        "id": "discovery:branch-01:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b",
+        "lane": "discovery",
+        "memory_type": "summary",
+        "tokens": 55,
+        "utility": 1.77,
+        "order_index": 12,
+        "contradiction_risk": 0.0,
+        "cluster_id": "discovery",
+        "provenance": {
+          "reasoning_provenance": [
+            "{\"session_id\": \"7ff4a2b7-8ae8-442d-85a9-9e0a0a61908b\", \"summary_chunk_index\": 0, \"source\": \"session_summary\", \"kind\": \"prescription\", \"memory_subtype\": \"workflow_pattern\", \"normalized_key\": \"prescription:reusable procedure seed proc-1776001594: ingest -> validate -> deploy then run smoke tests\", \"source_summary\": \"Stable fact seed: deployment window is Tuesday 14:00 UTC (FACT-1776001594).\\nReusable procedure seed PROC-1776001594: ingest -> validate -> deploy; then run smoke tests.\\nEpisodic seed: temporary canary\", \"source_refs\": [{\"session_id\": \"7ff4a2b7-8ae8-442d-85a9-9e0a0a61908b\", \"summary_chunk_index\": 0, \"created_at\": null, \"source\": \"session_summary\"}], \"source_class\": \"promoted_memory\", \"created_at\": null}"
+          ],
+          "source_class": "promoted_memory",
+          "source_store": "reasoning_store",
+          "memory_subtype": "workflow_pattern",
+          "freshness_state": "unknown",
+          "normalized_text": "prescription:reusable procedure seed proc-1776001594: ingest -> validate -> deploy then run smoke tests",
+          "reuse_count": 1,
+          "canonical_pattern_id": "prom:prescription:0643e97c1f010733",
+          "success_signal_count": 0,
+          "failure_signal_count": 0,
+          "success_confidence": 0.0,
+          "success_basis": {},
+          "category_graph": {
+            "categories": [
+              {
+                "category": "ai_memory",
+                "score": 0.5,
+                "matched_keywords": [
+                  "memory"
+                ],
+                "edge_id": "ge:7569fc246f062e5cdc",
+                "node_id": "gn:reasoning_pattern:7d3e8e0d3e50f155"
+              },
+              {
+                "category": "engineering_db",
+                "score": 0.5,
+                "matched_keywords": [
+                  "index"
+                ],
+                "edge_id": "ge:d11bdb2fc4fd69c2af",
+                "node_id": "gn:reasoning_pattern:7d3e8e0d3e50f155"
+              }
+            ],
+            "category_count": 2
+          },
+          "rerank": {
+            "strategy": "bounded_signal_rerank_v1",
+            "base_score": 0.3805,
+            "lane_priority": 0.79,
+            "lexical_fit": 0.0,
+            "category_fit": 0.0,
+            "graph_support": 0.0,
+            "reuse_signal": 0.0,
+            "success_confidence": 0.0,
+            "tier_bonus": 0.0,
+            "freshness_penalty": 0.0,
+            "contradiction_penalty": 0.0,
+            "helper_adjustment": 0.0,
+            "final_score": 0.406775
+          },
+          "fast_path": {
+            "agent_hot_cache_hit": false
+          },
+          "branch_id": "branch-01",
+          "lane": "promoted",
+          "memory_type": "promoted_fact"
+        }
+      }
+    ],
+    "dropped_blocks": [
+      {
+        "id": "fresh:f008-branch-control:1",
+        "lane": "fresh_tail",
+        "tokens": 14,
+        "reason": "compatibility_conflict",
+        "contradiction_risk": 0.0
+      },
+      {
+        "id": "fresh:f008-branch-control:1",
+        "lane": "fresh_tail",
+        "tokens": 14,
+        "reason": "compatibility_conflict",
+        "contradiction_risk": 0.0
+      },
+      {
+        "id": "discovery:branch-01:lex:fresh:f008-branch-control:1",
+        "lane": "discovery",
+        "tokens": 14,
+        "reason": "compatibility_conflict",
+        "contradiction_risk": 0.0
+      },
+      {
+        "id": "sem:fresh:f008-branch-control:1",
+        "lane": "semantic",
+        "tokens": 14,
+        "reason": "compatibility_conflict",
+        "contradiction_risk": 0.0
+      },
+      {
+        "id": "lex:fresh:f008-branch-control:1",
+        "lane": "lexical",
+        "tokens": 14,
+        "reason": "compatibility_conflict",
+        "contradiction_risk": 0.0
+      }
+    ],
+    "lane_totals": {
+      "fresh_tail": 107,
+      "promoted": 198,
+      "discovery": 99
+    },
+    "cluster_coverage": [
+      "discovery",
+      "fresh_tail",
+      "stable_fact",
+      "workflow_pattern"
+    ],
+    "reorder_strategy": "front_back_anchor"
+  },
+  "discovery_contribution_truth": {
+    "selected_discovery_block_count": 2,
+    "discovery_injected_count": 3,
+    "contribution_visible": true
+  }
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "index": 0,
+    "text": "Feature flag is enabled in production for all users."
+  },
+  {
+    "index": 1,
+    "text": "Feature flag is not enabled in production for all users."
+  },
+  {
+    "index": 2,
+    "text": "Rollback rehearsal was skipped in the last rollout drill."
+  },
+  {
+    "index": 3,
+    "text": "Missing rollback rehearsal increases latent incident risk."
+  },
+  {
+    "index": 4,
+    "text": "Deployment looked successful in initial smoke checks."
+  },
+  {
+    "index": 5,
+    "text": "Audit note: safety gate depends on contradiction visibility."
+  },
+  {
+    "index": 6,
+    "text": "Non-obvious risk: stale fallback assumptions can hide unresolved blockers."
+  },
+  {
+    "index": 7,
+    "text": "Operator requested bounded discovery with explicit provenance."
+  },
+  {
+    "index": 8,
+    "text": "A previous run skipped contradiction checks due haste."
+  },
+  {
+    "index": 9,
+    "text": "A current run requires contradiction checks before rollout approval."
+  },
+  {
+    "index": 10,
+    "text": "Unknown unknown probe: verify hidden dependencies before cutover."
+  },
+  {
+    "index": 11,
+    "text": "Context must stay bounded and source-truthful even under pressure."
+  }
+]

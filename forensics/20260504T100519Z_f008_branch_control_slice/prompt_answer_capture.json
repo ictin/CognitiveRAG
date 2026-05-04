@@ -1,0 +1,9 @@
+{
+  "prompt": "What else matters here that I may not be asking?",
+  "answer": "Bounded discovery findings:\n- Feature flag is not enabled in production for all users.\n- [workflow_pattern] reusable procedure seed proc-1776001594: ingest -> validate -> deploy then run smoke tests\n[workflow_pattern] reusable procedure seed proc-1776001948: ingest -> validate -> deploy then run smoke tests\n- No contradiction surfaced.\n- Weak-signal artifact: 5 bounded branch/review warning(s) surfaced.\n- Suggested next branch: Reframe from [skeptic] Find evidence that conflicts with the current strongest claim. Query: What else matters here that I may not be asking?. Target lan with narrower lane constraints or higher-evidence terms.",
+  "discovery_ids": [
+    "discovery:branch-01:lex:fresh:f008-branch-control:1",
+    "discovery:branch-01:promoted:prom:prescription:0643e97c1f010733+promoted:prom:prescription:180a29e10c35dc1b",
+    "discovery:branch-02:promoted:prom:proposition:d65504ef9cccda7d+promoted:prom:proposition:ef1e0a79b87bb5ec"
+  ]
+}

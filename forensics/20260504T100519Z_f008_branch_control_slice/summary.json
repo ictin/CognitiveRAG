@@ -1,0 +1,11 @@
+{
+  "artifact_dir": "/home/ictin_claw/.openclaw/workspace/.tmp-backend-master-align/forensics/20260504T100519Z_f008_branch_control_slice",
+  "prompt": "What else matters here that I may not be asking?",
+  "bounded": true,
+  "within_budget": true,
+  "contradiction_count": 0,
+  "weak_signal_count": 5,
+  "weak_branch_abandonment_count": 5,
+  "next_branch_suggestion_count": 5,
+  "selected_discovery_block_count": 2
+}
