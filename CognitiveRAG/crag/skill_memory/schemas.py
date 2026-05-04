@@ -17,7 +17,10 @@ ArtifactType = Literal[
     "rubric",
     "anti_pattern",
     "workflow",
+    "style_note",
     "style_gist",
+    "execution_lesson",
+    "evaluation_lesson",
 ]
 
 
@@ -87,6 +90,23 @@ class WorkflowArtifact(SkillArtifact):
 class StyleGistArtifact(SkillArtifact):
     artifact_type: Literal["style_gist"] = "style_gist"
     style_traits: List[str] = Field(default_factory=list)
+
+
+class StyleNoteArtifact(SkillArtifact):
+    artifact_type: Literal["style_note"] = "style_note"
+    style_traits: List[str] = Field(default_factory=list)
+
+
+class ExecutionLessonArtifact(SkillArtifact):
+    artifact_type: Literal["execution_lesson"] = "execution_lesson"
+    lesson_summary: str
+    success_flag: bool = False
+
+
+class EvaluationLessonArtifact(SkillArtifact):
+    artifact_type: Literal["evaluation_lesson"] = "evaluation_lesson"
+    lesson_summary: str
+    pass_flag: bool = False
 
 
 AgentType = Literal["script_agent", "storyboard_agent"]
@@ -174,6 +194,23 @@ def build_artifact(
     if artifact_type == "style_gist":
         traits = [p.strip() for p in canonical_text.split(",") if p.strip()]
         return StyleGistArtifact(**common, style_traits=traits)
+    if artifact_type == "style_note":
+        traits = [p.strip() for p in canonical_text.split(",") if p.strip()]
+        return StyleNoteArtifact(**common, style_traits=traits)
+    if artifact_type == "execution_lesson":
+        success_flag = bool((metadata or {}).get("success_flag", False))
+        return ExecutionLessonArtifact(
+            **common,
+            lesson_summary=canonical_text.strip(),
+            success_flag=success_flag,
+        )
+    if artifact_type == "evaluation_lesson":
+        pass_flag = bool((metadata or {}).get("pass_flag", False))
+        return EvaluationLessonArtifact(
+            **common,
+            lesson_summary=canonical_text.strip(),
+            pass_flag=pass_flag,
+        )
     raise ValueError(f"Unsupported artifact type: {artifact_type}")
 
 

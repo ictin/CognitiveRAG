@@ -11,7 +11,18 @@ from CognitiveRAG.crag.skill_memory.schemas import SkillArtifact, SkillPack, Ski
 from CognitiveRAG.crag.skill_memory.store import SkillMemoryStore
 
 
-TYPE_ORDER = ["principle", "template", "example", "rubric", "anti_pattern", "workflow", "raw_chunk"]
+TYPE_ORDER = [
+    "principle",
+    "template",
+    "rubric",
+    "workflow",
+    "anti_pattern",
+    "style_note",
+    "execution_lesson",
+    "evaluation_lesson",
+    "example",
+    "raw_chunk",
+]
 
 AGENT_QUOTAS: Dict[str, Dict[str, int]] = {
     "script_agent": {
@@ -21,6 +32,9 @@ AGENT_QUOTAS: Dict[str, Dict[str, int]] = {
         "rubric": 1,
         "anti_pattern": 1,
         "workflow": 1,
+        "style_note": 1,
+        "execution_lesson": 1,
+        "evaluation_lesson": 1,
         "raw_chunk": 2,
     },
     "storyboard_agent": {
@@ -30,6 +44,9 @@ AGENT_QUOTAS: Dict[str, Dict[str, int]] = {
         "rubric": 1,
         "anti_pattern": 1,
         "workflow": 1,
+        "style_note": 1,
+        "execution_lesson": 1,
+        "evaluation_lesson": 1,
         "raw_chunk": 2,
     },
 }
