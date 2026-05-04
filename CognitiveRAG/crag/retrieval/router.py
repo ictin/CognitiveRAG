@@ -14,6 +14,11 @@ from CognitiveRAG.crag.graph_memory.category_graph import (
     decide_query_category_routing,
     record_category_relations_for_hits,
 )
+from CognitiveRAG.crag.graph_memory.topic_graph import (
+    decide_query_topic_bridge,
+    record_topic_relations_for_hits,
+    topics_for_hit_from_graph,
+)
 from CognitiveRAG.crag.graph_memory.store import GraphMemoryStore
 from CognitiveRAG.crag.retrieval import (
     corpus_lane,
@@ -468,6 +473,29 @@ def _attach_category_graph_metadata(*, workdir: str, hits: list[LaneHit]) -> lis
     return out
 
 
+def _attach_topic_graph_metadata(*, workdir: str, hits: list[LaneHit]) -> list[LaneHit]:
+    if not hits:
+        return []
+    if os.getenv("CRAG_DISABLE_TOPIC_GRAPH", "").strip() == "1":
+        return [hit.model_copy(deep=True) for hit in hits]
+    store = _graph_store(workdir)
+    # Topic graph remains helper-only: attach inspectable bridge metadata.
+    record_topic_relations_for_hits(store, hits=hits)
+
+    out: list[LaneHit] = []
+    for hit in hits:
+        clone = hit.model_copy(deep=True)
+        topics = topics_for_hit_from_graph(store, clone)
+        prov = dict(clone.provenance or {})
+        prov["topic_graph"] = {
+            "topics": topics,
+            "topic_count": len(topics),
+        }
+        clone.provenance = prov
+        out.append(clone)
+    return out
+
+
 def _category_ids(hit: LaneHit) -> set[str]:
     cg = dict((hit.provenance or {}).get("category_graph") or {})
     rows = list(cg.get("categories") or [])
@@ -521,6 +549,12 @@ def route_and_retrieve(
         )
         shortlist_hit = False
 
+    topic_decision = decide_query_topic_bridge(query)
+    topic_hints = tuple(topic_decision.hinted_topics)
+    topic_strong = bool(topic_decision.strong_signal)
+    topic_score = float(topic_decision.score)
+    topic_reason = str(topic_decision.reason)
+
     route_key = _route_cache_key(query=query, intent_family=intent_family)
     route_cached = _ROUTE_CACHE.get(route_key)
     if route_cached is not None:
@@ -558,6 +592,13 @@ def route_and_retrieve(
                 "reason": "cache_hit" if shortlist_hit else "cache_miss_computed",
             },
         },
+        "topic_graph_bridge": {
+            "helper_enabled": os.getenv("CRAG_DISABLE_TOPIC_GRAPH", "").strip() != "1",
+            "hinted_topics": list(topic_hints),
+            "strong_signal": bool(topic_strong),
+            "score": float(topic_score),
+            "reason": topic_reason,
+        },
         "route_cache": {
             "hit": bool(route_hit),
             "key_terms": list(route_key),
@@ -574,7 +615,9 @@ def route_and_retrieve(
         intent_family=intent_family,
         top_k=top_k_per_lane,
     )
-    hits.extend(_attach_category_graph_metadata(workdir=workdir, hits=fast_hits))
+    fast_hits = _attach_category_graph_metadata(workdir=workdir, hits=fast_hits)
+    fast_hits = _attach_topic_graph_metadata(workdir=workdir, hits=fast_hits)
+    hits.extend(fast_hits)
 
     expensive_lanes = {RetrievalLane.CORPUS, RetrievalLane.LARGE_FILE, RetrievalLane.WEB}
     for lane in plan.lanes:
@@ -595,6 +638,7 @@ def route_and_retrieve(
             top_k=lane_top_k,
         )
         lane_hits = _attach_category_graph_metadata(workdir=workdir, hits=list(lane_hits or []))
+        lane_hits = _attach_topic_graph_metadata(workdir=workdir, hits=lane_hits)
 
         if category_strong and lane in expensive_lanes and lane_hits:
             hinted = set(category_hints)
