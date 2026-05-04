@@ -39,11 +39,15 @@ class DiscoveryExecutor:
         seen_tokens = set()
 
         branch_rows: list[tuple[BranchCandidate, list[DiscoveryEvidenceRef]]] = []
-        probes = list(plan.role_conditioned_probes)
-        if not probes:
-            probes = []
+        # Execute the full bounded probe set from planning:
+        # role-conditioned + contradiction + novelty.
+        probes = [
+            *list(plan.role_conditioned_probes or []),
+            *list(plan.contradiction_probes or []),
+            *list(plan.novelty_probes or []),
+        ]
 
-        for idx, probe in enumerate(probes[: self.policy.max_branches * 2]):
+        for idx, probe in enumerate(probes[: self.policy.max_branches * 3]):
             branch_id = f'branch-{idx + 1:02d}'
             scored: list[tuple[float, ContextCandidate]] = []
             for cand in candidate_pool:
@@ -124,7 +128,10 @@ class DiscoveryExecutor:
                 )
             )
 
-        contradictions = detect_contradictions(explored_evidence)
+        # Contradictions are first-class signals and should be surfaced from the
+        # bounded discovery evidence set even if some branches are later rejected.
+        bounded_evidence = [row for _, evidence in branch_rows for row in evidence]
+        contradictions = detect_contradictions(bounded_evidence)
         if contradictions:
             ledger.add_contradictions(contradictions)
 
