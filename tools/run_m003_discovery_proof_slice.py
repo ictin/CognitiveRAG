@@ -42,7 +42,17 @@ def _synthesize_answer(out: dict) -> str:
     discovery = out.get("discovery") or {}
     injected = list(discovery.get("injected_discoveries") or [])
     contradictions = list(discovery.get("contradictions") or [])
-    findings = [item.get("text", "").strip() for item in injected[:2] if str(item.get("text", "")).strip()]
+    findings: list[str] = []
+    seen = set()
+    for item in injected:
+        text = str(item.get("text", "")).strip()
+        key = " ".join(text.lower().split())
+        if not text or key in seen:
+            continue
+        seen.add(key)
+        findings.append(text)
+        if len(findings) >= 2:
+            break
     contradiction_note = "No contradiction surfaced."
     if contradictions:
         c0 = contradictions[0]
@@ -50,11 +60,16 @@ def _synthesize_answer(out: dict) -> str:
             f"Contradiction detected: {c0.get('left_evidence_id')} vs {c0.get('right_evidence_id')} "
             f"({c0.get('reason')})."
         )
+    weak_signal_count = len(list((discovery.get("ledger") or {}).get("rejected_branches", []))) + len(
+        list((discovery.get("ledger") or {}).get("unresolved_questions", []))
+    )
     if not findings:
         findings = ["No non-obvious finding passed bounded discovery thresholds."]
     lines = ["Bounded discovery findings:"]
     lines.extend(f"- {text}" for text in findings)
     lines.append(f"- {contradiction_note}")
+    if weak_signal_count > 0:
+        lines.append(f"- Weak-signal artifact: {weak_signal_count} bounded branch/review warning(s) surfaced.")
     return "\n".join(lines)
 
 

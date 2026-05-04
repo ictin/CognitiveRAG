@@ -141,11 +141,15 @@ class DiscoveryExecutor:
         injected: list[InjectedDiscovery] = []
         used_tokens = 0
         seen_discovery_ids = set()
+        seen_normalized_text = set()
         ranked_evidence = sorted(explored_evidence, key=lambda item: (-item.score, item.evidence_id))
         for evidence in ranked_evidence:
             if len(injected) >= self.policy.max_injected_discoveries:
                 break
             if evidence.evidence_id in seen_discovery_ids:
+                continue
+            normalized_text = " ".join(str(evidence.text or "").lower().split())
+            if normalized_text and normalized_text in seen_normalized_text:
                 continue
             if used_tokens + evidence.tokens > self.policy.injection_budget_tokens:
                 continue
@@ -165,6 +169,8 @@ class DiscoveryExecutor:
                 )
             )
             seen_discovery_ids.add(evidence.evidence_id)
+            if normalized_text:
+                seen_normalized_text.add(normalized_text)
             used_tokens += evidence.tokens
 
         return DiscoveryResult(
