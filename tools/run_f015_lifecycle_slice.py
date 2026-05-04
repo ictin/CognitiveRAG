@@ -6,6 +6,8 @@ import json
 import sqlite3
 from pathlib import Path
 
+from CognitiveRAG.crag.context_selection.explanation import build_explanation
+from CognitiveRAG.crag.contracts.schemas import ContextCandidate
 from CognitiveRAG.crag.contracts.enums import IntentFamily, MemoryType
 from CognitiveRAG.crag.retrieval.promoted_lane import retrieve as retrieve_promoted
 from CognitiveRAG.crag.retrieval.web_lane import retrieve as retrieve_web
@@ -113,6 +115,57 @@ def main() -> int:
     }
     (outdir / "lifecycle_readback_artifact.json").write_text(json.dumps(lifecycle_artifact, indent=2), encoding="utf-8")
 
+    # Build explicit explanation artifact proving lifecycle visibility/truthfulness in explanation surfaces.
+    explanation_candidates: list[ContextCandidate] = []
+    for hit in web_promoted[:2]:
+        explanation_candidates.append(
+            ContextCandidate(
+                id=hit.id,
+                lane=hit.lane,
+                memory_type=hit.memory_type,
+                text=hit.text,
+                tokens=hit.tokens,
+                provenance=dict(hit.provenance or {}),
+                lexical_score=float(hit.lexical_score or 0.0),
+                semantic_score=float(hit.semantic_score or 0.0),
+                recency_score=float(hit.recency_score or 0.0),
+                freshness_score=float(hit.freshness_score or 0.0),
+                trust_score=float(hit.trust_score or 0.0),
+                novelty_score=float(hit.novelty_score or 0.0),
+                contradiction_risk=float(hit.contradiction_risk or 0.0),
+                cluster_id=hit.cluster_id,
+            )
+        )
+    if promoted_hits:
+        top = promoted_hits[0]
+        explanation_candidates.append(
+            ContextCandidate(
+                id=top.id,
+                lane=top.lane,
+                memory_type=top.memory_type,
+                text=top.text,
+                tokens=top.tokens,
+                provenance=dict(top.provenance or {}),
+                lexical_score=float(top.lexical_score or 0.0),
+                semantic_score=float(top.semantic_score or 0.0),
+                recency_score=float(top.recency_score or 0.0),
+                freshness_score=float(top.freshness_score or 0.0),
+                trust_score=float(top.trust_score or 0.0),
+                novelty_score=float(top.novelty_score or 0.0),
+                contradiction_risk=float(top.contradiction_risk or 0.0),
+                cluster_id=top.cluster_id,
+            )
+        )
+    selected = [(c, float(c.semantic_score + c.lexical_score + c.trust_score)) for c in explanation_candidates]
+    explanation = build_explanation(
+        intent_family=IntentFamily.MEMORY_SUMMARY,
+        total_budget=1200,
+        reserved_tokens=180,
+        selected=selected,
+        dropped=[],
+    ).model_dump(mode="json")
+    (outdir / "explanation_lifecycle_artifact.json").write_text(json.dumps(explanation, indent=2), encoding="utf-8")
+
     checks = {
         "explicit_lifecycle_state_present": bool(
             dict(lifecycle_artifact["webPromotedLifecycle"]["wp_unreviewed"]).get("lifecycle")
@@ -127,6 +180,10 @@ def main() -> int:
         "provenance_preserved": bool(
             dict(lifecycle_artifact["webPromotedLifecycle"]["wp_approved"]).get("metadata")
             and dict(lifecycle_artifact["reasoningPromotedLifecycle"]).get("reasoning_provenance")
+        ),
+        "explanation_lifecycle_visible": any(
+            bool(dict(block.get("provenance") or {}).get("lifecycle"))
+            for block in list(explanation.get("selected_blocks") or [])
         ),
     }
     summary = {
