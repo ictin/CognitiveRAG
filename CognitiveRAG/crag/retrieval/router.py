@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import os
 import re
 import time
 from collections import OrderedDict
@@ -12,6 +13,12 @@ from CognitiveRAG.crag.graph_memory.category_graph import (
     categories_for_hit_from_graph,
     decide_query_category_routing,
     record_category_relations_for_hits,
+)
+from CognitiveRAG.crag.graph_memory.clustering import annotate_hits_with_clusters
+from CognitiveRAG.crag.graph_memory.topic_graph import (
+    decide_query_topic_bridge,
+    record_topic_relations_for_hits,
+    topics_for_hit_from_graph,
 )
 from CognitiveRAG.crag.graph_memory.store import GraphMemoryStore
 from CognitiveRAG.crag.retrieval import (
@@ -447,6 +454,8 @@ def _graph_store(workdir: str) -> GraphMemoryStore:
 def _attach_category_graph_metadata(*, workdir: str, hits: list[LaneHit]) -> list[LaneHit]:
     if not hits:
         return []
+    if os.getenv("CRAG_DISABLE_CATEGORY_GRAPH", "").strip() == "1":
+        return [hit.model_copy(deep=True) for hit in hits]
     store = _graph_store(workdir)
     # Persist deterministic category edges for reusable routing/filtering.
     record_category_relations_for_hits(store, hits=hits)
@@ -463,6 +472,37 @@ def _attach_category_graph_metadata(*, workdir: str, hits: list[LaneHit]) -> lis
         clone.provenance = prov
         out.append(clone)
     return out
+
+
+def _attach_topic_graph_metadata(*, workdir: str, hits: list[LaneHit]) -> list[LaneHit]:
+    if not hits:
+        return []
+    if os.getenv("CRAG_DISABLE_TOPIC_GRAPH", "").strip() == "1":
+        return [hit.model_copy(deep=True) for hit in hits]
+    store = _graph_store(workdir)
+    # Topic graph remains helper-only: attach inspectable bridge metadata.
+    record_topic_relations_for_hits(store, hits=hits)
+
+    out: list[LaneHit] = []
+    for hit in hits:
+        clone = hit.model_copy(deep=True)
+        topics = topics_for_hit_from_graph(store, clone)
+        prov = dict(clone.provenance or {})
+        prov["topic_graph"] = {
+            "topics": topics,
+            "topic_count": len(topics),
+        }
+        clone.provenance = prov
+        out.append(clone)
+    return out
+
+
+def _attach_clustering_helper_metadata(*, hits: list[LaneHit]) -> list[LaneHit]:
+    if not hits:
+        return []
+    if os.getenv("CRAG_DISABLE_CLUSTERING_HELPER", "").strip() == "1":
+        return [hit.model_copy(deep=True) for hit in hits]
+    return annotate_hits_with_clusters(hits)
 
 
 def _category_ids(hit: LaneHit) -> set[str]:
@@ -518,6 +558,12 @@ def route_and_retrieve(
         )
         shortlist_hit = False
 
+    topic_decision = decide_query_topic_bridge(query)
+    topic_hints = tuple(topic_decision.hinted_topics)
+    topic_strong = bool(topic_decision.strong_signal)
+    topic_score = float(topic_decision.score)
+    topic_reason = str(topic_decision.reason)
+
     route_key = _route_cache_key(query=query, intent_family=intent_family)
     route_cached = _ROUTE_CACHE.get(route_key)
     if route_cached is not None:
@@ -541,6 +587,7 @@ def route_and_retrieve(
     plan.metadata = {
         **dict(plan.metadata or {}),
         "category_routing": {
+            "helper_enabled": os.getenv("CRAG_DISABLE_CATEGORY_GRAPH", "").strip() != "1",
             "hinted_categories": list(category_hints),
             "strong_signal": bool(category_strong),
             "score": float(category_score),
@@ -553,6 +600,19 @@ def route_and_retrieve(
                 "key_terms": list(shortlist_key),
                 "reason": "cache_hit" if shortlist_hit else "cache_miss_computed",
             },
+        },
+        "topic_graph_bridge": {
+            "helper_enabled": os.getenv("CRAG_DISABLE_TOPIC_GRAPH", "").strip() != "1",
+            "hinted_topics": list(topic_hints),
+            "strong_signal": bool(topic_strong),
+            "score": float(topic_score),
+            "reason": topic_reason,
+        },
+        "clustering_helper": {
+            "helper_enabled": os.getenv("CRAG_DISABLE_CLUSTERING_HELPER", "").strip() != "1",
+            "helper_only": True,
+            "authoritative": False,
+            "cluster_map_available": False,
         },
         "route_cache": {
             "hit": bool(route_hit),
@@ -570,7 +630,10 @@ def route_and_retrieve(
         intent_family=intent_family,
         top_k=top_k_per_lane,
     )
-    hits.extend(_attach_category_graph_metadata(workdir=workdir, hits=fast_hits))
+    fast_hits = _attach_category_graph_metadata(workdir=workdir, hits=fast_hits)
+    fast_hits = _attach_topic_graph_metadata(workdir=workdir, hits=fast_hits)
+    fast_hits = _attach_clustering_helper_metadata(hits=fast_hits)
+    hits.extend(fast_hits)
 
     expensive_lanes = {RetrievalLane.CORPUS, RetrievalLane.LARGE_FILE, RetrievalLane.WEB}
     for lane in plan.lanes:
@@ -591,6 +654,8 @@ def route_and_retrieve(
             top_k=lane_top_k,
         )
         lane_hits = _attach_category_graph_metadata(workdir=workdir, hits=list(lane_hits or []))
+        lane_hits = _attach_topic_graph_metadata(workdir=workdir, hits=lane_hits)
+        lane_hits = _attach_clustering_helper_metadata(hits=lane_hits)
 
         if category_strong and lane in expensive_lanes and lane_hits:
             hinted = set(category_hints)
@@ -614,12 +679,23 @@ def route_and_retrieve(
         RetrievalLane.WORKSPACE_FAST: -2,
         RetrievalLane.INSTALLATION_FAST: -1,
     }
-    hits.sort(
-        key=lambda h: (
-            fast_lane_order.get(h.lane, plan.lanes.index(h.lane) if h.lane in plan.lanes else 999),
-            h.id,
+    # F-017: hot-path safe optimization.
+    # Preserve deterministic semantics while avoiding repeated O(n) lane index lookups.
+    if os.getenv("CRAG_F017_LEGACY_SORT", "").strip() == "1":
+        hits.sort(
+            key=lambda h: (
+                fast_lane_order.get(h.lane, plan.lanes.index(h.lane) if h.lane in plan.lanes else 999),
+                h.id,
+            )
         )
-    )
+    else:
+        lane_rank = {lane: idx for idx, lane in enumerate(plan.lanes)}
+        hits.sort(
+            key=lambda h: (
+                fast_lane_order.get(h.lane, lane_rank.get(h.lane, 999)),
+                h.id,
+            )
+        )
 
     rerank = rerank_hits(
         query=query,
@@ -629,8 +705,15 @@ def route_and_retrieve(
         category_strong=bool(category_strong),
     )
     hits = list(rerank.hits)
+    cluster_ids = sorted({str(h.cluster_id or "") for h in hits if str(h.cluster_id or "")})
     plan.metadata = {
         **dict(plan.metadata or {}),
+        "clustering_helper": {
+            **dict((plan.metadata or {}).get("clustering_helper") or {}),
+            "cluster_map_available": bool(cluster_ids),
+            "cluster_ids": cluster_ids,
+            "cluster_count": len(cluster_ids),
+        },
         "rerank": dict(rerank.metadata or {}),
     }
 
