@@ -21,6 +21,15 @@ from .skill_graph import (
     record_execution_case_graph_links,
     record_skill_artifact_graph_links,
 )
+from .topic_graph import (
+    TopicBridgeDecision,
+    TopicHint,
+    decide_query_topic_bridge,
+    infer_topic_hints,
+    read_topics_for_node,
+    record_topic_relations_for_hits,
+    topics_for_hit_from_graph,
+)
 
 __all__ = [
     'GraphNode',
@@ -45,4 +54,11 @@ __all__ = [
     'record_execution_case_graph_links',
     'record_evaluation_case_graph_links',
     'read_skill_graph_signal',
+    'TopicHint',
+    'TopicBridgeDecision',
+    'infer_topic_hints',
+    'decide_query_topic_bridge',
+    'record_topic_relations_for_hits',
+    'read_topics_for_node',
+    'topics_for_hit_from_graph',
 ]
