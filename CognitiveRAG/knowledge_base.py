@@ -1,14 +1,24 @@
 import os
 import networkx as nx
 from rank_bm25 import BM25Okapi
-from bertopic import BERTopic
+try:
+    from bertopic import BERTopic
+except Exception:
+    BERTopic = None
 try:
     from langchain_chroma import Chroma
 except ImportError:
-    from langchain_community.vectorstores import Chroma
+    try:
+        from langchain_community.vectorstores import Chroma
+    except Exception:
+        Chroma = None
 from . import config
 from . import utils
-from .llm_provider import get_embeddings
+try:
+    from .llm_provider import get_embeddings
+except Exception:
+    def get_embeddings():
+        raise RuntimeError("Embedding provider dependency unavailable")
 
 class KnowledgeBase:
     """
@@ -19,7 +29,7 @@ class KnowledgeBase:
         self.doc_store: dict = {}
         self.bm25_index: BM25Okapi = None
         self.vector_store: Chroma = None
-        self.topic_model: BERTopic = None
+        self.topic_model = None
         self.knowledge_graph: nx.Graph = None
         try:
             self._load_all()
@@ -31,11 +41,13 @@ class KnowledgeBase:
         print("--- Loading Knowledge Base ---")
         self.doc_store = utils.load_pickle(config.DOC_STORE_PATH) or {}
         self.bm25_index = utils.load_pickle(config.BM25_INDEX_PATH)
-        self.topic_model = BERTopic.load(config.TOPIC_MODEL_PATH) if os.path.exists(config.TOPIC_MODEL_PATH) else None
+        self.topic_model = BERTopic.load(config.TOPIC_MODEL_PATH) if BERTopic and os.path.exists(config.TOPIC_MODEL_PATH) else None
         self.knowledge_graph = utils.load_pickle(config.KNOWLEDGE_GRAPH_PATH)
 
         # Initialize vector store with the configured embedding provider
         try:
+            if Chroma is None:
+                raise RuntimeError("Chroma backend unavailable")
             embeddings = get_embeddings()
             self.vector_store = Chroma(
                 persist_directory=config.VECTOR_STORE_PATH,
@@ -82,25 +94,33 @@ class KnowledgeBase:
 
         # 3. Build Vector Store (Chroma)
         print("Building vector store...")
-        embeddings = get_embeddings()
-        # Clear old collection if it exists, to rebuild
-        if os.path.exists(config.VECTOR_STORE_PATH):
-            import shutil
-            shutil.rmtree(config.VECTOR_STORE_PATH)
-        self.vector_store = Chroma.from_documents(
-            documents,
-            embeddings,
-            persist_directory=config.VECTOR_STORE_PATH
-        )
-        print(f"Vector store built with {self.vector_store._collection.count()} embeddings.")
+        if Chroma is None:
+            print("Skipping vector store build: Chroma dependency unavailable.")
+            self.vector_store = None
+        else:
+            embeddings = get_embeddings()
+            # Clear old collection if it exists, to rebuild
+            if os.path.exists(config.VECTOR_STORE_PATH):
+                import shutil
+                shutil.rmtree(config.VECTOR_STORE_PATH)
+            self.vector_store = Chroma.from_documents(
+                documents,
+                embeddings,
+                persist_directory=config.VECTOR_STORE_PATH
+            )
+            print(f"Vector store built with {self.vector_store._collection.count()} embeddings.")
 
         # 4. Build Topic Model
-        print("Building topic model...")
-        self.topic_model = BERTopic(language="english", verbose=True)
-        doc_contents = [doc.page_content for doc in documents]
-        topics, _ = self.topic_model.fit_transform(doc_contents)
-        self.topic_model.save(config.TOPIC_MODEL_PATH)
-        print(f"Topic model built. Found {len(self.topic_model.get_topic_info())-1} topics.")
+        topics = [-1] * len(documents)
+        if BERTopic:
+            print("Building topic model...")
+            self.topic_model = BERTopic(language="english", verbose=True)
+            doc_contents = [doc.page_content for doc in documents]
+            topics, _ = self.topic_model.fit_transform(doc_contents)
+            self.topic_model.save(config.TOPIC_MODEL_PATH)
+            print(f"Topic model built. Found {len(self.topic_model.get_topic_info())-1} topics.")
+        else:
+            print("Skipping topic model build: BERTopic dependency unavailable.")
 
         # 5. Build Knowledge Graph
         print("Building knowledge graph...")
@@ -113,7 +133,13 @@ class KnowledgeBase:
             if topic_id != -1:
                 topic_name = f"topic_{topic_id}"
                 if not self.knowledge_graph.has_node(topic_name):
-                    self.knowledge_graph.add_node(topic_name, type='topic', label=self.topic_model.get_topic(topic_id)[0][0])
+                    label = topic_name
+                    if self.topic_model is not None:
+                        try:
+                            label = self.topic_model.get_topic(topic_id)[0][0]
+                        except Exception:
+                            label = topic_name
+                    self.knowledge_graph.add_node(topic_name, type='topic', label=label)
                 self.knowledge_graph.add_edge(doc_id, topic_name)
         utils.save_pickle(self.knowledge_graph, config.KNOWLEDGE_GRAPH_PATH)
         print("Knowledge graph built.")
