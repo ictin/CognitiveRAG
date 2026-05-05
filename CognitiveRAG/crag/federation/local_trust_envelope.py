@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
+from CognitiveRAG.crag.lifecycle.normalization import normalized_lifecycle_view
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -207,6 +209,16 @@ class LocalFederationEnvelopeStore:
             "exported_at": row["exported_at"],
             "imported_at": row["imported_at"],
             "metadata": json.loads(row["metadata_json"] or "{}"),
+            "lifecycle": normalized_lifecycle_view(
+                source_class="federation_import",
+                provenance={
+                    "trust_status": row["trust_status"],
+                    "approval_status": row["approval_status"],
+                    "freshness_lifecycle_state": row["freshness_lifecycle_state"],
+                    "import_state": row["import_state"],
+                    "authoritative": bool(int(row["authoritative"] or 0)),
+                },
+            ),
         }
 
     def list_packets(self) -> List[Dict[str, Any]]:
