@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
 
 
-FEATURE_IDS = [f"F-{i:03d}" for i in range(1, 21)]
+FEATURE_IDS = [f"F-{i:03d}" for i in range(1, 26)]
 
 
 @dataclass
@@ -64,14 +64,15 @@ def validate_manifest_shape(manifest: Dict) -> Tuple[List[str], Dict[str, Dict]]
             failures.append(f"{fid}: invalid surface {surface!r}")
         backend_tests = row.get("backendTests")
         plugin_tests = row.get("pluginTests")
+        plugin_no_surface_justification = str(row.get("pluginNoSurfaceJustification") or "").strip()
         if not isinstance(backend_tests, list) or not all(isinstance(x, str) and x.strip() for x in backend_tests):
             failures.append(f"{fid}: backendTests must be non-empty string list")
         if not isinstance(plugin_tests, list) or not all(isinstance(x, str) and x.strip() for x in plugin_tests):
-            failures.append(f"{fid}: pluginTests must be non-empty string list")
+            failures.append(f"{fid}: pluginTests must be string list")
         if not backend_tests:
             failures.append(f"{fid}: backendTests empty (fail closed)")
-        if not plugin_tests:
-            failures.append(f"{fid}: pluginTests empty (fail closed)")
+        if not plugin_tests and not plugin_no_surface_justification:
+            failures.append(f"{fid}: pluginTests empty without pluginNoSurfaceJustification (fail closed)")
         if not str(row.get("proofType") or "").strip():
             failures.append(f"{fid}: proofType missing")
 
@@ -100,4 +101,3 @@ def summarize_result(result: CommandResult) -> Dict:
         "stdout_tail": "\n".join(result.stdout.splitlines()[-40:]),
         "stderr_tail": "\n".join(result.stderr.splitlines()[-40:]),
     }
-

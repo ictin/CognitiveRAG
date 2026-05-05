@@ -63,8 +63,8 @@ def main() -> int:
         for fid, row in by_id.items():
             if not row.get("backendTests"):
                 missing_coverage.append(f"{fid}: missing backendTests")
-            if not row.get("pluginTests"):
-                missing_coverage.append(f"{fid}: missing pluginTests")
+            if not row.get("pluginTests") and not str(row.get("pluginNoSurfaceJustification") or "").strip():
+                missing_coverage.append(f"{fid}: missing pluginTests and pluginNoSurfaceJustification")
 
     failures = []
     failures.extend(shape_failures)

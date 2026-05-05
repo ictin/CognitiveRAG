@@ -17,7 +17,7 @@ from accepted_feature_gate_lib import (
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run accepted-feature plugin/runtime regression gate (F-001..F-020).")
+    parser = argparse.ArgumentParser(description="Run accepted-feature plugin/runtime regression gate (F-001..F-025).")
     parser.add_argument("--manifest", default="tools/accepted_feature_regression_manifest.json")
     parser.add_argument(
         "--plugin-root",
@@ -75,7 +75,8 @@ def main() -> int:
                 "id": fid,
                 "surface": row["surface"],
                 "pluginTests": row["pluginTests"],
-                "pluginCoverageOk": bool(row["pluginTests"]),
+                "pluginNoSurfaceJustification": row.get("pluginNoSurfaceJustification"),
+                "pluginCoverageOk": bool(row["pluginTests"]) or bool(str(row.get("pluginNoSurfaceJustification") or "").strip()),
                 "proofType": row["proofType"],
             }
         )

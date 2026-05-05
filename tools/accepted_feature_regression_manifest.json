@@ -255,6 +255,64 @@
         "test/plugin_backend_web_contract_validation.test.mjs",
         "test/plugin_status_reports_online_lane.test.mjs"
       ]
+    },
+    {
+      "id": "F-021",
+      "surface": "dual",
+      "proofType": "helper-only clustering map",
+      "backendTests": [
+        "CognitiveRAG/tests/retrieval/test_clustering_helper_routing.py"
+      ],
+      "pluginTests": [
+        "test/plugin_status_reports_online_lane.test.mjs"
+      ]
+    },
+    {
+      "id": "F-022",
+      "surface": "dual",
+      "proofType": "graph-assisted discovery helper branching",
+      "backendTests": [
+        "CognitiveRAG/tests/cognition/test_graph_assisted_discovery_helper.py",
+        "CognitiveRAG/tests/cognition/test_discovery.py"
+      ],
+      "pluginTests": [
+        "test/evidence_sensitive_routing_regression.test.mjs",
+        "test/crag_explain_memory_backend_contract.test.mjs"
+      ]
+    },
+    {
+      "id": "F-023",
+      "surface": "dual",
+      "proofType": "local federation trust-envelope quarantine seam",
+      "backendTests": [
+        "CognitiveRAG/tests/federation/test_local_trust_envelope.py"
+      ],
+      "pluginTests": [
+        "test/plugin_backend_web_contract_validation.test.mjs"
+      ]
+    },
+    {
+      "id": "F-024",
+      "surface": "dual",
+      "proofType": "cross-class lifecycle trust/freshness/revalidation maturity",
+      "backendTests": [
+        "CognitiveRAG/tests/lifecycle/test_normalized_lifecycle_contract.py",
+        "CognitiveRAG/tests/web_memory/test_promoted_freshness_revalidation.py"
+      ],
+      "pluginTests": [
+        "test/plugin_web_memory_truthfulness.test.mjs",
+        "test/crag_explain_memory_backend_contract.test.mjs"
+      ]
+    },
+    {
+      "id": "F-025",
+      "surface": "backend-only",
+      "proofType": "local non-authoritative research-tuning loop with approval gate",
+      "backendTests": [
+        "CognitiveRAG/tests/research_tuning/test_runtime_tuning_store.py"
+      ],
+      "pluginTests": [],
+      "pluginNoSurfaceJustification": "F-025 is backend-local proposal governance; plugin remains thin and consumes backend-approved behavior only."
     }
   ],
   "requiredIntegrationScenarios": [
