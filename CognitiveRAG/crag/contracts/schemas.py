@@ -218,6 +218,9 @@ class DiscoveryBranchRecord(BaseModel):
     score: float = 0.0
     evidence_ids: List[str] = Field(default_factory=list)
     reason: str | None = None
+    helper_source_type: str | None = None
+    helper_strength: float | None = None
+    helper_provenance_refs: List[Dict[str, str]] = Field(default_factory=list)
 
 
 class DiscoveryLedgerSnapshot(BaseModel):
@@ -244,3 +247,4 @@ class DiscoveryResult(BaseModel):
     injected_discoveries: List[InjectedDiscovery] = Field(default_factory=list)
     contradictions: List[ContradictionRecord] = Field(default_factory=list)
     ledger: DiscoveryLedgerSnapshot = Field(default_factory=DiscoveryLedgerSnapshot)
+    helper_metadata: Dict[str, Any] = Field(default_factory=dict)
