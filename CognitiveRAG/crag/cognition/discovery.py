@@ -182,6 +182,7 @@ class DiscoveryExecutor:
                         'branch_id': evidence.branch_id,
                         'lane': evidence.lane.value,
                         'memory_type': evidence.memory_type.value,
+                        'lifecycle': dict((evidence.provenance or {}).get("lifecycle") or {}),
                         'graph_helper': helper_by_prompt.get(
                             next((b.query for b in explored if b.branch_id == evidence.branch_id), ""),
                             {},

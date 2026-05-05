@@ -7,6 +7,7 @@ from typing import List
 
 from CognitiveRAG.crag.contracts.enums import IntentFamily, MemoryType, RetrievalLane
 from CognitiveRAG.crag.graph_memory.enrichment import GraphRetrievalEnricher
+from CognitiveRAG.crag.lifecycle.normalization import normalized_lifecycle_view
 from CognitiveRAG.crag.retrieval.models import LaneHit
 from CognitiveRAG.crag.web_memory.evidence_store import WebEvidenceStore
 from CognitiveRAG.crag.web_memory.fetch import WebFetcher
@@ -129,6 +130,11 @@ def retrieve(
             first_source = next((origin.get("source_url") for origin in graph_origins if origin.get("source_url")), None)
             if first_source:
                 provenance["source_url"] = first_source
+        provenance["trust_status"] = "trusted" if str(item.get("promotion_state") or "staged") == "trusted" else "unreviewed"
+        provenance["approval_status"] = "approved" if str(item.get("promotion_state") or "staged") == "trusted" else "unreviewed"
+        provenance["import_state"] = "local"
+        provenance["authoritative"] = True
+        provenance["lifecycle"] = normalized_lifecycle_view(source_class="web_promoted", provenance=provenance)
         state = str(item.get("promotion_state") or "staged")
         lifecycle = str(item.get("freshness_lifecycle_state") or "stale")
         tier = str(item.get("promotion_tier") or "local")
@@ -195,6 +201,10 @@ def retrieve(
                     "updated_at": item.get("updated_at"),
                     "freshness_class": freshness,
                     "evidence_id": item.get("evidence_id"),
+                    "promotion_state": "staged",
+                    "approval_status": "unreviewed",
+                    "trust_status": "unreviewed",
+                    "freshness_lifecycle_state": "unreviewed",
                 },
                 lexical_score=0.35,
                 semantic_score=0.5,
@@ -207,6 +217,7 @@ def retrieve(
                 compressible=True,
             ).with_token_estimate()
         )
+        hits[-1].provenance["lifecycle"] = normalized_lifecycle_view(source_class="web_evidence", provenance=hits[-1].provenance)
 
     def _sort_key(hit: LaneHit):
         if hit.memory_type == MemoryType.WEB_PROMOTED_FACT:
