@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from typing import List
 
 from CognitiveRAG.crag.cognition.backtracking import BacktrackingPolicy, BranchCandidate, execute_backtracking
 from CognitiveRAG.crag.cognition.contradiction import detect_contradictions
 from CognitiveRAG.crag.cognition.curiosity import score_candidate_curiosity, update_seen_tokens
+from CognitiveRAG.crag.cognition.graph_discovery_helper import suggest_graph_assisted_branches, suggestions_to_probes
 from CognitiveRAG.crag.cognition.ledger import GlobalLedger
 from CognitiveRAG.crag.contracts.enums import MemoryType, RetrievalLane
 from CognitiveRAG.crag.contracts.schemas import (
@@ -29,7 +31,7 @@ class DiscoveryPolicy:
 
 
 class DiscoveryExecutor:
-    """Bounded discovery executor for M10 (no graph/federation)."""
+    """Bounded discovery executor with helper-only graph-assisted branch suggestions."""
 
     def __init__(self, policy: DiscoveryPolicy | None = None):
         self.policy = policy or DiscoveryPolicy()
@@ -42,6 +44,23 @@ class DiscoveryExecutor:
         probes = list(plan.role_conditioned_probes)
         if not probes:
             probes = []
+        helper_enabled = os.getenv("CRAG_DISABLE_GRAPH_DISCOVERY_HELPER", "").strip() != "1"
+        helper_suggestions = suggest_graph_assisted_branches(
+            candidate_pool=candidate_pool, max_suggestions=max(1, self.policy.max_branches)
+        ) if helper_enabled else []
+        helper_probes = suggestions_to_probes(helper_suggestions) if helper_suggestions else []
+        if helper_probes:
+            probes = list(probes) + list(helper_probes)
+
+        helper_by_prompt = {
+            str(s.branch_prompt): {
+                "helper_source_type": s.helper_source_type,
+                "branch_reason": s.branch_reason,
+                "strength": float(s.strength),
+                "provenance_refs": list(s.provenance_refs),
+            }
+            for s in helper_suggestions
+        }
 
         for idx, probe in enumerate(probes[: self.policy.max_branches * 2]):
             branch_id = f'branch-{idx + 1:02d}'
@@ -101,6 +120,7 @@ class DiscoveryExecutor:
         for branch in explored:
             evidence = evidence_by_branch.get(branch.branch_id, [])
             explored_evidence.extend(evidence)
+            helper = dict(helper_by_prompt.get(branch.query) or {})
             ledger.record_explored(
                 DiscoveryBranchRecord(
                     branch_id=branch.branch_id,
@@ -108,11 +128,16 @@ class DiscoveryExecutor:
                     status='explored',
                     score=branch.score,
                     evidence_ids=[item.evidence_id for item in evidence],
+                    reason=str(helper.get("branch_reason") or ""),
+                    helper_source_type=helper.get("helper_source_type"),
+                    helper_strength=(float(helper.get("strength")) if helper.get("strength") is not None else None),
+                    helper_provenance_refs=list(helper.get("provenance_refs") or []),
                 ),
                 evidence,
             )
 
         for branch, reason in rejected:
+            helper = dict(helper_by_prompt.get(branch.query) or {})
             ledger.record_rejected(
                 DiscoveryBranchRecord(
                     branch_id=branch.branch_id,
@@ -121,6 +146,9 @@ class DiscoveryExecutor:
                     score=branch.score,
                     evidence_ids=[item.evidence_id for item in evidence_by_branch.get(branch.branch_id, [])],
                     reason=reason,
+                    helper_source_type=helper.get("helper_source_type"),
+                    helper_strength=(float(helper.get("strength")) if helper.get("strength") is not None else None),
+                    helper_provenance_refs=list(helper.get("provenance_refs") or []),
                 )
             )
 
@@ -154,6 +182,10 @@ class DiscoveryExecutor:
                         'branch_id': evidence.branch_id,
                         'lane': evidence.lane.value,
                         'memory_type': evidence.memory_type.value,
+                        'graph_helper': helper_by_prompt.get(
+                            next((b.query for b in explored if b.branch_id == evidence.branch_id), ""),
+                            {},
+                        ),
                     },
                 )
             )
@@ -167,6 +199,13 @@ class DiscoveryExecutor:
             injected_discoveries=injected,
             contradictions=contradictions,
             ledger=ledger.snapshot(),
+            helper_metadata={
+                "helper_enabled": bool(helper_enabled),
+                "suggested_branch_count": len(helper_suggestions),
+                "kept_branch_count": len([b for b in ledger.explored_branches if b.helper_source_type]),
+                "abandoned_branch_count": len([b for b in ledger.rejected_branches if b.helper_source_type]),
+                "sources": [s.helper_source_type for s in helper_suggestions],
+            },
         )
 
 
