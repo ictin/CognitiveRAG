@@ -1,0 +1,323 @@
+{
+  "schemaVersion": "accepted-feature-dual-surface-gate.v1",
+  "acceptedFeatures": [
+    {
+      "id": "F-001",
+      "surface": "dual",
+      "proofType": "taxonomy + runtime metadata exposure",
+      "backendTests": [
+        "CognitiveRAG/tests/test_retrieval_metadata.py",
+        "CognitiveRAG/tests/retrieval/test_typed_candidate_parity_audit.py"
+      ],
+      "pluginTests": [
+        "test/plugin_web_source_class_rendering.test.mjs",
+        "test/plugin_backend_web_contract_validation.test.mjs"
+      ]
+    },
+    {
+      "id": "F-002",
+      "surface": "dual",
+      "proofType": "lossless memory + additive compaction",
+      "backendTests": [
+        "CognitiveRAG/tests/session_memory/test_compaction_recoverability.py",
+        "CognitiveRAG/tests/test_session_recall.py"
+      ],
+      "pluginTests": [
+        "test/lossless_session_memory.test.mjs",
+        "test/long_session_exact_span.test.mjs"
+      ]
+    },
+    {
+      "id": "F-003",
+      "surface": "dual",
+      "proofType": "budget-aware context selection",
+      "backendTests": [
+        "CognitiveRAG/tests/context_selection/test_selector.py",
+        "CognitiveRAG/tests/context_selection/test_selector_budget_parity_audit.py"
+      ],
+      "pluginTests": [
+        "test/plugin_assemble_uses_backend_selector.test.mjs",
+        "test/assemble_regression.test.mjs"
+      ]
+    },
+    {
+      "id": "F-004",
+      "surface": "dual",
+      "proofType": "durable promoted memory write/readback",
+      "backendTests": [
+        "CognitiveRAG/tests/promotion/test_promoted_retrieval_normalized.py",
+        "CognitiveRAG/tests/test_promotion_durability_integration.py"
+      ],
+      "pluginTests": [
+        "test/crag_recall_truth.test.mjs",
+        "test/memory_truth_stability_regression.test.mjs"
+      ]
+    },
+    {
+      "id": "F-005",
+      "surface": "dual",
+      "proofType": "mode-aware retrieval metadata",
+      "backendTests": [
+        "CognitiveRAG/tests/test_retrieval_modes.py",
+        "CognitiveRAG/tests/retrieval/test_router_selector_integration.py"
+      ],
+      "pluginTests": [
+        "test/plugin_status_reports_online_lane.test.mjs",
+        "test/crag_explain_memory_backend_contract.test.mjs"
+      ]
+    },
+    {
+      "id": "F-006",
+      "surface": "dual",
+      "proofType": "web_evidence vs web_promoted split",
+      "backendTests": [
+        "CognitiveRAG/tests/web_memory/test_retrieval_integration.py",
+        "CognitiveRAG/tests/test_web_evidence_staging.py"
+      ],
+      "pluginTests": [
+        "test/plugin_web_memory_truthfulness.test.mjs",
+        "test/plugin_web_source_class_rendering.test.mjs"
+      ]
+    },
+    {
+      "id": "F-007",
+      "surface": "dual",
+      "proofType": "reasoning reuse surfaced",
+      "backendTests": [
+        "CognitiveRAG/tests/test_reasoning_reuse.py",
+        "CognitiveRAG/tests/skill_memory/test_pack_builder_graph_reuse.py"
+      ],
+      "pluginTests": [
+        "test/plugin_reasoning_memory_reuse_surface.test.mjs",
+        "test/plugin_skill_memory_integration.test.mjs"
+      ]
+    },
+    {
+      "id": "F-008",
+      "surface": "dual",
+      "proofType": "bounded discovery + contradiction surfacing",
+      "backendTests": [
+        "CognitiveRAG/tests/cognition/test_discovery.py",
+        "CognitiveRAG/tests/cognition/test_discovery_integration.py"
+      ],
+      "pluginTests": [
+        "test/evidence_sensitive_routing_regression.test.mjs",
+        "test/natural_answer_routing.test.mjs"
+      ]
+    },
+    {
+      "id": "F-009",
+      "surface": "dual",
+      "proofType": "truthful explanation surfaces",
+      "backendTests": [
+        "CognitiveRAG/tests/context_selection/test_explanation.py",
+        "CognitiveRAG/tests/context_selection/test_reorder_explanation_parity_audit.py"
+      ],
+      "pluginTests": [
+        "test/crag_explain_memory_backend_contract.test.mjs",
+        "test/fail_open_backend_explanation_validation.test.mjs"
+      ]
+    },
+    {
+      "id": "F-010",
+      "surface": "dual",
+      "proofType": "safe integration modes",
+      "backendTests": [
+        "CognitiveRAG/tests/test_context_window_runtime.py",
+        "CognitiveRAG/tests/test_context_window_integration.py"
+      ],
+      "pluginTests": [
+        "test/plugin_status_reports_online_lane.test.mjs",
+        "test/live_smoke_failure_visibility.test.mjs"
+      ]
+    },
+    {
+      "id": "F-011",
+      "surface": "dual",
+      "proofType": "fail-open runtime behavior",
+      "backendTests": [
+        "CognitiveRAG/tests/test_client_wiring.py"
+      ],
+      "pluginTests": [
+        "test/fail_open_backend_explanation_validation.test.mjs",
+        "test/skill_route_persistence_fail_open.test.mjs"
+      ]
+    },
+    {
+      "id": "F-012",
+      "surface": "dual",
+      "proofType": "live acceptance + closure contract",
+      "backendTests": [
+        "CognitiveRAG/tests/benchmarks/test_epic_c_suite.py"
+      ],
+      "pluginTests": [
+        "test/live_acceptance_report_scoring.test.mjs",
+        "test/live_acceptance_report_scoring_synthetic_fail.test.mjs",
+        "test/live_smoke_report_shape.test.mjs"
+      ]
+    },
+    {
+      "id": "F-013",
+      "surface": "dual",
+      "proofType": "graph write/read helper seam",
+      "backendTests": [
+        "CognitiveRAG/tests/graph_memory/test_store.py",
+        "CognitiveRAG/tests/graph_memory/test_relations.py"
+      ],
+      "pluginTests": [
+        "test/plugin_assemble_uses_backend_selector.test.mjs"
+      ]
+    },
+    {
+      "id": "F-014",
+      "surface": "dual",
+      "proofType": "graph-assisted retrieval helper",
+      "backendTests": [
+        "CognitiveRAG/tests/retrieval/test_graph_enriched_retrieval.py",
+        "CognitiveRAG/tests/retrieval/test_router_selector_integration.py"
+      ],
+      "pluginTests": [
+        "test/plugin_backend_web_contract_validation.test.mjs"
+      ]
+    },
+    {
+      "id": "F-015",
+      "surface": "dual",
+      "proofType": "lifecycle state visibility",
+      "backendTests": [
+        "CognitiveRAG/tests/web_memory/test_promoted_approval_workflow.py",
+        "CognitiveRAG/tests/web_memory/test_promoted_freshness_revalidation.py"
+      ],
+      "pluginTests": [
+        "test/plugin_web_memory_truthfulness.test.mjs",
+        "test/crag_explain_memory_backend_contract.test.mjs"
+      ]
+    },
+    {
+      "id": "F-016",
+      "surface": "dual",
+      "proofType": "compaction trigger + additive preservation",
+      "backendTests": [
+        "CognitiveRAG/tests/session_memory/test_compaction_recoverability.py"
+      ],
+      "pluginTests": [
+        "test/lossless_session_memory.test.mjs",
+        "test/memory_path.test.mjs"
+      ]
+    },
+    {
+      "id": "F-017",
+      "surface": "dual",
+      "proofType": "safe hot-path speed optimization equivalence",
+      "backendTests": [
+        "CognitiveRAG/tests/retrieval/test_f017_sort_optimization_equivalence.py",
+        "CognitiveRAG/tests/benchmarks/test_i_fast_retrieval_benchmark.py"
+      ],
+      "pluginTests": [
+        "test/memory_quality_benchmark_invariants.test.mjs",
+        "test/natural_answer_routing.test.mjs"
+      ]
+    },
+    {
+      "id": "F-018",
+      "surface": "dual",
+      "proofType": "structural skill memory reuse",
+      "backendTests": [
+        "CognitiveRAG/tests/skill_memory/test_structural_reuse_slice.py",
+        "CognitiveRAG/tests/skill_memory/test_pack_builder.py"
+      ],
+      "pluginTests": [
+        "test/plugin_skill_memory_integration.test.mjs",
+        "test/skill_route_persistence_fail_open.test.mjs"
+      ]
+    },
+    {
+      "id": "F-019",
+      "surface": "dual",
+      "proofType": "category graph helper-only navigation",
+      "backendTests": [
+        "CognitiveRAG/tests/graph_memory/test_category_graph.py",
+        "CognitiveRAG/tests/retrieval/test_category_pruned_routing.py"
+      ],
+      "pluginTests": [
+        "test/plugin_web_source_class_rendering.test.mjs"
+      ]
+    },
+    {
+      "id": "F-020",
+      "surface": "dual",
+      "proofType": "topic graph helper-only bridge",
+      "backendTests": [
+        "CognitiveRAG/tests/graph_memory/test_topic_graph.py",
+        "CognitiveRAG/tests/retrieval/test_topic_graph_helper_routing.py"
+      ],
+      "pluginTests": [
+        "test/plugin_backend_web_contract_validation.test.mjs",
+        "test/plugin_status_reports_online_lane.test.mjs"
+      ]
+    },
+    {
+      "id": "F-021",
+      "surface": "dual",
+      "proofType": "helper-only clustering map",
+      "backendTests": [
+        "CognitiveRAG/tests/retrieval/test_clustering_helper_routing.py"
+      ],
+      "pluginTests": [
+        "test/plugin_status_reports_online_lane.test.mjs"
+      ]
+    },
+    {
+      "id": "F-022",
+      "surface": "dual",
+      "proofType": "graph-assisted discovery helper branching",
+      "backendTests": [
+        "CognitiveRAG/tests/cognition/test_graph_assisted_discovery_helper.py",
+        "CognitiveRAG/tests/cognition/test_discovery.py"
+      ],
+      "pluginTests": [
+        "test/evidence_sensitive_routing_regression.test.mjs",
+        "test/crag_explain_memory_backend_contract.test.mjs"
+      ]
+    },
+    {
+      "id": "F-023",
+      "surface": "dual",
+      "proofType": "local federation trust-envelope quarantine seam",
+      "backendTests": [
+        "CognitiveRAG/tests/federation/test_local_trust_envelope.py"
+      ],
+      "pluginTests": [
+        "test/plugin_backend_web_contract_validation.test.mjs"
+      ]
+    },
+    {
+      "id": "F-024",
+      "surface": "dual",
+      "proofType": "cross-class lifecycle trust/freshness/revalidation maturity",
+      "backendTests": [
+        "CognitiveRAG/tests/lifecycle/test_normalized_lifecycle_contract.py",
+        "CognitiveRAG/tests/web_memory/test_promoted_freshness_revalidation.py"
+      ],
+      "pluginTests": [
+        "test/plugin_web_memory_truthfulness.test.mjs",
+        "test/crag_explain_memory_backend_contract.test.mjs"
+      ]
+    },
+    {
+      "id": "F-025",
+      "surface": "backend-only",
+      "proofType": "local non-authoritative research-tuning loop with approval gate",
+      "backendTests": [
+        "CognitiveRAG/tests/research_tuning/test_runtime_tuning_store.py"
+      ],
+      "pluginTests": [],
+      "pluginNoSurfaceJustification": "F-025 is backend-local proposal governance; plugin remains thin and consumes backend-approved behavior only."
+    }
+  ],
+  "requiredIntegrationScenarios": [
+    "WF-007",
+    "TC-007",
+    "TC-008"
+  ]
+}
