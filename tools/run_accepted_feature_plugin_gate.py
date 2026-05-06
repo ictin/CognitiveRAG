@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 from pathlib import Path
 
 from accepted_feature_gate_lib import (
@@ -23,6 +24,12 @@ def main() -> int:
         "--plugin-root",
         default="/home/ictin_claw/.openclaw/workspace/openclaw-cognitiverag-memory",
     )
+    parser.add_argument(
+        "--runtime-root",
+        default="/home/ictin_claw/.openclaw/workspace/.openclaw/extensions/cognitiverag-memory",
+    )
+    parser.add_argument("--drift-guardrail-mode", choices=["off", "audit", "release-signoff"], default="off")
+    parser.add_argument("--drift-guardrail-allow-report-only-success", action="store_true")
     parser.add_argument("--output-dir", default=None)
     args = parser.parse_args()
 
@@ -32,6 +39,7 @@ def main() -> int:
     stamp = utc_stamp()
     outdir = Path(args.output_dir) if args.output_dir else (repo_root / "forensics" / f"{stamp}_accepted_feature_plugin_gate")
     outdir.mkdir(parents=True, exist_ok=True)
+    runtime_ext_root = Path(args.runtime_root).resolve()
 
     manifest = load_manifest(manifest_path)
     failures, by_id = validate_manifest_shape(manifest)
@@ -55,8 +63,8 @@ def main() -> int:
                 failures.append(f"plugin test failed: {rel}")
 
     # runtime parity check where available (required by this gate)
-    runtime_ext_root = Path("/home/ictin_claw/.openclaw/workspace/.openclaw/extensions/cognitiverag-memory")
     runtime_parity = {
+        "runtimeExtensionRoot": str(runtime_ext_root),
         "runtimeExtensionExists": runtime_ext_root.exists(),
         "repoIndexExists": (plugin_root / "index.ts").exists(),
         "runtimeIndexExists": (runtime_ext_root / "index.ts").exists(),
@@ -66,6 +74,38 @@ def main() -> int:
         runtime_parity["matchesRepo"] = (plugin_root / "index.ts").read_bytes() == (runtime_ext_root / "index.ts").read_bytes()
     if runtime_parity["runtimeExtensionExists"] and runtime_parity["matchesRepo"] is False:
         failures.append("runtime/plugin parity mismatch: runtime extension index.ts differs from plugin repo index.ts")
+
+    drift_guardrail = None
+    if args.drift_guardrail_mode != "off":
+        drift_json = outdir / "drift_guardrail_report.json"
+        guardrail_cmd = [
+            str(repo_root / ".venv" / "bin" / "python"),
+            str(repo_root / "tools" / "runtime_drift_guardrail.py"),
+            "--plugin-root",
+            str(plugin_root),
+            "--backend-root",
+            str(repo_root),
+            "--runtime-root",
+            str(runtime_ext_root),
+            "--mode",
+            args.drift_guardrail_mode,
+            "--json-out",
+            str(drift_json),
+        ]
+        if args.drift_guardrail_allow_report_only_success:
+            guardrail_cmd.append("--allow-report-only-success")
+        proc = subprocess.run(guardrail_cmd, cwd=str(repo_root), text=True, capture_output=True)
+        if drift_json.exists():
+            drift_guardrail = json.loads(drift_json.read_text(encoding="utf-8"))
+        else:
+            drift_guardrail = {
+                "passed": False,
+                "reasonCodes": ["DRIFT_GUARDRAIL_REPORT_MISSING"],
+                "stdout_tail": "\n".join(proc.stdout.splitlines()[-40:]),
+                "stderr_tail": "\n".join(proc.stderr.splitlines()[-40:]),
+            }
+        if proc.returncode != 0:
+            failures.append(f"drift guardrail failed in mode={args.drift_guardrail_mode}")
 
     feature_rows = []
     for fid in FEATURE_IDS:
@@ -90,6 +130,7 @@ def main() -> int:
         "features": feature_rows,
         "pluginTestsCount": len(plugin_tests),
         "runtimeParity": runtime_parity,
+        "driftGuardrail": drift_guardrail,
         "testRuns": results,
         "failures": failures,
         "passed": not failures,

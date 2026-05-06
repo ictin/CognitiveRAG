@@ -12,6 +12,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run combined accepted-feature dual-surface gate.")
     parser.add_argument("--manifest", default="tools/accepted_feature_regression_manifest.json")
     parser.add_argument("--plugin-root", default="/home/ictin_claw/.openclaw/workspace/openclaw-cognitiverag-memory")
+    parser.add_argument("--runtime-root", default="/home/ictin_claw/.openclaw/workspace/.openclaw/extensions/cognitiverag-memory")
+    parser.add_argument("--drift-guardrail-mode", choices=["off", "audit", "release-signoff"], default="off")
+    parser.add_argument("--drift-guardrail-allow-report-only-success", action="store_true")
     parser.add_argument("--output-dir", default=None)
     args = parser.parse_args()
 
@@ -44,9 +47,15 @@ def main() -> int:
         str(manifest_path),
         "--plugin-root",
         str(args.plugin_root),
+        "--runtime-root",
+        str(args.runtime_root),
+        "--drift-guardrail-mode",
+        str(args.drift_guardrail_mode),
         "--output-dir",
         str(plugin_outdir),
     ]
+    if args.drift_guardrail_allow_report_only_success:
+        plugin_cmd.append("--drift-guardrail-allow-report-only-success")
 
     import subprocess
 
