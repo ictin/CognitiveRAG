@@ -36,6 +36,11 @@ export PYTHONPATH=./CognitiveRAG
 python -m uvicorn CognitiveRAG.main_server:app --host 0.0.0.0 --port 8000
 ```
 
+## Ollama host
+- Default durable Ollama base URL for this workspace: `http://172.31.208.1:11434`
+- Override with `OLLAMA_BASE_URL` if the runtime host changes.
+- The local `localhost:11434` endpoint is not assumed to be present in this environment.
+
 ## OpenClaw wiring point
 Point the live OpenClaw installation at the production server base URL and use these endpoints:
 - `POST /session_append_message`

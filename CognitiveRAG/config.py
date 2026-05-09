@@ -11,7 +11,8 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # --- LLM and Embedding Models ---
 # Provider can be 'ollama' or 'openai'
 LLM_PROVIDER = "ollama"
-OLLAMA_BASE_URL = "http://localhost:11434"
+# Durable Ollama host for this workspace. Override via OLLAMA_BASE_URL when needed.
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://172.31.208.1:11434")
 
 # Configure models for each purpose
 # For Ollama, specify the model name (e.g., "llama3", "gemma:2b")
