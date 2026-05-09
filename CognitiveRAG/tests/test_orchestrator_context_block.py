@@ -8,7 +8,7 @@ from CognitiveRAG.schemas.memory import MemoryContextBlock
 from CognitiveRAG.schemas.retrieval import RetrievedChunk
 
 
-def test_orchestrator_run_emits_context_block():
+def test_orchestrator_run_emits_context_block(monkeypatch):
     exact_chunk = RetrievedChunk(
         chunk_id="exact-1",
         text="exact text",
@@ -50,7 +50,7 @@ def test_orchestrator_run_emits_context_block():
     orch.promote_reasoning = lambda *args, **kwargs: None
     orch.episodic_store = SimpleNamespace(upsert=lambda *args, **kwargs: None)
     import CognitiveRAG.agents.orchestrator as orch_mod
-    orch_mod.EpisodicEvent = lambda *args, **kwargs: SimpleNamespace()
+    monkeypatch.setattr(orch_mod, "EpisodicEvent", lambda *args, **kwargs: SimpleNamespace())
 
     response = asyncio.run(orch.run("hello"))
 
