@@ -10,12 +10,20 @@ def test_client_query_and_promote(monkeypatch):
     client = TestClient(app)
 
     # monkeypatch requests.post to route to TestClient.post
-    def fake_post(url, json=None, timeout=None):
+    def fake_post(url, json=None, headers=None, timeout=None, **kwargs):
         # strip base url
         path = url.split('://')[-1].split('/', 1)[-1]
         if not path.startswith('/'):
             path = '/' + path
-        resp = client.post(path, json=json)
+        if path.endswith('/api/chat') or path == '/api/chat':
+            class R:
+                status_code = 200
+                def raise_for_status(self):
+                    return None
+                def json(self):
+                    return {'message': {'content': 'stub'}}
+            return R()
+        resp = client.post(path, json=json, headers=headers)
         class R:
             status_code = resp.status_code
             def raise_for_status(self):

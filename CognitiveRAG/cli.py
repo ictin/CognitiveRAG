@@ -9,6 +9,8 @@ import uvicorn
 from CognitiveRAG.app import create_app
 from CognitiveRAG.core.settings import settings
 
+DEFAULT_REPO_ROOT = Path(__file__).resolve().parents[1]
+
 
 def _load_self_heal(repo_root):
     spec = importlib.util.spec_from_file_location('cognitive_self_heal', str(repo_root / 'agent' / 'self_heal.py'))
@@ -32,7 +34,7 @@ def main() -> None:
     repair.add_argument("--path", required=True)
     repair.add_argument("--content-file", required=True)
     repair.add_argument("--expected-prefix", required=True)
-    repair.add_argument("--cwd", default="/home/ictin_claw/.openclaw/workspace/CognitiveRAG")
+    repair.add_argument("--cwd", default=str(DEFAULT_REPO_ROOT))
     repair.add_argument("--py-compile", action="store_true")
     repair.add_argument("--targeted-pytest", nargs="*", default=None)
     repair.add_argument("--full-pytest", action="store_true")
@@ -40,7 +42,7 @@ def main() -> None:
     # analyze subcommand
     analyze = sub.add_parser("analyze")
     analyze.add_argument("--text", required=True)
-    analyze.add_argument("--cwd", default="/home/ictin_claw/.openclaw/workspace/CognitiveRAG")
+    analyze.add_argument("--cwd", default=str(DEFAULT_REPO_ROOT))
     analyze.add_argument("--execute-proposed-repair", action="store_true", help="Execute the proposed repair if safe and inputs provided")
     analyze.add_argument("--content-file", required=False, help="Content file to use if executing the proposed repair")
     analyze.add_argument("--expected-prefix", required=False, help="Expected prefix to use if executing the proposed repair")
@@ -93,7 +95,7 @@ def main() -> None:
             else:
                 expected = classification.get("reason") or ""
             cmd = (
-                f"./.venv/bin/python -m CognitiveRAG.cli repair --path {target} --content-file <content> --expected-prefix \"{expected}\" --cwd /home/ictin_claw/.openclaw/workspace/CognitiveRAG --py-compile"
+                f"./.venv/bin/python -m CognitiveRAG.cli repair --path {target} --content-file <content> --expected-prefix \"{expected}\" --cwd {DEFAULT_REPO_ROOT} --py-compile"
             )
             proposed = cmd
 
