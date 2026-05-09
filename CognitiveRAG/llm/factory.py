@@ -17,7 +17,13 @@ class OllamaLLMClient:
     async def ainvoke_text(self, system_prompt: str, user_prompt: str) -> str:
         prompt = system_prompt + "\n\n" + user_prompt
         messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
-        resp = self.client.chat(self.model, messages)
+        # provider-agnostic sanitization before provider selection
+        try:
+            from CognitiveRAG.llm.sanitizer import sanitize_messages
+            safe_messages = sanitize_messages(messages)
+        except Exception:
+            safe_messages = messages
+        resp = self.client.chat(self.model, safe_messages)
         # prefer message.content path
         if isinstance(resp, dict):
             if 'message' in resp and isinstance(resp['message'], dict):
@@ -33,7 +39,13 @@ class OllamaLLMClient:
             + "\n\nRespond only with a JSON object matching the requested schema."
         )
         messages = [{"role": "system", "content": instruct}, {"role": "user", "content": user_prompt}]
-        resp = self.client.chat(self.model, messages)
+        # provider-agnostic sanitization before provider selection
+        try:
+            from CognitiveRAG.llm.sanitizer import sanitize_messages
+            safe_messages = sanitize_messages(messages)
+        except Exception:
+            safe_messages = messages
+        resp = self.client.chat(self.model, safe_messages)
         content = ''
         if isinstance(resp, dict):
             if 'message' in resp and isinstance(resp['message'], dict):

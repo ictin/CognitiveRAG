@@ -19,6 +19,7 @@ from contextlib import asynccontextmanager
 import signal
 import sys
 import asyncio
+import inspect
 from pathlib import Path
 
 # --- Lifespan event handler ---
@@ -57,6 +58,34 @@ class QueryRequest(BaseModel):
 class QueryResponse(BaseModel):
     answer: str
     sources: List[str]
+
+
+class _SimpleQueryOrchestrator:
+    """Compatibility orchestrator for legacy `/query` route.
+
+    This path is intentionally dependency-light and deterministic. It does not
+    use the dependency-heavy package orchestrator in `CognitiveRAG/agents/`.
+    """
+
+    async def run(self, query: str, session_id: str | None = None):
+        from CognitiveRAG import config as _config
+        from CognitiveRAG.llm_provider import get_llm
+
+        llm = get_llm(getattr(_config, "SYNTHESIS_MODEL", "gpt-5-mini"))
+        prompt = _augment_query_with_session_summary(query, session_id)
+        response = llm.invoke(prompt)
+        content = response.content if hasattr(response, "content") else str(response)
+        return {"answer": content, "context": []}
+
+
+def _build_simple_query_orchestrator():
+    # Explicit compatibility binding for /query. Keep package Orchestrator
+    # dependency mismatch visible as separate architecture work.
+    return _SimpleQueryOrchestrator()
+
+
+def _is_start_new_conversation_command(text: str) -> bool:
+    return text.strip().lower() == "start a new conversation"
 
 
 def _augment_query_with_session_summary(query: str, session_id: str | None) -> str:
@@ -147,18 +176,16 @@ async def process_query(request: QueryRequest):
     if not request.query:
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
+    if _is_start_new_conversation_command(request.query):
+        if not request.session_id:
+            raise HTTPException(status_code=400, detail="session_id is required for start a new conversation command")
+        await start_new_conversation({"session_id": request.session_id})
+        return QueryResponse(answer="Started a new conversation for this session.", sources=[])
+
     try:
-        from .agents import Orchestrator
-        orchestrator = Orchestrator()
-        # pass session_id through when supported; fallback for legacy signatures
-        try:
-            final_state = await orchestrator.run(request.query, session_id=request.session_id)
-        except TypeError as exc:
-            if "session_id" not in str(exc):
-                raise
-            final_state = await orchestrator.run(
-                _augment_query_with_session_summary(request.query, request.session_id)
-            )
+        orchestrator = _build_simple_query_orchestrator()
+        maybe = orchestrator.run(request.query, session_id=request.session_id)
+        final_state = await maybe if inspect.isawaitable(maybe) else maybe
         # final_state is a QueryResponse model or dict-like; attempt to extract answer and context
         try:
             answer = final_state.answer if hasattr(final_state, 'answer') else final_state['answer']
@@ -173,9 +200,6 @@ async def process_query(request: QueryRequest):
             sources=sources
         )
     except Exception as e:
-        fallback_answer = await _legacy_synth_fallback(request.query, request.session_id)
-        if fallback_answer is not None:
-            return QueryResponse(answer=str(fallback_answer), sources=[])
         raise HTTPException(status_code=500, detail=f"An error occurred during query processing: {str(e)}")
 
 @app.get("/health")
@@ -589,3 +613,61 @@ async def session_compaction_state(payload: dict):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Compaction state failed: {e}")
+
+
+@app.post('/start_new_conversation')
+async def start_new_conversation(payload: dict):
+    """Clear session memory and parts for a given session_id.
+
+    This endpoint is a top-level command handler that removes both ConversationStore rows and
+    any fallback raw files so that the session appears as a fresh conversation.
+    """
+    session_id = payload.get('session_id')
+    if not session_id:
+        raise HTTPException(status_code=400, detail='Missing required fields')
+    try:
+        # Try to clear ConversationStore if available
+        try:
+            from CognitiveRAG.session_memory.conversation_store import ConversationStore
+            store = ConversationStore()
+            conn = store._connect()
+            try:
+                cur = conn.cursor()
+                cur.execute('DELETE FROM conversations WHERE session_id=?', (session_id,))
+                conn.commit()
+            finally:
+                conn.close()
+        except Exception:
+            # best-effort; continue to remove fallback files
+            pass
+
+        # Remove fallback raw JSON files and parts files
+        workdir = os.path.join(os.getcwd(), 'data', 'session_memory')
+        raw_path = os.path.join(workdir, f'raw_{session_id}.json')
+        if os.path.exists(raw_path):
+            try:
+                os.remove(raw_path)
+            except Exception:
+                pass
+        # remove parts files for this session
+        try:
+            for fname in os.listdir(workdir):
+                if fname.startswith(f'parts_{session_id}_') or fname.startswith(f'parts_{session_id}_') or fname.startswith(f'parts_{session_id}_'):
+                    try:
+                        os.remove(os.path.join(workdir, fname))
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+        # Also remove summaries file if present
+        sum_path = os.path.join(workdir, f'summaries_{session_id}.json')
+        if os.path.exists(sum_path):
+            try:
+                os.remove(sum_path)
+            except Exception:
+                pass
+
+        return {'status': 'cleared'}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to clear session: {e}")
