@@ -70,11 +70,23 @@ class _SimpleQueryOrchestrator:
     async def run(self, query: str, session_id: str | None = None):
         from CognitiveRAG import config as _config
         from CognitiveRAG.llm_provider import get_llm
+        from CognitiveRAG.core.settings import settings as _settings
+        from CognitiveRAG.llm.factory import build_llm_clients
 
-        llm = get_llm(getattr(_config, "SYNTHESIS_MODEL", "gpt-5-mini"))
         prompt = _augment_query_with_session_summary(query, session_id)
-        response = llm.invoke(prompt)
-        content = response.content if hasattr(response, "content") else str(response)
+        try:
+            llm = get_llm(getattr(_config, "SYNTHESIS_MODEL", "gpt-5-mini"))
+            response = llm.invoke(prompt)
+            content = response.content if hasattr(response, "content") else str(response)
+        except RuntimeError as exc:
+            # Compatibility fallback for environments without langchain Chat* provider packages.
+            if "unavailable" not in str(exc).lower():
+                raise
+            llm_clients = build_llm_clients(_settings)
+            content = await llm_clients.synthesizer.ainvoke_text(
+                system_prompt="You are a helpful assistant.",
+                user_prompt=prompt,
+            )
         return {"answer": content, "context": []}
 
 
