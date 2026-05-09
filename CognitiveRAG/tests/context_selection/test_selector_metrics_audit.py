@@ -43,8 +43,9 @@ def test_selector_metrics_surface_lane_and_budget_counts():
     assert "decision_stats" in metrics
 
     ccounts = metrics["candidate_counts"]
-    assert ccounts["pre_prune"] >= ccounts["post_prune"]
-    assert ccounts["pruned"] == ccounts["pre_prune"] - ccounts["post_prune"]
+    # Lane pruning can split oversized compressible candidates, so the
+    # post-prune candidate count may exceed the original count.
+    assert ccounts["pruned"] == max(0, ccounts["pre_prune"] - ccounts["post_prune"])
     assert ccounts["selected"] == len(out["selected_blocks"])
     assert ccounts["dropped"] == len(out["dropped_blocks"])
 
