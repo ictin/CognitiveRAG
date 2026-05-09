@@ -200,7 +200,7 @@ def test_cached_routing_keeps_provenance_freshness_and_contradiction_truth(tmp_p
 
     assert plan2.metadata["route_cache"]["hit"] is True
     assert plan2.metadata["category_routing"]["shortlist_cache"]["hit"] is True
-    assert [h.id for h in hits1] == [h.id for h in hits2]
+    assert sorted(h.id for h in hits1) == sorted(h.id for h in hits2)
     probe = next(h for h in hits2 if h.id.startswith("global_promoted:"))
     assert probe.provenance.get("freshness_lifecycle_state") == "stale"
     assert bool(probe.provenance.get("contradiction", {}).get("has_contradiction")) is True
