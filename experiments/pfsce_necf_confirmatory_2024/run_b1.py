@@ -66,7 +66,12 @@ def read_zip(path):
         if not ms: raise RuntimeError(f'no csv in {path}')
         for m in ms:
             with z.open(m) as f: h=pd.read_csv(f,nrows=0)
-            mp=pick(list(h.columns)); wanted=set(mp.values())
+            try:
+                mp=pick(list(h.columns))
+            except ValueError as e:
+                meta.append({'member':m,'rows':0,'skipped':True,'reason':str(e)})
+                continue
+            wanted=set(mp.values())
             with z.open(m) as f: r=pd.read_csv(f,usecols=lambda c:c in wanted,low_memory=False)
             r=r.rename(columns={v:k for k,v in mp.items()}); r['ba']=r['ba'].astype(str).str.strip(); r=r[r.ba.isin(BAS)].copy()
             if r.empty: meta.append({'member':m,'rows':0}); continue
@@ -74,6 +79,7 @@ def read_zip(path):
             r['demand']=pd.to_numeric(r.demand,errors='coerce'); r['forecast']=pd.to_numeric(r.forecast,errors='coerce')
             r=r[['datetime_utc','ba','demand','forecast']].dropna(subset=['datetime_utc']); frames.append(r)
             meta.append({'member':m,'rows':len(r),'columns':mp})
+    if not frames: raise RuntimeError(f'no balance CSV with demand forecast found in {path}')
     return pd.concat(frames,ignore_index=True),meta
 
 
