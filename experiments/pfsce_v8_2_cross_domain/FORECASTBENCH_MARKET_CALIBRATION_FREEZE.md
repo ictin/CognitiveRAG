@@ -4,7 +4,7 @@ Protocol ID: `PFSCE-V8.2-FORECASTBENCH-MARKET-CAL-V1`
 
 Status: **FROZEN BEFORE THIS PROTOCOL READS OR SCORES THE 2026 HOLDOUT RESOLUTIONS.**
 
-External source: official `forecastingresearch/forecastbench-datasets` plus the public ForecastBench schema in `forecastingresearch/forecastbench`.
+External source: official `forecastingresearch/forecastbench-datasets` pinned to commit `638d1e6808a0aa352851949bea62918fb55ca054`, plus the public ForecastBench schema/source metadata in `forecastingresearch/forecastbench`.
 
 Pre-execution schema correction: the public resolution-set files contain resolution fields but intentionally omit the internal `market_value_on_due_date`; therefore this protocol uses the market `freeze_datetime_value` published inside each corresponding LLM question set. ForecastBench freezes questions 10 days before `forecast_due_date`, so this is a genuine earlier market probability and is more temporally conservative than a due-date market quote. This correction was made before any 2026 HOLDOUT resolution rows were materialized or scored by this protocol.
 
@@ -16,10 +16,13 @@ This is a retrospective historical holdout experiment. It cannot validate full P
 
 ## Eligible target contract
 
-Read official ForecastBench `datasets/question_sets/*-llm.json` and `datasets/resolution_sets/*_resolution_set.json` files through Git LFS. Pair a resolution set to the LLM question set with the same `forecast_due_date`. For each question set, use only market questions whose published `freeze_datetime_value` is numeric.
+Read official ForecastBench `datasets/question_sets/*-llm.json` and `datasets/resolution_sets/*_resolution_set.json` files through Git LFS. Pair a resolution set to the LLM question set with the same `forecast_due_date`.
+
+Market-source allowlist is frozen from ForecastBench `SOURCE_METADATA` entries with `SourceType.MARKET`: `infer`, `kalshi`, `manifold`, `metaculus`, `polymarket`. Sources outside this allowlist are excluded even if their freeze value happens to be numeric.
 
 Use merged rows satisfying all frozen criteria:
 
+- source is in the frozen market-source allowlist;
 - standard binary target with string question `id`;
 - matching `id` and `source` between question and resolution set;
 - `resolved == true` where that field is present;
@@ -27,7 +30,6 @@ Use merged rows satisfying all frozen criteria:
 - numeric question-set `freeze_datetime_value` strictly between 0 and 1;
 - parseable question-set `forecast_due_date` and resolution-set `resolution_date`;
 - `resolution_date >= forecast_due_date`;
-- source is non-missing;
 - one unique row per `(id, forecast_due_date, resolution_date, source, direction)` after exact duplicate removal.
 
 Question-set files that cannot be paired to a resolution set are reported and excluded. If the archive contains repeated copies of the same target in multiple files, retain the earliest file instance after sorting by due date and filename. Do not select rows according to model performance or outcome.
@@ -120,6 +122,6 @@ A PASS would support only the generality of the PFSCE **calibration + selective 
 
 ## Integrity rules
 
-- This corrected freeze file must be committed before the workflow materializes/reads 2026 HOLDOUT resolution rows.
+- This corrected and source-pinned freeze file must be committed before the workflow materializes/reads 2026 HOLDOUT resolution rows.
 - The runner must log the ForecastBench dataset commit SHA, every input question/resolution file hash, row exclusions by reason, paired/unpaired file counts, cohort sizes, selected C values and router decisions.
 - Any post-result change to cohort dates, eligibility, features, model family, C grid, cells, bootstrap estimator, thresholds or interpretation requires V2 with a new untouched later/prospective cohort.
