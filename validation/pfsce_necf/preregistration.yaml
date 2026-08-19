@@ -6,8 +6,32 @@ purpose: >
   out-of-sample predictive information beyond EIA-930 balancing-authority
   day-ahead demand forecasts; then test whether archived operational HRRR
   weather forecasts add incremental lift beyond the non-weather correction model.
+
 geography:
   balancing_authorities: [CISO, ERCO, PJM, ISNE]
+  weather_adapter: fixed_equal_weight_load_centres_v1
+  load_centres:
+    CISO:
+      - {name: Sacramento, lat: 38.5816, lon: -121.4944}
+      - {name: Fresno, lat: 36.7378, lon: -119.7871}
+      - {name: Los_Angeles, lat: 34.0522, lon: -118.2437}
+      - {name: San_Diego, lat: 32.7157, lon: -117.1611}
+    ERCO:
+      - {name: Dallas_Fort_Worth, lat: 32.8998, lon: -97.0403}
+      - {name: Houston, lat: 29.7604, lon: -95.3698}
+      - {name: Austin, lat: 30.2672, lon: -97.7431}
+      - {name: San_Antonio, lat: 29.4241, lon: -98.4936}
+    PJM:
+      - {name: Philadelphia, lat: 39.9526, lon: -75.1652}
+      - {name: Washington_DC, lat: 38.9072, lon: -77.0369}
+      - {name: Pittsburgh, lat: 40.4406, lon: -79.9959}
+      - {name: Columbus, lat: 39.9612, lon: -82.9988}
+    ISNE:
+      - {name: Boston, lat: 42.3601, lon: -71.0589}
+      - {name: Hartford, lat: 41.7658, lon: -72.6734}
+      - {name: Providence, lat: 41.8240, lon: -71.4128}
+      - {name: Manchester_NH, lat: 42.9956, lon: -71.4548}
+
 splits:
   train_start: "2020-01-01T00:00:00Z"
   train_end: "2022-12-31T23:00:00Z"
@@ -17,25 +41,35 @@ splits:
   confirmatory_end: "2024-12-31T23:00:00Z"
   replication_start: "2025-01-01T00:00:00Z"
   replication_end: "2025-12-31T23:00:00Z"
+
 forecast_origin:
   local_clock: "10:30"
   timezone: America/New_York
   target_window_hours: 12
+  rule: >
+    At each daily origin forecast the next 12 hourly target intervals. Only target
+    hours whose interval end is strictly after forecast_origin are eligible. Evidence
+    availability_time must be <= forecast_origin.
+
 baseline:
   name: EIA930_day_ahead_demand_forecast
   field: DF
+  role: strongest_contemporaneous_baseline
+
 quarantine:
   require_positive_demand: true
   require_positive_forecast: true
   min_demand_to_forecast_ratio: 0.2
   max_demand_to_forecast_ratio: 5.0
   future_aware_imputation_prohibited: true
+
 feature_policy:
   min_residual_lag_hours: 48
   load_lags_hours: [48, 72, 168]
   residual_lags_hours: [48, 72, 168]
   rolling_windows_hours: [168, 336, 720]
   calendar_features: [hour, day_of_week, month, is_weekend]
+
 models:
   ridge:
     alphas: [0.1, 1.0, 10.0, 100.0]
@@ -50,6 +84,7 @@ models:
   stack:
     constraints: nonnegative_weights_sum_to_one
     fit_on: validation_2023_only
+
 router:
   unit: balancing_authority
   validation_cluster: BA_week
@@ -59,6 +94,29 @@ router:
     Use the enhanced local correction for a BA only when the 95% weekly-block
     bootstrap confidence interval for validation relative MAE improvement is
     entirely above zero. Otherwise fall back to the EIA operator baseline.
+
+weather:
+  source: NOAA_HRRR_operational_archive
+  archive: noaa-hrrr-bdp-pds
+  preferred_init_hour_utc: 12
+  latest_complete_run_before_origin_only: true
+  fields: [TMP_2m, DPT_2m]
+  derived: [temperature_c, dewpoint_c, relative_humidity, heat_index_c, cooling_degree_hours_18c]
+
+continuous_primary_gate:
+  aggregate_relative_mae_improvement_vs_B1_min: 0.02
+  aggregate_BA_week_bootstrap_ci_lower_gt: 0.0
+  minimum_BAs_with_positive_median_improvement: 3
+  maximum_unrouted_BA_degradation: 0.05
+
+probabilistic_gate_from_NECF:
+  pass_if_any:
+    relative_brier_improvement_min: 0.05
+    relative_pr_auc_improvement_min: 0.10
+    materially_better_top_decile_precision: true
+    longer_useful_lead_time_same_false_alert_rate: true
+
 authority:
-  current_or_late_revised_EIA_history: V1_PROVISIONAL_REVISION_SENSITIVE
+  consolidated_or_late_revised_EIA_history: V1_PROVISIONAL_REVISION_SENSITIVE
+  historical_HRRR_operational_archive: POINT_IN_TIME_ELIGIBLE_IF_OBJECT_RUN_PRECEDES_ORIGIN
   prospective_snapshots: POINT_IN_TIME_ELIGIBLE_IF_CAPTURE_MANIFEST_PASSES
