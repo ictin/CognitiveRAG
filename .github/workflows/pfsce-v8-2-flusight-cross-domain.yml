@@ -25,6 +25,8 @@ jobs:
           test -f experiments/pfsce_v8_2_cross_domain/FLUSIGHT_RESIDUAL_VALIDATION_FREEZE.md
           sha256sum experiments/pfsce_v8_2_cross_domain/FLUSIGHT_RESIDUAL_VALIDATION_FREEZE.md | tee FLUSIGHT_PROTOCOL_SHA256.txt
           sed -n '1,240p' experiments/pfsce_v8_2_cross_domain/FLUSIGHT_RESIDUAL_VALIDATION_FREEZE.md
+          echo 'Implementation patch v1.0.1 canonicalizes horizon identity only; scientific protocol unchanged.'
+          sha256sum experiments/pfsce_v8_2_cross_domain/run_flusight_residual_v1_0_1.py
 
       - name: Checkout immutable snapshot of official CDC FluSight hub
         run: |
@@ -50,7 +52,7 @@ jobs:
 
       - name: Execute frozen cross-domain holdout
         run: |
-          python experiments/pfsce_v8_2_cross_domain/run_flusight_residual_v1.py \
+          python experiments/pfsce_v8_2_cross_domain/run_flusight_residual_v1_0_1.py \
             --flusight-repo flusight \
             --out-dir experiment_output/flusight_v1
           cp FLUSIGHT_SOURCE_COMMIT.txt experiment_output/flusight_v1/
