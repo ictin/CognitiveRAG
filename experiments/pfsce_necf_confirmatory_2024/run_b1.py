@@ -52,7 +52,7 @@ def download(url,dest):
 def canon(c): return str(c).replace('\ufeff','').strip().lower().replace('_',' ')
 def pick(headers):
     n={canon(c):c for c in headers}; out={}
-    for target,names in {'ba':['ba','balancing authority'],'datetime_utc':['utc time','datetime utc','utc timestamp'],'forecast':['df','demand forecast'],'demand':['d','demand']}.items():
+    for target,names in {'ba':['ba','balancing authority'],'datetime_utc':['utc time','utc time at end of hour','datetime utc','utc timestamp'],'forecast':['df','demand forecast','demand forecast (mw)'],'demand':['d','demand','demand (mw)']}.items():
         for name in names:
             if name in n: out[target]=n[name]; break
         if target not in out: raise ValueError(f'missing {target}; headers={headers[:40]}')
