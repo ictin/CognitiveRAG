@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   confirmatory-b1:
@@ -27,7 +27,19 @@ jobs:
       - name: Hash result artifacts
         if: always()
         run: |
-          if [ -d experiment_output ]; then find experiment_output -type f -maxdepth 2 -print0 | sort -z | xargs -0 sha256sum | tee experiment_output/SHA256SUMS.txt; fi
+          if [ -d experiment_output ]; then find experiment_output -maxdepth 2 -type f -print0 | sort -z | xargs -0 sha256sum | tee experiment_output/SHA256SUMS.txt; fi
+      - name: Freeze compact result on experiment branch
+        if: success()
+        run: |
+          mkdir -p experiments/pfsce_necf_confirmatory_2024/results
+          cp experiment_output/B1_2024.json experiments/pfsce_necf_confirmatory_2024/results/B1_2024.json
+          cp experiment_output/source_provenance.json experiments/pfsce_necf_confirmatory_2024/results/B1_2024_source_provenance.json
+          sha256sum experiments/pfsce_necf_confirmatory_2024/results/B1_2024.json experiments/pfsce_necf_confirmatory_2024/results/B1_2024_source_provenance.json > experiments/pfsce_necf_confirmatory_2024/results/SHA256SUMS.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add experiments/pfsce_necf_confirmatory_2024/results
+          git commit -m 'Freeze PFSCE NECF B1 2024 confirmatory result'
+          git push
       - name: Upload immutable experiment outputs
         if: always()
         uses: actions/upload-artifact@v4
