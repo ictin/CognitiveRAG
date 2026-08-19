@@ -7,6 +7,12 @@ on:
     paths:
       - "validation/pfsce_necf/**"
       - ".github/workflows/pfsce_necf_b1_2024.yml"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "validation/pfsce_necf/**"
+      - ".github/workflows/pfsce_necf_b1_2024.yml"
   workflow_dispatch:
 
 permissions:
