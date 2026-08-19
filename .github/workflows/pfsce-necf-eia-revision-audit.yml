@@ -1,0 +1,54 @@
+name: PFSCE NECF EIA Revision Sensitivity Audit
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "experiments/pfsce_necf_confirmatory_2024/TRIGGER_EIA_REVISION_AUDIT.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout frozen experiment branch
+        uses: actions/checkout@v4
+        with:
+          ref: pfsce-necf-confirmatory-2024-run-20260819
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "numpy>=1.26" "pandas>=2.2" "scipy>=1.12" "scikit-learn>=1.5" "requests>=2.32" tzdata
+
+      - name: Verify audit freeze
+        run: |
+          test -f experiments/pfsce_necf_confirmatory_2024/REVISION_SENSITIVITY_AUDIT_FREEZE.md
+          sha256sum experiments/pfsce_necf_confirmatory_2024/REVISION_SENSITIVITY_AUDIT_FREEZE.md
+          sed -n '1,220p' experiments/pfsce_necf_confirmatory_2024/REVISION_SENSITIVITY_AUDIT_FREEZE.md
+
+      - name: Run row-level and full-pipeline vintage audit
+        run: |
+          python experiments/pfsce_necf_confirmatory_2024/run_eia_revision_audit.py
+
+      - name: Remove raw archive cache
+        if: always()
+        run: rm -rf experiment_output/eia_revision_audit/raw || true
+
+      - name: Upload immutable audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pfsce-necf-eia-revision-audit-v1
+          path: experiment_output/eia_revision_audit
+          if-no-files-found: warn
+          retention-days: 90
