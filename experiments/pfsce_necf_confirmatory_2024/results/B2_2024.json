@@ -1,0 +1,275 @@
+{
+  "protocol_id": "NECF-001-WP2-CONFIRMATORY-2024-v1",
+  "status": "FROZEN_B2_2024_RESULT",
+  "source_adapter": "POINT_IN_TIME_ELIGIBLE_DERIVED_HRRR_MIRROR",
+  "B1_result_sha256": "3eadb09ad82ac5b5338c9dd26eadac592bd5378fb4139a1b7a0cc65cbdca1d89",
+  "B1_reproduction": {
+    "ridge": {
+      "alpha": 100.0,
+      "validation_mae": 1114.3217343515016
+    },
+    "stack_weights": [
+      3.768301164968898e-13,
+      0.4451296973915728,
+      0.5548703026093313
+    ],
+    "router": {
+      "CISO": {
+        "promoted": true,
+        "validation_BA_week_relative_lift_bootstrap": {
+          "mean": 0.4310614275792316,
+          "median": 0.45574326685046584,
+          "lower": 0.3924843328894457,
+          "upper": 0.46760842121080876,
+          "n_clusters": 53
+        }
+      },
+      "ERCO": {
+        "promoted": false,
+        "validation_BA_week_relative_lift_bootstrap": {
+          "mean": 0.04097487391864901,
+          "median": 0.023040859284267932,
+          "lower": -0.017592556737381606,
+          "upper": 0.10079307392053465,
+          "n_clusters": 53
+        }
+      },
+      "PJM": {
+        "promoted": true,
+        "validation_BA_week_relative_lift_bootstrap": {
+          "mean": 0.3091665326963655,
+          "median": 0.3017082883132071,
+          "lower": 0.2715614200659555,
+          "upper": 0.3450712828458433,
+          "n_clusters": 53
+        }
+      },
+      "ISNE": {
+        "promoted": false,
+        "validation_BA_week_relative_lift_bootstrap": {
+          "mean": 0.003003777934309889,
+          "median": -0.0017162272256862044,
+          "lower": -0.023868298439320257,
+          "upper": 0.030470856497753232,
+          "n_clusters": 53
+        }
+      }
+    },
+    "models": {
+      "operator": {
+        "mae": 1725.0005719842131,
+        "rmse": 2563.21636591166
+      },
+      "ridge": {
+        "mae": 1241.650831114705,
+        "rmse": 1866.8729129789397,
+        "baseline_mae": 1725.0005719842131,
+        "relative_mae_improvement": 0.28020265541913786
+      },
+      "hgb": {
+        "mae": 1395.5064542074963,
+        "rmse": 2090.689647416662,
+        "baseline_mae": 1725.0005719842131,
+        "relative_mae_improvement": 0.19101101943271256
+      },
+      "stack": {
+        "mae": 1286.9541637548768,
+        "rmse": 1923.2631559468944,
+        "baseline_mae": 1725.0005719842131,
+        "relative_mae_improvement": 0.25393986259695295
+      },
+      "routed": {
+        "mae": 1272.9666006614848,
+        "rmse": 1894.886931539505,
+        "baseline_mae": 1725.0005719842131,
+        "relative_mae_improvement": 0.2620485921362728
+      }
+    },
+    "n_train": 52538,
+    "n_validation": 17506,
+    "n_holdout": 17483
+  },
+  "B2": {
+    "ridge": {
+      "alpha": 100.0,
+      "validation_mae": 1118.2131245442092
+    },
+    "stack_weights": [
+      2.4873142823992334e-12,
+      0.2891027680921894,
+      0.7108972319054138
+    ],
+    "router": {
+      "CISO": {
+        "promoted": true,
+        "validation_BA_week_relative_lift_bootstrap": {
+          "mean": 0.4275056503165997,
+          "median": 0.4420548918456477,
+          "lower": 0.39116015016246986,
+          "upper": 0.46303596646066364,
+          "n_clusters": 53
+        }
+      },
+      "ERCO": {
+        "promoted": false,
+        "validation_BA_week_relative_lift_bootstrap": {
+          "mean": 0.04741229265927028,
+          "median": 0.03066133043263376,
+          "lower": -0.009328802268287863,
+          "upper": 0.10418547948523939,
+          "n_clusters": 53
+        }
+      },
+      "PJM": {
+        "promoted": true,
+        "validation_BA_week_relative_lift_bootstrap": {
+          "mean": 0.3285146829881171,
+          "median": 0.3108430644986633,
+          "lower": 0.2922768152198632,
+          "upper": 0.36302020652996086,
+          "n_clusters": 53
+        }
+      },
+      "ISNE": {
+        "promoted": false,
+        "validation_BA_week_relative_lift_bootstrap": {
+          "mean": -0.030875627865811252,
+          "median": -0.012080814651874919,
+          "lower": -0.0711961710710976,
+          "upper": 0.006491762820646935,
+          "n_clusters": 53
+        }
+      }
+    },
+    "models": {
+      "operator": {
+        "mae": 1725.0005719842131,
+        "rmse": 2563.21636591166
+      },
+      "ridge": {
+        "mae": 1236.99603091994,
+        "rmse": 1855.4712120197694,
+        "baseline_mae": 1725.0005719842131,
+        "relative_mae_improvement": 0.2829010894198934
+      },
+      "hgb": {
+        "mae": 1283.879861733459,
+        "rmse": 1942.5361029182657,
+        "baseline_mae": 1725.0005719842131,
+        "relative_mae_improvement": 0.2557220660763881
+      },
+      "stack": {
+        "mae": 1242.1590848896642,
+        "rmse": 1873.5508437628303,
+        "baseline_mae": 1725.0005719842131,
+        "relative_mae_improvement": 0.2799080156472944
+      },
+      "routed": {
+        "mae": 1235.8157252683825,
+        "rmse": 1859.1619395279017,
+        "baseline_mae": 1725.0005719842131,
+        "relative_mae_improvement": 0.2835853243533345
+      }
+    },
+    "n_train": 52538,
+    "n_validation": 17506,
+    "n_holdout": 17483
+  },
+  "weather_coverage": {
+    "train": {
+      "rows": 52592,
+      "weather_complete_rows": 44288,
+      "coverage": 0.8421052631578947
+    },
+    "validation": {
+      "rows": 17520,
+      "weather_complete_rows": 17520,
+      "coverage": 1.0
+    },
+    "confirmatory": {
+      "rows": 17568,
+      "weather_complete_rows": 17520,
+      "coverage": 0.9972677595628415
+    }
+  },
+  "incremental_gate_vs_B1": {
+    "aggregate_relative_mae_improvement_vs_B1": 0.02918448557393195,
+    "required_min": 0.02,
+    "BA_week_bootstrap": {
+      "mean": 0.021461525599191605,
+      "median": 0.0,
+      "lower": 0.014559208110935936,
+      "upper": 0.02863808763630197,
+      "n_clusters": 212
+    },
+    "required_bootstrap_lower_gt": 0.0,
+    "BAs_positive_median_improvement": 2,
+    "required_min_BAs_positive_median": 3,
+    "max_unrouted_BA_degradation": 0.0,
+    "allowed_max_unrouted_BA_degradation": 0.05,
+    "pass": false
+  },
+  "by_ba_incremental_vs_B1": {
+    "CISO": {
+      "median_weekly_improvement_vs_B1": 0.07352539582263448,
+      "mean_weekly_improvement_vs_B1": 0.06790012732661561,
+      "bootstrap": {
+        "mean": 0.06790012732661561,
+        "median": 0.07352539582263448,
+        "lower": 0.050361725679540656,
+        "upper": 0.08648138587105725,
+        "n_clusters": 53
+      },
+      "B1_mae": 1454.83786638982,
+      "B2_mae": 1336.623595240779,
+      "relative_mae_improvement_vs_B1": 0.08125597627066836,
+      "B2_router_promoted": true
+    },
+    "ERCO": {
+      "median_weekly_improvement_vs_B1": 0.0,
+      "mean_weekly_improvement_vs_B1": 0.0,
+      "bootstrap": {
+        "mean": 0.0,
+        "median": 0.0,
+        "lower": 0.0,
+        "upper": 0.0,
+        "n_clusters": 53
+      },
+      "B1_mae": 1291.180402930403,
+      "B2_mae": 1291.180402930403,
+      "relative_mae_improvement_vs_B1": 0.0,
+      "B2_router_promoted": false
+    },
+    "ISNE": {
+      "median_weekly_improvement_vs_B1": 0.0,
+      "mean_weekly_improvement_vs_B1": 0.0,
+      "bootstrap": {
+        "mean": 0.0,
+        "median": 0.0,
+        "lower": 0.0,
+        "upper": 0.0,
+        "n_clusters": 53
+      },
+      "B1_mae": 269.50398542473243,
+      "B2_mae": 269.50398542473243,
+      "relative_mae_improvement_vs_B1": 0.0,
+      "B2_router_promoted": false
+    },
+    "PJM": {
+      "median_weekly_improvement_vs_B1": 0.026349388025469298,
+      "mean_weekly_improvement_vs_B1": 0.01794597507015081,
+      "bootstrap": {
+        "mean": 0.01794597507015081,
+        "median": 0.026349388025469298,
+        "lower": 0.0007210704941610946,
+        "upper": 0.03343247462611234,
+        "n_clusters": 53
+      },
+      "B1_mae": 2082.1275946361466,
+      "B2_mae": 2051.3200421241527,
+      "relative_mae_improvement_vs_B1": 0.014796188567577933,
+      "B2_router_promoted": true
+    }
+  },
+  "n_quarantined": 306
+}
