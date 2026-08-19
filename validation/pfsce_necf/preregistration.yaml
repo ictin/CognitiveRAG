@@ -1,0 +1,64 @@
+protocol_id: NECF-001-WP2-CONFIRMATORY-2024-v1
+frozen_at_utc: "2026-08-19T13:35:00Z"
+status: FROZEN_BEFORE_CONFIRMATORY_OUTCOME_INSPECTION
+purpose: >
+  Confirm or refute whether a temporally valid PFSCE material-state model adds
+  out-of-sample predictive information beyond EIA-930 balancing-authority
+  day-ahead demand forecasts; then test whether archived operational HRRR
+  weather forecasts add incremental lift beyond the non-weather correction model.
+geography:
+  balancing_authorities: [CISO, ERCO, PJM, ISNE]
+splits:
+  train_start: "2020-01-01T00:00:00Z"
+  train_end: "2022-12-31T23:00:00Z"
+  validation_start: "2023-01-01T00:00:00Z"
+  validation_end: "2023-12-31T23:00:00Z"
+  confirmatory_start: "2024-01-01T00:00:00Z"
+  confirmatory_end: "2024-12-31T23:00:00Z"
+  replication_start: "2025-01-01T00:00:00Z"
+  replication_end: "2025-12-31T23:00:00Z"
+forecast_origin:
+  local_clock: "10:30"
+  timezone: America/New_York
+  target_window_hours: 12
+baseline:
+  name: EIA930_day_ahead_demand_forecast
+  field: DF
+quarantine:
+  require_positive_demand: true
+  require_positive_forecast: true
+  min_demand_to_forecast_ratio: 0.2
+  max_demand_to_forecast_ratio: 5.0
+  future_aware_imputation_prohibited: true
+feature_policy:
+  min_residual_lag_hours: 48
+  load_lags_hours: [48, 72, 168]
+  residual_lags_hours: [48, 72, 168]
+  rolling_windows_hours: [168, 336, 720]
+  calendar_features: [hour, day_of_week, month, is_weekend]
+models:
+  ridge:
+    alphas: [0.1, 1.0, 10.0, 100.0]
+    selection: validation_2023_only
+  hgb:
+    learning_rate: 0.05
+    max_iter: 300
+    max_leaf_nodes: 15
+    min_samples_leaf: 50
+    l2_regularization: 1.0
+    random_state: 20260819
+  stack:
+    constraints: nonnegative_weights_sum_to_one
+    fit_on: validation_2023_only
+router:
+  unit: balancing_authority
+  validation_cluster: BA_week
+  bootstrap_resamples: 5000
+  random_seed: 20260819
+  promotion_rule: >
+    Use the enhanced local correction for a BA only when the 95% weekly-block
+    bootstrap confidence interval for validation relative MAE improvement is
+    entirely above zero. Otherwise fall back to the EIA operator baseline.
+authority:
+  current_or_late_revised_EIA_history: V1_PROVISIONAL_REVISION_SENSITIVE
+  prospective_snapshots: POINT_IN_TIME_ELIGIBLE_IF_CAPTURE_MANIFEST_PASSES
