@@ -1,0 +1,560 @@
+{
+  "protocol_id": "NECF-001-WP2-CONFIRMATORY-2024-v1",
+  "preflight_version": "B2-HRRR-SOURCE-ADAPTER-PREFLIGHT-v1",
+  "status": "PASS",
+  "source_adapter": "POINT_IN_TIME_ELIGIBLE_DERIVED_HRRR_MIRROR",
+  "point_index": {
+    "CISO": [
+      {
+        "name": "Sacramento",
+        "lat": 38.5816,
+        "lon": -121.4944,
+        "ix": 212,
+        "iy": 622,
+        "chunk_id": "4.1",
+        "in_x": 62,
+        "in_y": 22
+      },
+      {
+        "name": "Fresno",
+        "lat": 36.7378,
+        "lon": -119.7871,
+        "ix": 243,
+        "iy": 544,
+        "chunk_id": "3.1",
+        "in_x": 93,
+        "in_y": 94
+      },
+      {
+        "name": "Los_Angeles",
+        "lat": 34.0522,
+        "lon": -118.2437,
+        "ix": 266,
+        "iy": 436,
+        "chunk_id": "2.1",
+        "in_x": 116,
+        "in_y": 136
+      },
+      {
+        "name": "San_Diego",
+        "lat": 32.7157,
+        "lon": -117.1611,
+        "ix": 288,
+        "iy": 380,
+        "chunk_id": "2.1",
+        "in_x": 138,
+        "in_y": 80
+      }
+    ],
+    "ERCO": [
+      {
+        "name": "Dallas_Fort_Worth",
+        "lat": 32.8998,
+        "lon": -97.0403,
+        "ix": 914,
+        "iy": 321,
+        "chunk_id": "2.6",
+        "in_x": 14,
+        "in_y": 21
+      },
+      {
+        "name": "Houston",
+        "lat": 29.7604,
+        "lon": -95.3698,
+        "ix": 968,
+        "iy": 205,
+        "chunk_id": "1.6",
+        "in_x": 68,
+        "in_y": 55
+      },
+      {
+        "name": "Austin",
+        "lat": 30.2672,
+        "lon": -97.7431,
+        "ix": 891,
+        "iy": 223,
+        "chunk_id": "1.5",
+        "in_x": 141,
+        "in_y": 73
+      },
+      {
+        "name": "San_Antonio",
+        "lat": 29.4241,
+        "lon": -98.4936,
+        "ix": 867,
+        "iy": 191,
+        "chunk_id": "1.5",
+        "in_x": 117,
+        "in_y": 41
+      }
+    ],
+    "PJM": [
+      {
+        "name": "Philadelphia",
+        "lat": 39.9526,
+        "lon": -75.1652,
+        "ix": 1528,
+        "iy": 660,
+        "chunk_id": "4.10",
+        "in_x": 28,
+        "in_y": 60
+      },
+      {
+        "name": "Washington_DC",
+        "lat": 38.9072,
+        "lon": -77.0369,
+        "ix": 1485,
+        "iy": 610,
+        "chunk_id": "4.9",
+        "in_x": 135,
+        "in_y": 10
+      },
+      {
+        "name": "Pittsburgh",
+        "lat": 40.4406,
+        "lon": -79.9959,
+        "ix": 1390,
+        "iy": 648,
+        "chunk_id": "4.9",
+        "in_x": 40,
+        "in_y": 48
+      },
+      {
+        "name": "Columbus",
+        "lat": 39.9612,
+        "lon": -82.9988,
+        "ix": 1310,
+        "iy": 616,
+        "chunk_id": "4.8",
+        "in_x": 110,
+        "in_y": 16
+      }
+    ],
+    "ISNE": [
+      {
+        "name": "Boston",
+        "lat": 42.3601,
+        "lon": -71.0589,
+        "ix": 1615,
+        "iy": 776,
+        "chunk_id": "5.10",
+        "in_x": 115,
+        "in_y": 26
+      },
+      {
+        "name": "Hartford",
+        "lat": 41.7658,
+        "lon": -72.6734,
+        "ix": 1578,
+        "iy": 742,
+        "chunk_id": "4.10",
+        "in_x": 78,
+        "in_y": 142
+      },
+      {
+        "name": "Providence",
+        "lat": 41.824,
+        "lon": -71.4128,
+        "ix": 1611,
+        "iy": 754,
+        "chunk_id": "5.10",
+        "in_x": 111,
+        "in_y": 4
+      },
+      {
+        "name": "Manchester_NH",
+        "lat": 42.9956,
+        "lon": -71.4548,
+        "ix": 1598,
+        "iy": 795,
+        "chunk_id": "5.10",
+        "in_x": 98,
+        "in_y": 45
+      }
+    ]
+  },
+  "samples": [
+    {
+      "date": "2020-08-01",
+      "forecast_origin_utc": "2020-08-01T14:30:00+00:00",
+      "init_utc": "2020-08-01T12:00:00+00:00",
+      "target_fxx": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "original_noaa_all_objects_available_before_origin": true,
+      "original_noaa_latest_required_object_utc": "2020-08-01T13:16:49+00:00",
+      "zarr_metadata": {
+        "TMP": {
+          "dtype": "<f2",
+          "shape": [
+            36,
+            1059,
+            1799
+          ],
+          "chunks": [
+            36,
+            150,
+            150
+          ],
+          "compressor": {
+            "blocksize": 0,
+            "clevel": 9,
+            "cname": "lz4",
+            "id": "blosc",
+            "shuffle": 1
+          }
+        },
+        "DPT": {
+          "dtype": "<f2",
+          "shape": [
+            36,
+            1059,
+            1799
+          ],
+          "chunks": [
+            36,
+            150,
+            150
+          ],
+          "compressor": {
+            "blocksize": 0,
+            "clevel": 9,
+            "cname": "lz4",
+            "id": "blosc",
+            "shuffle": 1
+          }
+        }
+      },
+      "unique_spatial_chunks": [
+        "1.5",
+        "1.6",
+        "2.1",
+        "2.6",
+        "3.1",
+        "4.1",
+        "4.10",
+        "4.8",
+        "4.9",
+        "5.10"
+      ],
+      "finite_values": {
+        "TMP": 192,
+        "DPT": 192
+      },
+      "plausible_ranges_K": {
+        "TMP": [
+          290.25,
+          312.5
+        ],
+        "DPT": [
+          268.5,
+          297.75
+        ]
+      },
+      "sample_values_sha256": "36018079434b6bce2bddaa6cf8bfb650879c755d64f3c2661807a81e91135a16"
+    },
+    {
+      "date": "2021-07-16",
+      "forecast_origin_utc": "2021-07-16T14:30:00+00:00",
+      "init_utc": "2021-07-16T12:00:00+00:00",
+      "target_fxx": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "original_noaa_all_objects_available_before_origin": true,
+      "original_noaa_latest_required_object_utc": "2021-07-16T13:09:54+00:00",
+      "zarr_metadata": {
+        "TMP": {
+          "dtype": "<f2",
+          "shape": [
+            48,
+            1059,
+            1799
+          ],
+          "chunks": [
+            48,
+            150,
+            150
+          ],
+          "compressor": {
+            "blocksize": 0,
+            "clevel": 9,
+            "cname": "lz4",
+            "id": "blosc",
+            "shuffle": 1
+          }
+        },
+        "DPT": {
+          "dtype": "<f2",
+          "shape": [
+            48,
+            1059,
+            1799
+          ],
+          "chunks": [
+            48,
+            150,
+            150
+          ],
+          "compressor": {
+            "blocksize": 0,
+            "clevel": 9,
+            "cname": "lz4",
+            "id": "blosc",
+            "shuffle": 1
+          }
+        }
+      },
+      "unique_spatial_chunks": [
+        "1.5",
+        "1.6",
+        "2.1",
+        "2.6",
+        "3.1",
+        "4.1",
+        "4.10",
+        "4.8",
+        "4.9",
+        "5.10"
+      ],
+      "finite_values": {
+        "TMP": 192,
+        "DPT": 192
+      },
+      "plausible_ranges_K": {
+        "TMP": [
+          288.5,
+          311.25
+        ],
+        "DPT": [
+          275.0,
+          298.75
+        ]
+      },
+      "sample_values_sha256": "57ec84e2974b19642260a566e3914e07ded31d4a44bed92f846266468af62cd3"
+    },
+    {
+      "date": "2023-07-15",
+      "forecast_origin_utc": "2023-07-15T14:30:00+00:00",
+      "init_utc": "2023-07-15T12:00:00+00:00",
+      "target_fxx": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "original_noaa_all_objects_available_before_origin": true,
+      "original_noaa_latest_required_object_utc": "2023-07-15T13:13:03+00:00",
+      "zarr_metadata": {
+        "TMP": {
+          "dtype": "<f2",
+          "shape": [
+            48,
+            1059,
+            1799
+          ],
+          "chunks": [
+            48,
+            150,
+            150
+          ],
+          "compressor": {
+            "blocksize": 0,
+            "clevel": 9,
+            "cname": "lz4",
+            "id": "blosc",
+            "shuffle": 1
+          }
+        },
+        "DPT": {
+          "dtype": "<f2",
+          "shape": [
+            48,
+            1059,
+            1799
+          ],
+          "chunks": [
+            48,
+            150,
+            150
+          ],
+          "compressor": {
+            "blocksize": 0,
+            "clevel": 9,
+            "cname": "lz4",
+            "id": "blosc",
+            "shuffle": 1
+          }
+        }
+      },
+      "unique_spatial_chunks": [
+        "1.5",
+        "1.6",
+        "2.1",
+        "2.6",
+        "3.1",
+        "4.1",
+        "4.10",
+        "4.8",
+        "4.9",
+        "5.10"
+      ],
+      "finite_values": {
+        "TMP": 192,
+        "DPT": 192
+      },
+      "plausible_ranges_K": {
+        "TMP": [
+          293.0,
+          317.25
+        ],
+        "DPT": [
+          277.0,
+          298.25
+        ]
+      },
+      "sample_values_sha256": "7352bbaebef9cd0a8375849e069c37d09bb9aeff791cfe6aea86ba54d7854a0c"
+    },
+    {
+      "date": "2024-07-15",
+      "forecast_origin_utc": "2024-07-15T14:30:00+00:00",
+      "init_utc": "2024-07-15T12:00:00+00:00",
+      "target_fxx": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "original_noaa_all_objects_available_before_origin": true,
+      "original_noaa_latest_required_object_utc": "2024-07-15T13:09:54+00:00",
+      "zarr_metadata": {
+        "TMP": {
+          "dtype": "<f4",
+          "shape": [
+            48,
+            1059,
+            1799
+          ],
+          "chunks": [
+            48,
+            150,
+            150
+          ],
+          "compressor": {
+            "blocksize": 0,
+            "clevel": 9,
+            "cname": "lz4",
+            "id": "blosc",
+            "shuffle": 1
+          }
+        },
+        "DPT": {
+          "dtype": "<f4",
+          "shape": [
+            48,
+            1059,
+            1799
+          ],
+          "chunks": [
+            48,
+            150,
+            150
+          ],
+          "compressor": {
+            "blocksize": 0,
+            "clevel": 9,
+            "cname": "lz4",
+            "id": "blosc",
+            "shuffle": 1
+          }
+        }
+      },
+      "unique_spatial_chunks": [
+        "1.5",
+        "1.6",
+        "2.1",
+        "2.6",
+        "3.1",
+        "4.1",
+        "4.10",
+        "4.8",
+        "4.9",
+        "5.10"
+      ],
+      "finite_values": {
+        "TMP": 192,
+        "DPT": 192
+      },
+      "plausible_ranges_K": {
+        "TMP": [
+          292.6181640625,
+          312.5057373046875
+        ],
+        "DPT": [
+          279.3747863769531,
+          298.7642822265625
+        ]
+      },
+      "sample_values_sha256": "302328fd76f02b5d029f5517d8f01b38eab7373e00c4f61b8d9c903da1029577"
+    }
+  ],
+  "dtype_observations": [
+    [
+      "2020-08-01",
+      "<f2",
+      "<f2"
+    ],
+    [
+      "2021-07-16",
+      "<f2",
+      "<f2"
+    ],
+    [
+      "2023-07-15",
+      "<f2",
+      "<f2"
+    ],
+    [
+      "2024-07-15",
+      "<f4",
+      "<f4"
+    ]
+  ]
+}
