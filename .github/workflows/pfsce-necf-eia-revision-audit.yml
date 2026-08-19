@@ -36,19 +36,19 @@ jobs:
           sha256sum experiments/pfsce_necf_confirmatory_2024/REVISION_SENSITIVITY_AUDIT_FREEZE.md
           sed -n '1,220p' experiments/pfsce_necf_confirmatory_2024/REVISION_SENSITIVITY_AUDIT_FREEZE.md
 
-      - name: Run row-level and full-pipeline vintage audit
+      - name: Run corrected v1.0.1 row-level and full-pipeline vintage audit
         run: |
-          python experiments/pfsce_necf_confirmatory_2024/run_eia_revision_audit.py
+          python experiments/pfsce_necf_confirmatory_2024/run_eia_revision_audit_v1_0_1.py
 
       - name: Remove raw archive cache
         if: always()
         run: rm -rf experiment_output/eia_revision_audit/raw || true
 
-      - name: Upload immutable audit evidence
+      - name: Upload immutable corrected audit evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pfsce-necf-eia-revision-audit-v1
+          name: pfsce-necf-eia-revision-audit-v1-0-1
           path: experiment_output/eia_revision_audit
           if-no-files-found: warn
           retention-days: 90
