@@ -6,6 +6,12 @@ on:
       - master
     paths:
       - .github/workflows/_temporary_pfsce_necf_b1_2024.yml
+  pull_request:
+    branches:
+      - master
+    paths:
+      - experiments/pfsce_necf_confirmatory_2024/run_b1.py
+      - .github/workflows/pfsce-necf-confirmatory-2024-b1.yml
 
 permissions:
   contents: write
