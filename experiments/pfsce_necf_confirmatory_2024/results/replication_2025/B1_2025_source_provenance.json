@@ -1,0 +1,74 @@
+{
+  "authority": "V1_PROVISIONAL_REVISION_SENSITIVE_REPLICATION",
+  "files": [
+    {
+      "expected_md5": "4ebc17b3e786b5c4a06315afc285093f",
+      "file": "eia930-2025half1.zip",
+      "md5": "4ebc17b3e786b5c4a06315afc285093f",
+      "members": [
+        {
+          "columns": {
+            "ba": "Balancing Authority",
+            "datetime_utc": "UTC Time at End of Hour",
+            "demand": "Demand (MW)",
+            "forecast": "Demand Forecast (MW)"
+          },
+          "member": "eia930-2025half1-balance.csv",
+          "rows": 17372
+        },
+        {
+          "member": "eia930-2025half1-interchange.csv",
+          "reason": "missing forecast; headers=['Balancing Authority', 'Data Date', 'Hour Number', 'Directly Interconnected Balancing Authority', 'Interchange (MW)', 'Local Time at End of Hour', 'UTC Time at End of Hour', 'Region', 'DIBA_Region']",
+          "rows": 0,
+          "skipped": true
+        },
+        {
+          "member": "eia930-2025half1-subregion.csv",
+          "reason": "missing forecast; headers=['Balancing Authority', 'Data Date', 'Hour Number', 'Sub-Region', 'Demand (MW)', 'Local Time at End of Hour', 'UTC Time at End of Hour']",
+          "rows": 0,
+          "skipped": true
+        }
+      ],
+      "selected_2025_rows": 17372,
+      "sha256": "fa2d7985b3acc002454306210814208db45f2aa5fd88c74d4bc8bc6d9f94ee52",
+      "size": 19914464,
+      "url": "https://zenodo.org/records/18448416/files/eia930-2025half1.zip?download=1"
+    },
+    {
+      "expected_md5": "9a7fe2bb3cdfe42236782ab7291a49ba",
+      "file": "eia930-2025half2.zip",
+      "md5": "9a7fe2bb3cdfe42236782ab7291a49ba",
+      "members": [
+        {
+          "columns": {
+            "ba": "Balancing Authority",
+            "datetime_utc": "UTC Time at End of Hour",
+            "demand": "Demand (MW)",
+            "forecast": "Demand Forecast (MW)"
+          },
+          "member": "eia930-2025half2-balance.csv",
+          "rows": 17668
+        },
+        {
+          "member": "eia930-2025half2-interchange.csv",
+          "reason": "missing forecast; headers=['Balancing Authority', 'Data Date', 'Hour Number', 'Directly Interconnected Balancing Authority', 'Interchange (MW)', 'Local Time at End of Hour', 'UTC Time at End of Hour', 'Region', 'DIBA_Region']",
+          "rows": 0,
+          "skipped": true
+        },
+        {
+          "member": "eia930-2025half2-subregion.csv",
+          "reason": "missing forecast; headers=['Balancing Authority', 'Data Date', 'Hour Number', 'Sub-Region', 'Demand (MW)', 'Local Time at End of Hour', 'UTC Time at End of Hour']",
+          "rows": 0,
+          "skipped": true
+        }
+      ],
+      "selected_2025_rows": 17640,
+      "sha256": "1d8545fed0301bd94fa3b2d0148737d6fb32246554be724743167a44bbec344e",
+      "size": 20367762,
+      "url": "https://zenodo.org/records/18448416/files/eia930-2025half2.zip?download=1"
+    }
+  ],
+  "published": "2026-02-01",
+  "record": "18448416",
+  "rows_2025": 35012
+}
