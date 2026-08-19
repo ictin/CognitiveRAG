@@ -1,10 +1,10 @@
 {
   "BA_week_routed_lift_bootstrap": {
-    "lower": 0.10134396439174222,
-    "mean": 0.12249313574571752,
+    "lower": 0.10134396439174237,
+    "mean": 0.1224931357457177,
     "median": 0.0,
     "n_clusters": 212,
-    "upper": 0.14367665673355176
+    "upper": 0.14367665673355198
   },
   "authority": "V1_PROVISIONAL_REVISION_SENSITIVE_REPLICATION",
   "by_ba_2025": {
@@ -21,22 +21,22 @@
       },
       "ridge": {
         "baseline_mae": 3125.877310536044,
-        "mae": 1560.6893375318389,
-        "relative_mae_improvement": 0.5007195796612368,
-        "rmse": 1997.1654124332733
+        "mae": 1560.689337531835,
+        "relative_mae_improvement": 0.500719579661238,
+        "rmse": 1997.165412433268
       },
       "routed": {
         "baseline_mae": 3125.877310536044,
-        "mae": 2527.7479437330326,
-        "relative_mae_improvement": 0.19134767854994308,
-        "rmse": 2896.522297044429
+        "mae": 2527.7479437330303,
+        "relative_mae_improvement": 0.19134767854994383,
+        "rmse": 2896.5222970444265
       },
       "router_promoted": true,
       "stack": {
         "baseline_mae": 3125.877310536044,
-        "mae": 2527.7479437330326,
-        "relative_mae_improvement": 0.19134767854994308,
-        "rmse": 2896.522297044429
+        "mae": 2527.7479437330303,
+        "relative_mae_improvement": 0.19134767854994383,
+        "rmse": 2896.5222970444265
       }
     },
     "ERCO": {
@@ -55,7 +55,7 @@
         "baseline_mae": 1647.8011520737327,
         "mae": 1484.5479586097733,
         "relative_mae_improvement": 0.09907335800712831,
-        "rmse": 1978.9353311810878
+        "rmse": 1978.9353311810885
       },
       "routed": {
         "baseline_mae": 1647.8011520737327,
@@ -66,9 +66,9 @@
       "router_promoted": false,
       "stack": {
         "baseline_mae": 1647.8011520737327,
-        "mae": 1432.287562489394,
-        "relative_mae_improvement": 0.13078859018463368,
-        "rmse": 1915.391911729761
+        "mae": 1432.2875624893945,
+        "relative_mae_improvement": 0.1307885901846334,
+        "rmse": 1915.3919117297614
       }
     },
     "ISNE": {
@@ -85,9 +85,9 @@
       },
       "ridge": {
         "baseline_mae": 262.17375400091447,
-        "mae": 271.55792319827157,
-        "relative_mae_improvement": -0.03579370190245803,
-        "rmse": 352.8288107856981
+        "mae": 271.5579231982709,
+        "relative_mae_improvement": -0.03579370190245543,
+        "rmse": 352.82881078569676
       },
       "routed": {
         "baseline_mae": 262.17375400091447,
@@ -98,9 +98,9 @@
       "router_promoted": false,
       "stack": {
         "baseline_mae": 262.17375400091447,
-        "mae": 237.8922902159127,
-        "relative_mae_improvement": 0.09261592136685455,
-        "rmse": 313.5411455039854
+        "mae": 237.89229021591248,
+        "relative_mae_improvement": 0.09261592136685541,
+        "rmse": 313.54114550398504
       }
     },
     "PJM": {
@@ -118,7 +118,7 @@
         "baseline_mae": 3041.986938588451,
         "mae": 2153.5083371889755,
         "relative_mae_improvement": 0.2920718002200723,
-        "rmse": 2793.9111098427848
+        "rmse": 2793.911109842785
       },
       "routed": {
         "baseline_mae": 3041.986938588451,
@@ -154,41 +154,41 @@
       "CISO": {
         "promoted": true,
         "validation_BA_week_relative_lift_bootstrap": {
-          "lower": 0.3924843328894454,
-          "mean": 0.4310614275792314,
-          "median": 0.455743266850466,
+          "lower": 0.3924843328894457,
+          "mean": 0.4310614275792316,
+          "median": 0.45574326685046584,
           "n_clusters": 53,
-          "upper": 0.4676084212108084
+          "upper": 0.46760842121080876
         }
       },
       "ERCO": {
         "promoted": false,
         "validation_BA_week_relative_lift_bootstrap": {
-          "lower": -0.01759255673738134,
-          "mean": 0.04097487391864914,
-          "median": 0.023040859284267783,
+          "lower": -0.017592556737381606,
+          "mean": 0.04097487391864901,
+          "median": 0.023040859284267932,
           "n_clusters": 53,
-          "upper": 0.10079307392053463
+          "upper": 0.10079307392053465
         }
       },
       "ISNE": {
         "promoted": false,
         "validation_BA_week_relative_lift_bootstrap": {
-          "lower": -0.023868298439320673,
-          "mean": 0.0030037779343090746,
-          "median": -0.0017162272256814012,
+          "lower": -0.023868298439320257,
+          "mean": 0.003003777934309889,
+          "median": -0.0017162272256862044,
           "n_clusters": 53,
-          "upper": 0.03047085649775248
+          "upper": 0.030470856497753232
         }
       },
       "PJM": {
         "promoted": true,
         "validation_BA_week_relative_lift_bootstrap": {
-          "lower": 0.27156142006595546,
+          "lower": 0.2715614200659555,
           "mean": 0.3091665326963655,
-          "median": 0.3017082883132083,
+          "median": 0.3017082883132071,
           "n_clusters": 53,
-          "upper": 0.34507128284584343
+          "upper": 0.3450712828458433
         }
       }
     },
@@ -211,21 +211,21 @@
     },
     "ridge": {
       "baseline_mae": 2016.674307709985,
-      "mae": 1366.3855183710298,
-      "relative_mae_improvement": 0.3224560291430421,
-      "rmse": 1989.1241085830416
+      "mae": 1366.3855183710286,
+      "relative_mae_improvement": 0.32245602914304267,
+      "rmse": 1989.1241085830404
     },
     "routed": {
       "baseline_mae": 2016.674307709985,
-      "mae": 1643.1763378647224,
-      "relative_mae_improvement": 0.18520490315036767,
-      "rmse": 2287.373878921285
+      "mae": 1643.176337864722,
+      "relative_mae_improvement": 0.18520490315036792,
+      "rmse": 2287.373878921284
     },
     "stack": {
       "baseline_mae": 2016.674307709985,
-      "mae": 1583.3385749443719,
-      "relative_mae_improvement": 0.21487640870363608,
-      "rmse": 2227.291152144636
+      "mae": 1583.3385749443712,
+      "relative_mae_improvement": 0.21487640870363642,
+      "rmse": 2227.2911521446354
     }
   },
   "protocol_family": "NECF-001-WP2-CONFIRMATORY-2024-v1",
@@ -236,7 +236,7 @@
       "aggregate_lift_ge_10pct": true,
       "fallback_BAs_unchanged": true
     },
-    "observed_routed_relative_mae_lift": 0.18520490315036767,
+    "observed_routed_relative_mae_lift": 0.18520490315036792,
     "required": {
       "BA_week_bootstrap_lower_gt": 0.0,
       "aggregate_routed_MAE_lift_min": 0.1,
