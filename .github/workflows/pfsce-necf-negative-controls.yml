@@ -1,0 +1,46 @@
+name: PFSCE NECF B1 Negative Controls
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "experiments/pfsce_necf_confirmatory_2024/TRIGGER_NEGATIVE_CONTROLS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  controls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout frozen branch
+        uses: actions/checkout@v4
+        with:
+          ref: pfsce-necf-confirmatory-2024-run-20260819
+      - name: Verify negative-control freeze
+        run: |
+          sha256sum experiments/pfsce_necf_confirmatory_2024/NEGATIVE_CONTROL_FREEZE.md
+          sed -n '1,220p' experiments/pfsce_necf_confirmatory_2024/NEGATIVE_CONTROL_FREEZE.md
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "numpy>=1.26" "pandas>=2.2" "scipy>=1.12" "scikit-learn>=1.5" "requests>=2.32" tzdata
+      - name: Run frozen controls
+        run: python experiments/pfsce_necf_confirmatory_2024/run_negative_controls_v1.py
+      - name: Remove raw cache
+        if: always()
+        run: rm -rf experiment_output/raw || true
+      - name: Upload control evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pfsce-necf-b1-negative-controls-v1
+          path: experiment_output/negative_controls
+          if-no-files-found: warn
+          retention-days: 90
