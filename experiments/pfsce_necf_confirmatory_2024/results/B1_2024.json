@@ -1,0 +1,266 @@
+{
+  "protocol_id": "NECF-001-WP2-CONFIRMATORY-2024-v1",
+  "original_protocol_tree_sha256": "40f1912ec2a95a91891400efdf0444e7aad67b444a19898b4d7294b5c198f28a",
+  "preregistration_sha256": "ffccd7789cda190e10e7540f604f935d883faebecb1818dd20df9ec68d333da7",
+  "implementation_correction": "v1.0.1 pre-holdout",
+  "source_vintage": {
+    "zenodo_record": "14881638",
+    "created": "2025-02-17",
+    "authority": "V1_PROVISIONAL_REVISION_SENSITIVE"
+  },
+  "n_raw": 175392,
+  "n_quarantined": 306,
+  "n_train": 52538,
+  "n_validation": 17506,
+  "n_holdout": 17483,
+  "ridge": {
+    "alpha": 100.0,
+    "validation_mae": 1114.3217343515016
+  },
+  "stack_weights": [
+    3.768301164968898e-13,
+    0.4451296973915728,
+    0.5548703026093313
+  ],
+  "router": {
+    "CISO": {
+      "promoted": true,
+      "validation_BA_week_relative_lift_bootstrap": {
+        "mean": 0.4310614275792316,
+        "median": 0.45574326685046584,
+        "lower": 0.3924843328894457,
+        "upper": 0.46760842121080876,
+        "n_clusters": 53
+      }
+    },
+    "ERCO": {
+      "promoted": false,
+      "validation_BA_week_relative_lift_bootstrap": {
+        "mean": 0.04097487391864901,
+        "median": 0.023040859284267932,
+        "lower": -0.017592556737381606,
+        "upper": 0.10079307392053465,
+        "n_clusters": 53
+      }
+    },
+    "PJM": {
+      "promoted": true,
+      "validation_BA_week_relative_lift_bootstrap": {
+        "mean": 0.3091665326963655,
+        "median": 0.3017082883132071,
+        "lower": 0.2715614200659555,
+        "upper": 0.3450712828458433,
+        "n_clusters": 53
+      }
+    },
+    "ISNE": {
+      "promoted": false,
+      "validation_BA_week_relative_lift_bootstrap": {
+        "mean": 0.003003777934309889,
+        "median": -0.0017162272256862044,
+        "lower": -0.023868298439320257,
+        "upper": 0.030470856497753232,
+        "n_clusters": 53
+      }
+    }
+  },
+  "models": {
+    "operator": {
+      "mae": 1725.0005719842131,
+      "rmse": 2563.21636591166
+    },
+    "ridge": {
+      "mae": 1241.650831114705,
+      "rmse": 1866.8729129789397,
+      "baseline_mae": 1725.0005719842131,
+      "relative_mae_improvement": 0.28020265541913786
+    },
+    "hgb": {
+      "mae": 1395.5064542074963,
+      "rmse": 2090.689647416662,
+      "baseline_mae": 1725.0005719842131,
+      "relative_mae_improvement": 0.19101101943271256
+    },
+    "stack": {
+      "mae": 1286.9541637548768,
+      "rmse": 1923.2631559468944,
+      "baseline_mae": 1725.0005719842131,
+      "relative_mae_improvement": 0.25393986259695295
+    },
+    "routed": {
+      "mae": 1272.9666006614848,
+      "rmse": 1894.886931539505,
+      "baseline_mae": 1725.0005719842131,
+      "relative_mae_improvement": 0.2620485921362728
+    }
+  },
+  "by_ba": {
+    "CISO": {
+      "router_promoted": true,
+      "operator": {
+        "mae": 2423.901974288338,
+        "rmse": 2963.9170892869333
+      },
+      "ridge": {
+        "mae": 1223.957647680539,
+        "rmse": 1544.9990823596004,
+        "baseline_mae": 2423.901974288338,
+        "relative_mae_improvement": 0.495046556888962
+      },
+      "hgb": {
+        "mae": 1759.2267248143464,
+        "rmse": 2188.188671876462,
+        "baseline_mae": 2423.901974288338,
+        "relative_mae_improvement": 0.2742170502456649
+      },
+      "stack": {
+        "mae": 1454.83786638982,
+        "rmse": 1803.9420073119902,
+        "baseline_mae": 2423.901974288338,
+        "relative_mae_improvement": 0.3997950899738992
+      },
+      "routed": {
+        "mae": 1454.83786638982,
+        "rmse": 1803.9420073119902,
+        "baseline_mae": 2423.901974288338,
+        "relative_mae_improvement": 0.3997950899738992
+      },
+      "holdout_BA_week_routed_lift_bootstrap": {
+        "mean": 0.40808316965875807,
+        "median": 0.4111668711900464,
+        "lower": 0.3758037448260641,
+        "upper": 0.43932380735623044,
+        "n_clusters": 53
+      }
+    },
+    "ERCO": {
+      "router_promoted": false,
+      "operator": {
+        "mae": 1291.180402930403,
+        "rmse": 1863.3533347658865
+      },
+      "ridge": {
+        "mae": 1366.6433477377286,
+        "rmse": 1958.0621831817623,
+        "baseline_mae": 1291.180402930403,
+        "relative_mae_improvement": -0.058444927320813106
+      },
+      "hgb": {
+        "mae": 1448.2974901301352,
+        "rmse": 2142.132131170865,
+        "baseline_mae": 1291.180402930403,
+        "relative_mae_improvement": -0.12168484500163303
+      },
+      "stack": {
+        "mae": 1365.3075601036035,
+        "rmse": 1984.584770313836,
+        "baseline_mae": 1291.180402930403,
+        "relative_mae_improvement": -0.05741037968432984
+      },
+      "routed": {
+        "mae": 1291.180402930403,
+        "rmse": 1863.3533347658865,
+        "baseline_mae": 1291.180402930403,
+        "relative_mae_improvement": 0.0
+      },
+      "holdout_BA_week_routed_lift_bootstrap": {
+        "mean": 0.0,
+        "median": 0.0,
+        "lower": 0.0,
+        "upper": 0.0,
+        "n_clusters": 53
+      }
+    },
+    "ISNE": {
+      "router_promoted": false,
+      "operator": {
+        "mae": 269.50398542473243,
+        "rmse": 383.03604729538216
+      },
+      "ridge": {
+        "mae": 281.21375795212776,
+        "rmse": 368.7387539047892,
+        "baseline_mae": 269.50398542473243,
+        "relative_mae_improvement": -0.04344934828678315
+      },
+      "hgb": {
+        "mae": 243.1853936492538,
+        "rmse": 330.2871930117892,
+        "baseline_mae": 269.50398542473243,
+        "relative_mae_improvement": 0.09765566818613501
+      },
+      "stack": {
+        "mae": 251.45733159399373,
+        "rmse": 337.71163256202556,
+        "baseline_mae": 269.50398542473243,
+        "relative_mae_improvement": 0.06696247479345276
+      },
+      "routed": {
+        "mae": 269.50398542473243,
+        "rmse": 383.03604729538216,
+        "baseline_mae": 269.50398542473243,
+        "relative_mae_improvement": 0.0
+      },
+      "holdout_BA_week_routed_lift_bootstrap": {
+        "mean": 0.0,
+        "median": 0.0,
+        "lower": 0.0,
+        "upper": 0.0,
+        "n_clusters": 53
+      }
+    },
+    "PJM": {
+      "router_promoted": true,
+      "operator": {
+        "mae": 2925.0,
+        "rmse": 3730.4976660679554
+      },
+      "ridge": {
+        "mae": 2099.7972099349286,
+        "rmse": 2756.5338048978742,
+        "baseline_mae": 2925.0,
+        "relative_mae_improvement": 0.2821206119880586
+      },
+      "hgb": {
+        "mae": 2138.3830643809656,
+        "rmse": 2832.230720180905,
+        "baseline_mae": 2925.0,
+        "relative_mae_improvement": 0.26892886687830236
+      },
+      "stack": {
+        "mae": 2082.1275946361466,
+        "rmse": 2739.8150921323645,
+        "baseline_mae": 2925.0,
+        "relative_mae_improvement": 0.2881615061073003
+      },
+      "routed": {
+        "mae": 2082.1275946361466,
+        "rmse": 2739.8150921323645,
+        "baseline_mae": 2925.0,
+        "relative_mae_improvement": 0.2881615061073003
+      },
+      "holdout_BA_week_routed_lift_bootstrap": {
+        "mean": 0.2791001619563825,
+        "median": 0.30272447790731144,
+        "lower": 0.24746892527510955,
+        "upper": 0.31119286545156727,
+        "n_clusters": 53
+      }
+    }
+  },
+  "BA_week_routed_lift_bootstrap": {
+    "mean": 0.17179583290378514,
+    "median": 0.011172493577241155,
+    "lower": 0.14552301987221436,
+    "upper": 0.19821387415334954,
+    "n_clusters": 212
+  },
+  "primary_verdict_inputs": {
+    "aggregate_relative_mae_improvement_vs_operator": 0.2620485921362728,
+    "bootstrap_lower": 0.14552301987221436,
+    "promoted_BAs": [
+      "CISO",
+      "PJM"
+    ]
+  }
+}
