@@ -1,0 +1,114 @@
+name: PFSCE NECF B2 2025 Replication
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "experiments/pfsce_necf_confirmatory_2024/TRIGGER_B2_2025_REPLICATION.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  extract-weather:
+    name: HRRR ${{ matrix.label }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        include:
+          - {label: "2020h1", start: "2019-12-31", end: "2020-06-30"}
+          - {label: "2020h2", start: "2020-07-01", end: "2020-12-31"}
+          - {label: "2021h1", start: "2020-12-31", end: "2021-06-30"}
+          - {label: "2021h2", start: "2021-07-01", end: "2021-12-31"}
+          - {label: "2022h1", start: "2021-12-31", end: "2022-06-30"}
+          - {label: "2022h2", start: "2022-07-01", end: "2022-12-31"}
+          - {label: "2023h1", start: "2022-12-31", end: "2023-06-30"}
+          - {label: "2023h2", start: "2023-07-01", end: "2023-12-31"}
+          - {label: "2025h1", start: "2024-12-31", end: "2025-06-30"}
+          - {label: "2025h2", start: "2025-07-01", end: "2025-12-31"}
+    steps:
+      - name: Checkout frozen branch
+        uses: actions/checkout@v4
+        with:
+          ref: pfsce-necf-confirmatory-2024-run-20260819
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install HRRR extraction dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "numpy>=1.26" "pandas>=2.2" "boto3>=1.35" "botocore>=1.35" "numcodecs>=0.13" "pyproj>=3.7" tzdata
+
+      - name: Extract point-in-time-eligible HRRR shard
+        run: |
+          mkdir -p weather/${{ matrix.label }}
+          python experiments/pfsce_necf_confirmatory_2024/run_b2.py extract-weather \
+            --start "${{ matrix.start }}" \
+            --end "${{ matrix.end }}" \
+            --out "weather/${{ matrix.label }}/weather_${{ matrix.label }}.csv" \
+            --manifest "weather/${{ matrix.label }}/weather_${{ matrix.label }}_manifest.json"
+
+      - name: Upload HRRR shard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pfsce-hrrr-2025-${{ matrix.label }}
+          path: weather/${{ matrix.label }}
+          if-no-files-found: error
+          retention-days: 90
+
+  score-b2-2025:
+    name: Score frozen B2 2025 replication
+    runs-on: ubuntu-latest
+    needs: extract-weather
+    timeout-minutes: 75
+    steps:
+      - name: Checkout frozen branch
+        uses: actions/checkout@v4
+        with:
+          ref: pfsce-necf-confirmatory-2024-run-20260819
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install scoring dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "numpy>=1.26" "pandas>=2.2" "scipy>=1.12" "scikit-learn>=1.5" "requests>=2.32" tzdata
+
+      - name: Download all HRRR shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pfsce-hrrr-2025-*
+          path: weather
+          merge-multiple: false
+
+      - name: Verify B1 2025 strong replication was frozen first
+        run: |
+          test -f experiments/pfsce_necf_confirmatory_2024/results/replication_2025/B1_2025_REPLICATION_VERDICT.md
+          grep -q 'STRONG_REPLICATION' experiments/pfsce_necf_confirmatory_2024/results/replication_2025/B1_2025_REPLICATION_VERDICT.md
+
+      - name: Score B2 2025 without refitting on 2024 or 2025 outcomes
+        run: |
+          python experiments/pfsce_necf_confirmatory_2024/run_replication_2025_b2.py \
+            --weather-dir weather \
+            --out-dir experiment_output/replication_2025_b2
+
+      - name: Upload immutable B2 replication evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pfsce-necf-b2-2025-replication
+          path: experiment_output/replication_2025_b2
+          if-no-files-found: warn
+          retention-days: 90
