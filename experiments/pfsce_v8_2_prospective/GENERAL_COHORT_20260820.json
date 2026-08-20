@@ -1,0 +1,13 @@
+{
+  "cohort_id": "PFSCE-GEN-20260820-v1",
+  "issue_time": "2026-08-20T08:10:00Z",
+  "methodology": "PFSCE v8.2 anchor generation",
+  "packets": [
+    {"id":"GEN-20260820-001","topic":"September FOMC 25 bp hike","baseline_probability":0.27,"pfsce_raw_probability":0.24,"authority":"F1_EXPLORATORY_PROSPECTIVE","resolution_date":"2026-09-16"},
+    {"id":"GEN-20260820-002","topic":"September ECB 25 bp hike","baseline_probability":0.91,"pfsce_raw_probability":0.89,"authority":"F1_EXPLORATORY_PROSPECTIVE","resolution_date":"2026-09-10"},
+    {"id":"GEN-20260820-003","topic":"Anthropic publicly trading by 2026-10-31","baseline_probability":0.74,"pfsce_raw_probability":0.76,"authority":"F1_EXPLORATORY_PROSPECTIVE","resolution_date":"2026-10-31"},
+    {"id":"GEN-20260820-004","topic":"Nancy Grace Roman liftoff by 2026-08-31","baseline_probability":0.80,"baseline_quality":"WEAK_SCHEDULE_HEURISTIC","pfsce_raw_probability":0.84,"authority":"F0_EXPLORATORY_ONLY","resolution_date":"2026-08-31"}
+  ],
+  "nominal_n": 4,
+  "effective_n_note": "At most approximately 3 before resolution because FOMC and ECB share global inflation/energy drivers; Roman is excluded from strong-baseline promotion claims."
+}
