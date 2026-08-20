@@ -1,0 +1,14 @@
+{
+  "protocol_id":"PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "cutoff_utc":"2026-08-20T14:30:00Z",
+  "canonical_authority":"NOAA NODD S3 noaa-hrrr-bdp-pds",
+  "cycle":"20260820 12Z",
+  "required_leads":[3,4,5,6,7,8,9,10,11,12,13,14],
+  "required_object_pattern":"hrrr.20260820/conus/hrrr.t12z.wrfsfcfNN.grib2",
+  "all_last_modified_verified_by_cutoff":false,
+  "eligibility":"INELIGIBLE_NOT_CANONICALLY_VERIFIED",
+  "w1_action":"ABSTAIN",
+  "alternate_cycle_used":false,
+  "alternate_weather_source_used":false,
+  "reason":"The runtime did not obtain canonical NOAA S3 LastModified metadata for every required F03-F14 object before the frozen cutoff. Under the source-selection clarification, lack of proof is treated as ineligibility and no 06Z/later cycle or alternate model may substitute."
+}
