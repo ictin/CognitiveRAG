@@ -1,0 +1,25 @@
+{
+  "protocol_id":"PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "issue_date":"2026-08-20",
+  "audit_time_utc":"2026-08-20T14:24:37Z",
+  "checks":[
+    {"id":1,"name":"protocol_frozen_before_outcomes","status":"PASS"},
+    {"id":2,"name":"clarification_frozen_before_first_issue","status":"PASS"},
+    {"id":3,"name":"target_hours_timezone_aware_and_correct","status":"PASS"},
+    {"id":4,"name":"acquisition_attempt_started_before_cutoff","status":"PASS"},
+    {"id":5,"name":"eia_metadata_route_identified","status":"PASS"},
+    {"id":6,"name":"canonical_eia_live_payload_captured_pre_cutoff","status":"FAIL"},
+    {"id":7,"name":"missing_eia_baselines_retained_in_denominator","status":"PASS"},
+    {"id":8,"name":"no_post_cutoff_baseline_substitution","status":"PASS"},
+    {"id":9,"name":"a0_router_rule_preserved","status":"PASS"},
+    {"id":10,"name":"c1_model_rule_preserved","status":"PASS"},
+    {"id":11,"name":"hrrr_12z_f03_f14_lastmodified_all_verified_pre_cutoff","status":"FAIL"},
+    {"id":12,"name":"w1_abstained_when_hrrr_gate_unverified","status":"PASS"},
+    {"id":13,"name":"no_alternate_weather_cycle_or_model_substitution","status":"PASS"},
+    {"id":14,"name":"issue_artifacts_written_append_only_before_cutoff","status":"PASS"},
+    {"id":15,"name":"no_outcome_or_truth_used_in_issue_generation","status":"PASS"}
+  ],
+  "overall_status":"INTEGRITY_PRESERVED_WITH_INPUT_ACQUISITION_FAILURE",
+  "promotion_eligible_today":false,
+  "scientific_interpretation":"This issue day contributes denominator/fallback-abstention evidence and pipeline-integrity evidence only. It contributes no forecast-skill observation because no canonical pre-cutoff operator baseline or model prediction was issued. It must not be repaired using later data."
+}
