@@ -1,0 +1,37 @@
+name: PFSCE v8.2 Prospective Integrity
+
+on:
+  push:
+    branches:
+      - pfsce-necf-confirmatory-2024-run-20260819
+    paths:
+      - "experiments/pfsce_v8_2_prospective/**"
+      - ".github/workflows/pfsce-v8-2-prospective-integrity.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout experiment branch
+        uses: actions/checkout@v4
+        with:
+          ref: pfsce-necf-confirmatory-2024-run-20260819
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate prospective artifacts
+        run: python experiments/pfsce_v8_2_prospective/validate_prospective_artifacts.py
+
+      - name: Show frozen prospective protocols
+        run: |
+          sha256sum experiments/pfsce_v8_2_prospective/PROSPECTIVE_VALIDATION_FREEZE_20260820.md
+          sha256sum experiments/pfsce_v8_2_prospective/NECF_PROSPECTIVE_B1_B2V2_FREEZE_20260820.md
+          sha256sum experiments/pfsce_v8_2_prospective/NECF_FIRST_RUN_INTEGRITY_AUDIT_FREEZE_20260820.md
+          sha256sum experiments/pfsce_v8_2_prospective/NECF_LIVE_SOURCE_SELECTION_CLARIFICATION_20260820.md
