@@ -1,0 +1,14 @@
+{
+  "protocol_id":"PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "retrieval_attempt_utc":"2026-08-20T14:23:27Z",
+  "cutoff_utc":"2026-08-20T14:30:00Z",
+  "canonical_route":"https://api.eia.gov/v2/electricity/rto/region-data/",
+  "metadata_source_seen":"https://www.eia.gov/opendata/browser/electricity/rto/region-data",
+  "required_types":["D","DF"],
+  "required_respondents":["CISO","ERCO","PJM","ISNE"],
+  "canonical_payload_captured":false,
+  "failure_class":"CANONICAL_LIVE_API_UNREACHABLE_IN_RUNTIME",
+  "failure_detail":"Execution container DNS resolution for api.eia.gov failed; web search exposed official EIA route metadata/documentation but did not provide authenticated live API response bytes. Protocol forbids replacing the pre-cutoff canonical snapshot with post-cutoff data.",
+  "baseline_status":"BASELINE_UNAVAILABLE_ALL_TARGET_ROWS",
+  "post_cutoff_repair_allowed":false
+}
