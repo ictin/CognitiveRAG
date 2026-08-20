@@ -1,0 +1,14 @@
+{
+  "protocol_id":"PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "issue_date":"2026-08-20",
+  "target_end_timestamps_utc":["2026-08-20T15:00:00Z","2026-08-20T16:00:00Z","2026-08-20T17:00:00Z","2026-08-20T18:00:00Z","2026-08-20T19:00:00Z","2026-08-20T20:00:00Z","2026-08-20T21:00:00Z","2026-08-20T22:00:00Z","2026-08-20T23:00:00Z","2026-08-21T00:00:00Z","2026-08-21T01:00:00Z","2026-08-21T02:00:00Z"],
+  "row_count_denominator":48,
+  "rows_by_ba":{
+    "CISO":{"n":12,"operator":null,"A0":null,"C1":null,"W1":null,"baseline_status":"BASELINE_UNAVAILABLE","A0_reason":"ABSTAIN_CANONICAL_EIA_INPUTS_UNAVAILABLE_BY_CUTOFF","C1_reason":"ABSTAIN_CANONICAL_EIA_INPUTS_UNAVAILABLE_BY_CUTOFF","W1_reason":"ABSTAIN_HRRR_AVAILABILITY_NOT_CANONICALLY_VERIFIED_BY_CUTOFF"},
+    "ERCO":{"n":12,"operator":null,"A0":null,"C1":null,"W1":null,"baseline_status":"BASELINE_UNAVAILABLE","A0_reason":"OPERATOR_FALLBACK_BUT_BASELINE_UNAVAILABLE","C1_reason":"NOT_ELIGIBLE_BA","W1_reason":"NOT_ELIGIBLE_BA"},
+    "PJM":{"n":12,"operator":null,"A0":null,"C1":null,"W1":null,"baseline_status":"BASELINE_UNAVAILABLE","A0_reason":"ABSTAIN_CANONICAL_EIA_INPUTS_UNAVAILABLE_BY_CUTOFF","C1_reason":"ABSTAIN_CANONICAL_EIA_INPUTS_UNAVAILABLE_BY_CUTOFF","W1_reason":"ABSTAIN_HRRR_AVAILABILITY_NOT_CANONICALLY_VERIFIED_BY_CUTOFF"},
+    "ISNE":{"n":12,"operator":null,"A0":null,"C1":null,"W1":null,"baseline_status":"BASELINE_UNAVAILABLE","A0_reason":"OPERATOR_FALLBACK_BUT_BASELINE_UNAVAILABLE","C1_reason":"NOT_ELIGIBLE_BA","W1_reason":"NOT_ELIGIBLE_BA"}
+  },
+  "issued_numeric_forecasts":0,
+  "post_cutoff_backfill_allowed":false
+}
