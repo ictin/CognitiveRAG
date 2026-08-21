@@ -1,0 +1,198 @@
+{
+  "cycle_id": "PFSCE-V8.2-PROSPECTIVE-20260821-C002",
+  "contract_freeze_commit": "14ed0708e6fb9dd594c32b4f8bcfe49f7c8f8f72",
+  "issue_date": "2026-08-21",
+  "methodology": "PFSCE v8.2",
+  "anchor_generation": {
+    "id": "PFSCE-v8.2-A0",
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "checkpoint": "opaque_product_managed",
+    "policy": "production-eligible core with strict baseline fallback outside locally validated authority"
+  },
+  "challenger_generation": {
+    "id": "PFSCE-v8.2-C1-DAGCRITIC",
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "checkpoint": "opaque_product_managed",
+    "policy": "Forecast DAG/decomposition + critic + coherence; research-only unless separately promoted"
+  },
+  "denominator": {
+    "nominal_n": 3,
+    "initial_effective_independent_n_ceiling": 2.7,
+    "cluster_note": "The three new packets occupy distinct immediate clusters, but BOJ and BTC retain partial common exposure to global macro/liquidity conditions. ERCOT is additionally dependent with prior US_GRID_HEAT packets across cycles; cross-cycle effective N must be adjusted later.",
+    "anchor_router_counts": {
+      "baseline_fallback": 3,
+      "model_promoted": 0,
+      "abstention": 0
+    },
+    "raw_research_forecast_coverage": 1.0,
+    "routed_anchor_probability_coverage": 1.0,
+    "external_forecastbench_new_packet_count": 0,
+    "external_forecastbench_provenance_exclusion_count": 1
+  },
+  "packets": [
+    {
+      "forecast_id": "C002-GEN-1",
+      "stream": "pfsce_general",
+      "question": "Will the Bank of Japan raise its policy interest rate by at least 25 basis points at its September 2026 monetary-policy meeting?",
+      "resolution_contract_ref": "2026-08-21-cycle-002-contract-freeze.md#c002-gen-1--broad-pfsce-general-stream",
+      "forecastability_cell": "macro|central_bank_rate_change|~4w|institutional|strategic-data-dependent|Japan",
+      "mode": "baseline_residual_judgment",
+      "baseline": {
+        "type": "contemporaneous prediction-market snapshot",
+        "probability": 0.85,
+        "availability_time": "2026-08-21T06:22:00Z",
+        "source": "Polymarket September 2026 Bank of Japan interest-rate decision: +25 bp outcome displayed at 85%"
+      },
+      "anchor_raw_probability": 0.88,
+      "anchor_routed_probability": 0.85,
+      "anchor_router_action": "BASELINE_FALLBACK_EXACT_CELL_NOT_VALIDATED",
+      "challenger_raw_probability": 0.90,
+      "calibrated_probability": null,
+      "probability_provenance": "prediction-market baseline + official BOJ policy path/calendar + fresh Japan inflation and analyst-expectation evidence; uncalibrated",
+      "calibration_status": "none_local",
+      "authority_grade": "F0_PROSPECTIVE_RESEARCH",
+      "module_passport": null,
+      "meg": "MEG-0 for this exact forecastability cell",
+      "epistemic_range_not_ci": [0.70, 0.95],
+      "evidence_lineages": [
+        {
+          "lineage_id": "BOJ_SEP26_MARKET",
+          "origin": "Polymarket",
+          "availability_time": "2026-08-21T06:22:00Z",
+          "independence_weight": 1.0
+        },
+        {
+          "lineage_id": "BOJ_OFFICIAL_POLICY_PATH",
+          "origin": "Bank of Japan official monetary-policy calendar/statements and Tamura communication",
+          "availability_time": "2026-08-21-or-earlier",
+          "independence_weight": 0.7
+        },
+        {
+          "lineage_id": "JAPAN_INFLATION_EXPECTATIONS_20260821",
+          "origin": "fresh macroeconomic reporting/analyst expectations",
+          "availability_time": "2026-08-21",
+          "independence_weight": 0.5
+        }
+      ],
+      "effective_evidence_n": 2.2,
+      "update_triggers": [
+        "material Japan CPI/wage surprise",
+        "BOJ governor or board communication materially changing September guidance",
+        "yen or financial-stability shock large enough to alter expected policy timing",
+        "fresh prediction-market move of at least 10 percentage points supported by independent news"
+      ],
+      "prior_trajectory": [],
+      "episode_cluster": "GLOBAL_MONETARY_POLICY_ASIA",
+      "exposure_intervention_status": "unexposed/no intervention",
+      "scoring_status": "UNRESOLVED"
+    },
+    {
+      "forecast_id": "C002-NECF-1",
+      "stream": "necf_dense_material",
+      "question": "Will ERCOT system-wide demand exceed 85,000 MW in any reported hourly interval from August 22 through August 31, 2026 inclusive?",
+      "resolution_contract_ref": "2026-08-21-cycle-002-contract-freeze.md#c002-necf-1--necf-dense-materialgrid-stream",
+      "forecastability_cell": "electricity|ERCOT_extreme_load_threshold|1-10d|ISO|weather-sensitive-material",
+      "mode": "direct_threshold",
+      "baseline": {
+        "type": "predeclared structural/reference prior",
+        "probability": 0.82,
+        "availability_time": "2026-08-21T06:24:00Z",
+        "source": "ERCOT 2026 Summer Weather and Resource outlook + official 2026 realized peak records + current late-August heat/load forecast evidence"
+      },
+      "anchor_raw_probability": 0.90,
+      "anchor_routed_probability": 0.82,
+      "anchor_router_action": "BASELINE_FALLBACK_EXACT_CELL_NOT_VALIDATED",
+      "challenger_raw_probability": 0.93,
+      "calibrated_probability": null,
+      "probability_provenance": "ERCOT structural summer peak distribution + 2026 realized >85 GW peaks + near-term heat/load forecasts; uncalibrated direct threshold judgment",
+      "calibration_status": "NECF B1 historical evidence is adjacent but not transferable to this threshold/window without a local gate",
+      "authority_grade": "F1_ADJACENT_EVIDENCE_ONLY",
+      "module_passport": "NECF-B1 residual/router passport adjacent only; no production transfer",
+      "meg": "MEG-2 local historical evidence for NECF B1 architecture; MEG-0 for this exact threshold/window",
+      "epistemic_range_not_ci": [0.72, 0.97],
+      "evidence_lineages": [
+        {
+          "lineage_id": "ERCOT_2026_SUMMER_OUTLOOK",
+          "origin": "ERCOT official 2026 summer assessment",
+          "availability_time": "2026-05-or-earlier",
+          "independence_weight": 1.0
+        },
+        {
+          "lineage_id": "ERCOT_2026_REALIZED_PEAKS",
+          "origin": "ERCOT official peak-demand records",
+          "availability_time": "2026-08-21-or-earlier",
+          "independence_weight": 0.8
+        },
+        {
+          "lineage_id": "ERCOT_LATE_AUGUST_HEAT_LOAD",
+          "origin": "current ERCOT/credible regional load and heat reporting",
+          "availability_time": "2026-08-20-to-2026-08-21",
+          "independence_weight": 0.6
+        }
+      ],
+      "effective_evidence_n": 2.4,
+      "update_triggers": [
+        "ERCOT official seven-day load forecast materially moves below 85 GW",
+        "ERCOT official seven-day load forecast exceeds 90 GW",
+        "major Texas heat-wave forecast revision",
+        "large generation outage or demand-response intervention affecting realized load"
+      ],
+      "prior_trajectory": [],
+      "episode_cluster": "US_GRID_HEAT_SOUTH",
+      "exposure_intervention_status": "unexposed/no intervention",
+      "scoring_status": "UNRESOLVED"
+    },
+    {
+      "forecast_id": "C002-AOM-1",
+      "stream": "aom_directed_scientifically_isolated",
+      "question": "Will Bitcoin trade at or above USD 130,000 on Coinbase BTC-USD before September 30, 2026 23:59:59 UTC?",
+      "resolution_contract_ref": "2026-08-21-cycle-002-contract-freeze.md#c002-aom-1--aom-directed-scientifically-isolated-stream",
+      "forecastability_cell": "crypto|price_threshold|~40d|BTC|reflexive-market|global",
+      "mode": "baseline_residual_judgment",
+      "baseline": {
+        "type": "weak market-proxy prior adjusted for shorter horizon and venue mismatch",
+        "probability": 0.02,
+        "availability_time": "2026-08-21T06:25:00Z",
+        "source": "Polymarket BTC >=130,000 by end-2026 at ~4% on Binance, time-truncated to Sep 30 and treated as a weak proxy for Coinbase BTC-USD"
+      },
+      "anchor_raw_probability": 0.03,
+      "anchor_routed_probability": 0.02,
+      "anchor_router_action": "BASELINE_FALLBACK_WEAK_PROXY_EXACT_CELL_NOT_VALIDATED",
+      "challenger_raw_probability": 0.035,
+      "calibrated_probability": null,
+      "probability_provenance": "weak barrier-market proxy + current BTC spot near mid-$70k + distance-to-barrier/short-horizon judgment; uncalibrated",
+      "calibration_status": "none_local_and_baseline_proxy_not_contract-identical",
+      "authority_grade": "F0_AOM_ISOLATED",
+      "module_passport": null,
+      "meg": "MEG-0",
+      "epistemic_range_not_ci": [0.005, 0.08],
+      "evidence_lineages": [
+        {
+          "lineage_id": "BTC_130K_2026_MARKET_PROXY",
+          "origin": "Polymarket end-2026 BTC 130k barrier market",
+          "availability_time": "2026-08-21T06:25:00Z",
+          "independence_weight": 1.0
+        },
+        {
+          "lineage_id": "BTC_SPOT_20260821",
+          "origin": "current institutional/public BTC market data",
+          "availability_time": "2026-08-21",
+          "independence_weight": 0.7
+        }
+      ],
+      "effective_evidence_n": 1.7,
+      "update_triggers": [
+        "BTC crosses 90,000 or 100,000",
+        "BTC falls below 60,000",
+        "major crypto-liquidity/regulatory shock",
+        "strong contract-matched Coinbase-based prediction-market baseline becomes available"
+      ],
+      "prior_trajectory": [],
+      "episode_cluster": "CRYPTO_RISK_ASSETS",
+      "exposure_intervention_status": "AOM-selected/economic-relevance exposure; scientifically isolated from broad promotion",
+      "scoring_status": "UNRESOLVED"
+    }
+  ]
+}
