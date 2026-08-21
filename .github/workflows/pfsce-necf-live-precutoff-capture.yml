@@ -2,8 +2,14 @@ name: PFSCE NECF Live Pre-Cutoff Capture
 
 on:
   schedule:
-    # Run both UTC possibilities; the script executes only when local New York time is ~10:15.
+    # Redundant pre-cutoff attempts. The capture script accepts only 09:50-10:24
+    # America/New_York and stores each accepted attempt append-only. Both UTC
+    # families are scheduled so DST/standard-time transitions remain safe.
+    - cron: '55 13 * * *'
+    - cron: '05 14 * * *'
     - cron: '15 14 * * *'
+    - cron: '55 14 * * *'
+    - cron: '05 15 * * *'
     - cron: '15 15 * * *'
   workflow_dispatch:
 
