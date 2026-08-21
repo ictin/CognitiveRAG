@@ -1,0 +1,122 @@
+{
+  "cycle_id": "PFSCE-V8.2-PROSPECTIVE-20260821-C002",
+  "update_time": "2026-08-21T06:27:00Z",
+  "methodology": "PFSCE v8.2",
+  "frozen_parent_cohorts": ["PFSCE-GEN-20260820-v1", "PFSCE-GEN-20260820-v1-B"],
+  "immutability_note": "This artifact appends evidence/probability trajectories only. Original first-issue probabilities, baseline snapshots, resolution contracts, and cohort membership remain unchanged.",
+  "packets": [
+    {
+      "id": "GEN-20260820-001",
+      "original_baseline_probability": 0.27,
+      "original_pfsce_probability": 0.24,
+      "scoring_status": "UNRESOLVED",
+      "trajectory_action": "APPEND_UPDATE",
+      "updated_raw_probability": 0.30,
+      "evidence_cutoff": "2026-08-21T06:27:00Z",
+      "new_evidence": [
+        {
+          "lineage_id": "FOMC_JULY_MINUTES_PUBLICATION",
+          "availability_time": "2026-08-20",
+          "summary": "July FOMC minutes and subsequent reporting showed materially greater support for rate increases, including three dissents in favor of a hike, while incoming labor and inflation data still leave the September decision data-dependent."
+        },
+        {
+          "lineage_id": "FOMC_MARKET_20260821",
+          "availability_time": "2026-08-21",
+          "summary": "Fresh market-implied September +25 bp probability remains in roughly the mid-20s to mid-30s, broadly above the frozen 27% snapshot but not decisive."
+        }
+      ],
+      "reason": "Hawkish committee information is genuinely new relative to the first issue and raises the raw probability, but weak growth/labor signals and market uncertainty prevent a larger move.",
+      "resolution": null
+    },
+    {
+      "id": "GEN-20260820-002",
+      "original_baseline_probability": 0.91,
+      "original_pfsce_probability": 0.89,
+      "scoring_status": "UNRESOLVED",
+      "trajectory_action": "NO_UPDATE",
+      "evidence_cutoff": "2026-08-21T06:27:00Z",
+      "reason": "No sufficiently material new official ECB evidence since the freeze. Current market pricing remains close to the frozen high-probability state; preserving the 0.89 first-issue trajectory avoids noise-driven churn.",
+      "resolution": null
+    },
+    {
+      "id": "GEN-20260820-003",
+      "original_baseline_probability": 0.74,
+      "original_pfsce_probability": 0.76,
+      "scoring_status": "UNRESOLVED",
+      "trajectory_action": "NO_UPDATE",
+      "evidence_cutoff": "2026-08-21T06:27:00Z",
+      "reason": "No new official Anthropic IPO filing or listing event was found after freeze. A modest market-price drift is not treated as sufficient independent evidence for a PFSCE trajectory change.",
+      "resolution": null
+    },
+    {
+      "id": "GEN-20260820-004",
+      "original_baseline_probability": 0.80,
+      "original_baseline_quality": "WEAK_SCHEDULE_HEURISTIC",
+      "original_pfsce_probability": 0.84,
+      "scoring_status": "UNRESOLVED",
+      "trajectory_action": "APPEND_UPDATE",
+      "updated_raw_probability": 0.03,
+      "evidence_cutoff": "2026-08-21T06:27:00Z",
+      "new_evidence": [
+        {
+          "lineage_id": "NASA_ROMAN_EARLY_SEPTEMBER_TARGET",
+          "availability_time": "2026-08-21-or-earlier",
+          "summary": "Current NASA Goddard Roman pages state the mission is targeting launch as soon as early September 2026, which is after the frozen August 31 deadline."
+        }
+      ],
+      "reason": "The official schedule has moved beyond the contract deadline. A small residual probability remains only for an unexpected advancement before August 31. This packet remains excluded from strong-baseline promotion because its frozen comparator was weak.",
+      "resolution": null
+    },
+    {
+      "id": "GEN-20260820-005",
+      "original_baseline_probability": 0.15,
+      "original_pfsce_probability": 0.10,
+      "scoring_status": "UNRESOLVED",
+      "trajectory_action": "NO_UPDATE",
+      "evidence_cutoff": "2026-08-21T06:27:00Z",
+      "reason": "The live market remains near the frozen 15% and the continuing-resolution evidence already underlying the initial forecast remains the dominant state. No independent shock justifies a change.",
+      "resolution": null
+    },
+    {
+      "id": "GEN-20260820-006",
+      "original_baseline_probability": 0.08,
+      "original_pfsce_probability": 0.06,
+      "scoring_status": "UNRESOLVED",
+      "trajectory_action": "APPEND_UPDATE",
+      "updated_raw_probability": 0.07,
+      "evidence_cutoff": "2026-08-21T06:27:00Z",
+      "new_evidence": [
+        {
+          "lineage_id": "RU_UA_PEACE_SIGNAL_20260821",
+          "availability_time": "2026-08-21",
+          "summary": "Fresh reporting says Russia is ready to consider new ideas on peace while maintaining significant conditions; negotiations remain stalled and fighting continues."
+        }
+      ],
+      "reason": "The new diplomatic signal is mildly positive but insufficient to overcome the absence of a credible near-term general ceasefire pathway.",
+      "resolution": null
+    },
+    {
+      "id": "GEN-20260820-007",
+      "original_baseline_probability": 0.22,
+      "original_pfsce_probability": 0.18,
+      "scoring_status": "UNRESOLVED",
+      "trajectory_action": "NO_UPDATE",
+      "evidence_cutoff": "2026-08-21T06:27:00Z",
+      "reason": "No new qualifying U.S. federal action removing ordinary public access to another major model was identified after freeze; market pricing is essentially unchanged.",
+      "resolution": null
+    },
+    {
+      "id": "GEN-20260820-008",
+      "original_baseline_probability": 0.06,
+      "original_pfsce_probability": 0.09,
+      "scoring_status": "UNRESOLVED",
+      "trajectory_action": "NO_UPDATE",
+      "evidence_cutoff": "2026-08-21T06:27:00Z",
+      "reason": "No WHO pandemic declaration occurred. The active Ebola/PHEIC evidence was already incorporated into the original 9% forecast, so it is not double-counted as new evidence.",
+      "resolution": null
+    }
+  ],
+  "resolved_count": 0,
+  "updated_count": 3,
+  "unchanged_count": 5
+}
