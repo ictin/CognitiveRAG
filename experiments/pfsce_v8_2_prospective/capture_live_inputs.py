@@ -19,10 +19,6 @@ TYPES = ["D", "DF"]
 BUCKET = "noaa-hrrr-bdp-pds"
 
 
-def canonical_json_bytes(obj) -> bytes:
-    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
-
-
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -47,7 +43,7 @@ def eia_capture(api_key: str | None, now_utc: datetime, cutoff_utc: datetime, ou
         return result
 
     sess = requests.Session()
-    sess.headers.update({"User-Agent": "PFSCE-v8.2-prospective-validation/1.0"})
+    sess.headers.update({"User-Agent": "PFSCE-v8.2-prospective-validation/1.1"})
     base = "https://api.eia.gov/v2/electricity/rto/region-data"
     try:
         meta_r = sess.get(base, params={"api_key": api_key}, timeout=45)
@@ -137,25 +133,30 @@ def main() -> int:
     now_utc = datetime.now(timezone.utc)
     now_et = now_utc.astimezone(ET)
 
-    # The workflow is scheduled twice in UTC to survive US daylight-saving changes.
-    # Exactly one invocation should land at 10:15 ET; all others exit without producing evidence.
-    if not (now_et.hour == 10 and 8 <= now_et.minute <= 24):
-        print(f"SKIP: local time {now_et.isoformat()} is outside the frozen pre-cutoff acquisition window")
+    # GitHub cron can start late. Multiple scheduled attempts are therefore allowed,
+    # but every accepted attempt must still begin before the frozen 10:30 ET cutoff.
+    # Attempts are stored in unique subdirectories so source evidence is append-only.
+    local_minutes = now_et.hour * 60 + now_et.minute
+    if not (9 * 60 + 50 <= local_minutes <= 10 * 60 + 24):
+        print(f"SKIP: local time {now_et.isoformat()} is outside the 09:50-10:24 ET pre-cutoff acquisition window")
         return 0
 
     cutoff_et = now_et.replace(hour=10, minute=30, second=0, microsecond=0)
     cutoff_utc = cutoff_et.astimezone(timezone.utc)
     issue_date = now_et.date().isoformat()
-    out = Path("experiments/pfsce_v8_2_prospective/necf_precutoff") / issue_date
-    out.mkdir(parents=True, exist_ok=True)
+    attempt_id = "attempt-" + now_utc.strftime("%Y%m%dT%H%M%SZ")
+    out = Path("experiments/pfsce_v8_2_prospective/necf_precutoff") / issue_date / attempt_id
+    out.mkdir(parents=True, exist_ok=False)
 
     manifest = {
         "protocol_id": PROTOCOL,
         "issue_date": issue_date,
+        "attempt_id": attempt_id,
         "capture_started_utc": now_utc.isoformat().replace("+00:00", "Z"),
         "capture_started_et": now_et.isoformat(),
         "cutoff_utc": cutoff_utc.isoformat().replace("+00:00", "Z"),
-        "purpose": "transport-only pre-cutoff capture; no model or gate changes",
+        "purpose": "transport-only redundant pre-cutoff capture; no model or promotion-gate changes",
+        "append_only": True,
     }
     dump(out / "capture_manifest.json", manifest)
 
@@ -169,7 +170,7 @@ def main() -> int:
         "hrrr_status": hrrr.get("status"),
         "hrrr_eligible": bool(hrrr.get("all_required_objects_eligible", False)),
         "capture_promotion_eligible": bool(eia.get("eligible", False)),
-        "note": "HRRR is optional for B1 A0/C1 and required only for W1; EIA baseline capture is required for B1 skill scoring.",
+        "note": "HRRR is optional for B1 A0/C1 and required only for W1; EIA baseline capture is required for B1 skill scoring. Multiple pre-cutoff attempts may coexist; downstream issue generation must select only attempts whose recorded retrieval times are <= the frozen cutoff.",
     }
     dump(out / "capture_summary.json", summary)
     print(json.dumps(summary, indent=2))
