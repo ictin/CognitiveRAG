@@ -42,7 +42,7 @@ jobs:
       - name: Capture canonical EIA and NOAA availability before cutoff
         env:
           EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
-        run: python experiments/pfsce_v8_2_prospective/capture_live_inputs.py
+        run: python experiments/pfsce_v8_2_prospective/capture_live_inputs_v2.py
 
       - name: Commit immutable capture if one was produced
         run: |
