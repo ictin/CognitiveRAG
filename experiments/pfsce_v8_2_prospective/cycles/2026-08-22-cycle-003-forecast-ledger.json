@@ -1,0 +1,19 @@
+{
+  "cycle_id":"PFSCE-V8.2-PROSPECTIVE-20260822-C003",
+  "contract_freeze_commit":"54a0a75423104570e6374b33d934e23a89af7a7e",
+  "issue_date":"2026-08-22",
+  "methodology":"PFSCE v8.2",
+  "anchor_generation":{"id":"PFSCE-v8.2-A0","provider":"OpenAI","model":"GPT-5.6 Sol","checkpoint":"opaque_product_managed","policy":"production-eligible core with strict baseline fallback outside locally validated authority"},
+  "challenger_generation":{"id":"PFSCE-v8.2-C1-DAGCRITIC","provider":"OpenAI","model":"GPT-5.6 Sol","checkpoint":"opaque_product_managed","policy":"Forecast DAG/decomposition + critic + coherence; research-only unless separately promoted"},
+  "denominator":{"new_packet_nominal_n":0,"new_packet_effective_independent_n_ceiling":0.0,"anchor_router_counts":{"baseline_fallback":0,"model_promoted":0,"abstention":0},"new_packet_raw_research_forecast_coverage":null,"new_packet_routed_anchor_probability_coverage":null,"selection_exclusion_count":4,"selection_note":"No new packet admitted: preserving effective independence and baseline provenance was preferred to increasing nominal N."},
+  "packets":[],
+  "selection_exclusions":[
+    {"stream":"external_forecastbench","decision":"NO_NEW_PACKET","reason":"No fresh unresolved item with sufficiently auditable original baseline snapshot and resolution provenance established before answer-directed research."},
+    {"stream":"pfsce_general","decision":"NO_NEW_PACKET","reason":"Existing unresolved cohort already spans the main independent driver families; no candidate with a strong frozen comparator justified marginal effective-N gain today."},
+    {"stream":"necf_dense_material","decision":"NO_NEW_PACKET","reason":"Dedicated NECF prospective protocol is already collecting this domain; duplicate selection would inflate nominal N and contaminate dependence accounting."},
+    {"stream":"aom_directed_scientifically_isolated","decision":"NO_NEW_PACKET","reason":"Existing AOM packets remain unresolved and no contract-matched strong baseline in a sufficiently distinct driver cluster was established before freeze."}
+  ],
+  "existing_cohort_update_artifact":"2026-08-22-cycle-003-existing-cohort-updates.json",
+  "existing_cohort_status":{"immutable_questions":8,"resolved_this_cycle":0,"trajectory_updates":2,"no_updates":6},
+  "authority_status":{"prospective_f2_claim":false,"reason":"No newly resolved positive proper-score evidence versus frozen strong baselines; local calibration and integrity gates remain unsatisfied."}
+}
