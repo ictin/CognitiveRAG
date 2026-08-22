@@ -1,0 +1,32 @@
+{
+  "cutoff_utc": "2026-08-22T14:30:00Z",
+  "eligible": true,
+  "metadata_http_status": 200,
+  "metadata_sha256": "b4cae314c42e372c12a1bf26f1f4e0d46357a775fbf8cdbafe5b939afc3e68fc",
+  "payload_http_status": 200,
+  "payload_sha256": "97e33ddcdd5664b5d317ac1cce047cb34782ecec92f3f7cd5b8f239a8911fa13",
+  "respondents": [
+    "CISO",
+    "ERCO",
+    "PJM",
+    "ISNE"
+  ],
+  "retrieval_time_utc": "2026-08-22T14:08:21.937697Z",
+  "row_count": 368,
+  "seen_respondents": [
+    "CISO",
+    "ERCO",
+    "ISNE",
+    "PJM"
+  ],
+  "seen_types": [
+    "D",
+    "DF"
+  ],
+  "source": "EIA API v2 electricity/rto/region-data",
+  "status": "CAPTURED_PRE_CUTOFF",
+  "types": [
+    "D",
+    "DF"
+  ]
+}

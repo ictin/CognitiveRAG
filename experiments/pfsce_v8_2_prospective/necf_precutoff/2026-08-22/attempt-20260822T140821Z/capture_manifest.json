@@ -1,0 +1,10 @@
+{
+  "append_only": true,
+  "attempt_id": "attempt-20260822T140821Z",
+  "capture_started_et": "2026-08-22T10:08:21.937697-04:00",
+  "capture_started_utc": "2026-08-22T14:08:21.937697Z",
+  "cutoff_utc": "2026-08-22T14:30:00Z",
+  "issue_date": "2026-08-22",
+  "protocol_id": "PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "purpose": "transport-only redundant pre-cutoff capture; no model or promotion-gate changes"
+}
