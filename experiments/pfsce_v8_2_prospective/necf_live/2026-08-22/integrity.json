@@ -1,0 +1,20 @@
+{
+  "protocol_id": "PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "issue_date": "2026-08-22",
+  "audit_time_utc": "2026-08-22T14:22:00Z",
+  "checks": [
+    {"name":"precutoff_eia_capture","status":"PASS"},
+    {"name":"precutoff_hrrr_availability_gate","status":"PASS"},
+    {"name":"target_window_frozen_before_cutoff","status":"PASS"},
+    {"name":"operator_baselines_present_all_48_rows","status":"PASS"},
+    {"name":"frozen_router_preserved","status":"PASS"},
+    {"name":"required_b1_feature_history_available","status":"FAIL"},
+    {"name":"ciso_pjm_model_predictions_fabricated","status":"PASS","detail":"No; abstained."},
+    {"name":"w1_issued_without_c1_baseline","status":"PASS","detail":"No; abstained."},
+    {"name":"post_cutoff_substitution","status":"PASS","detail":"None used."},
+    {"name":"outcome_truth_used_at_issue","status":"PASS","detail":"None used."}
+  ],
+  "overall_status": "INTEGRITY_PRESERVED_WITH_MODEL_INPUT_HISTORY_ACQUISITION_FAILURE",
+  "promotion_eligible_today": false,
+  "scientific_interpretation": "Today contributes valid source-transport evidence and 24 frozen operator-fallback A0 rows, but no PFSCE skill observation because CISO/PJM model features cannot be constructed from the captured history window. It must not be repaired with post-cutoff data."
+}
