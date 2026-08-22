@@ -1,0 +1,15 @@
+{
+  "protocol_id": "PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "issue_date": "2026-08-22",
+  "forecast_origin_utc": "2026-08-22T14:22:00Z",
+  "cutoff_utc": "2026-08-22T14:30:00Z",
+  "target_interval_end_utc": ["2026-08-22T15","2026-08-22T16","2026-08-22T17","2026-08-22T18","2026-08-22T19","2026-08-22T20","2026-08-22T21","2026-08-22T22","2026-08-22T23","2026-08-23T00","2026-08-23T01","2026-08-23T02"],
+  "source_attempt": "experiments/pfsce_v8_2_prospective/necf_precutoff/2026-08-22/attempt-20260822T140821Z",
+  "eia_payload_sha256": "97e33ddcdd5664b5d317ac1cce047cb34782ecec92f3f7cd5b8f239a8911fa13",
+  "hrrr_availability_blob_sha": "385ea95e3aabe30444870d7a750213dede8492dd",
+  "eia_gate": "PASS",
+  "hrrr_gate": "PASS",
+  "issuance_status": "PARTIAL_ROUTER_FALLBACK_ONLY_MODEL_INPUT_HISTORY_UNAVAILABLE",
+  "implementation_blocker": "The pre-cutoff EIA capture contains only 2026-08-21 through 2026-08-23. Frozen B1 features require residual/demand lags 48/72/168h and rolling residual windows up to 720h with a 48h guard. Required pre-origin history was not captured, so CISO/PJM B1 A0 and C1 cannot be computed without violating the frozen feature contract. W1 cannot be computed because its C1 baseline is unavailable, despite HRRR availability passing.",
+  "post_cutoff_repair_allowed": false
+}
