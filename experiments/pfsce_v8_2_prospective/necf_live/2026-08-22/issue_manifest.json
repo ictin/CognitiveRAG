@@ -1,9 +1,11 @@
 {
   "protocol_id": "PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
   "issue_date": "2026-08-22",
+  "forecast_origin": "2026-08-22T14:22:00Z",
   "forecast_origin_utc": "2026-08-22T14:22:00Z",
   "cutoff_utc": "2026-08-22T14:30:00Z",
-  "target_interval_end_utc": ["2026-08-22T15","2026-08-22T16","2026-08-22T17","2026-08-22T18","2026-08-22T19","2026-08-22T20","2026-08-22T21","2026-08-22T22","2026-08-22T23","2026-08-23T00","2026-08-23T01","2026-08-23T02"],
+  "target_end_timestamps": ["2026-08-22T15:00:00Z","2026-08-22T16:00:00Z","2026-08-22T17:00:00Z","2026-08-22T18:00:00Z","2026-08-22T19:00:00Z","2026-08-22T20:00:00Z","2026-08-22T21:00:00Z","2026-08-22T22:00:00Z","2026-08-22T23:00:00Z","2026-08-23T00:00:00Z","2026-08-23T01:00:00Z","2026-08-23T02:00:00Z"],
+  "router": {"CISO":"PFSCE_B1","PJM":"PFSCE_B1","ERCO":"OPERATOR_FALLBACK","ISNE":"OPERATOR_FALLBACK"},
   "source_attempt": "experiments/pfsce_v8_2_prospective/necf_precutoff/2026-08-22/attempt-20260822T140821Z",
   "eia_payload_sha256": "97e33ddcdd5664b5d317ac1cce047cb34782ecec92f3f7cd5b8f239a8911fa13",
   "hrrr_availability_blob_sha": "385ea95e3aabe30444870d7a750213dede8492dd",
