@@ -1,0 +1,9 @@
+{
+  "source_attempt": "experiments/pfsce_v8_2_prospective/necf_precutoff/2026-08-22/attempt-20260822T140821Z",
+  "gate_status": "PASS",
+  "source_file": "hrrr_availability_precutoff.json",
+  "source_blob_sha": "385ea95e3aabe30444870d7a750213dede8492dd",
+  "all_required_objects_eligible": true,
+  "w1_action": "ABSTAIN_C1_BASELINE_UNAVAILABLE",
+  "reason": "HRRR source availability passed, but frozen W1 requires C1 as its baseline and C1 could not be computed because required B1 lag/rolling history was absent from the pre-cutoff EIA capture."
+}
