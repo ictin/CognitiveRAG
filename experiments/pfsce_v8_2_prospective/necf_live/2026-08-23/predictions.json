@@ -1,0 +1,21 @@
+{
+  "protocol_id": "PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "issue_date": "2026-08-23",
+  "forecast_origin_utc": "2026-08-23T14:25:27Z",
+  "cutoff_utc": "2026-08-23T14:30:00Z",
+  "denominator_ba_hours": 48,
+  "target_interval_end_utc": ["2026-08-23T15:00:00Z","2026-08-23T16:00:00Z","2026-08-23T17:00:00Z","2026-08-23T18:00:00Z","2026-08-23T19:00:00Z","2026-08-23T20:00:00Z","2026-08-23T21:00:00Z","2026-08-23T22:00:00Z","2026-08-23T23:00:00Z","2026-08-24T00:00:00Z","2026-08-24T01:00:00Z","2026-08-24T02:00:00Z"],
+  "issue_rows": {
+    "CISO": {"a0_action":"ABSTAIN","a0_reason":"FROZEN_B1_EXECUTABLE_NOT_REPRODUCIBLY_EXECUTED_BEFORE_CUTOFF","c1_action":"ABSTAIN","c1_reason":"FROZEN_C1_EXECUTABLE_NOT_REPRODUCIBLY_EXECUTED_BEFORE_CUTOFF","w1_action":"ABSTAIN","w1_reason":"C1_BASELINE_UNAVAILABLE"},
+    "PJM": {"a0_action":"ABSTAIN","a0_reason":"FROZEN_B1_EXECUTABLE_NOT_REPRODUCIBLY_EXECUTED_BEFORE_CUTOFF","c1_action":"ABSTAIN","c1_reason":"FROZEN_C1_EXECUTABLE_NOT_REPRODUCIBLY_EXECUTED_BEFORE_CUTOFF","w1_action":"ABSTAIN","w1_reason":"C1_BASELINE_UNAVAILABLE"},
+    "ERCO": {"a0_action":"ABSTAIN","a0_reason":"OPERATOR_DF_VALUES_CAPTURED_CANONICALLY_BUT_NOT_REPRODUCIBLY_EXTRACTED_IN_ISSUE_RUNTIME_BEFORE_CUTOFF","c1_action":"NOT_APPLICABLE","w1_action":"NOT_APPLICABLE"},
+    "ISNE": {"a0_action":"ABSTAIN","a0_reason":"OPERATOR_DF_VALUES_CAPTURED_CANONICALLY_BUT_NOT_REPRODUCIBLY_EXTRACTED_IN_ISSUE_RUNTIME_BEFORE_CUTOFF","c1_action":"NOT_APPLICABLE","w1_action":"NOT_APPLICABLE"}
+  },
+  "numerical_predictions_issued": 0,
+  "pfsce_skill_observations_issued": 0,
+  "fallback_eligible_rows": 24,
+  "fallback_numerical_rows_issued": 0,
+  "missing_or_abstained_rows": 48,
+  "no_post_cutoff_repair": true,
+  "note": "The valid pre-cutoff source capture is preserved, but no numerical prediction is issued unless the exact frozen computation and values can be reproduced before cutoff."
+}
