@@ -1,0 +1,15 @@
+{
+  "protocol_id": "PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "issue_date": "2026-08-23",
+  "cutoff_utc": "2026-08-23T14:30:00Z",
+  "selected_attempt": "experiments/pfsce_v8_2_prospective/necf_precutoff/2026-08-23/attempt-20260823T141043Z",
+  "canonical_authority": "NOAA NODD S3 noaa-hrrr-bdp-pds",
+  "cycle": "2026-08-23 12Z",
+  "required_leads": [3,4,5,6,7,8,9,10,11,12,13,14],
+  "availability_gate": "PASS",
+  "selected_attempt_capture_started_utc": "2026-08-23T14:10:43.940502Z",
+  "all_required_objects_eligible_pre_cutoff": true,
+  "w1_source_gate_eligible": true,
+  "w1_issue_action": "ABSTAIN_EXECUTION_BASELINE_UNAVAILABLE",
+  "reason": "HRRR availability passed, but W1 was not issued because the frozen C1 baseline was not reproducibly executed before cutoff. No alternate model or weather cycle was substituted."
+}
