@@ -1,0 +1,16 @@
+{
+  "append_only": true,
+  "attempt_id": "attempt-20260823T141043Z",
+  "capture_promotion_eligible": true,
+  "capture_started_et": "2026-08-23T10:10:43.940502-04:00",
+  "capture_started_utc": "2026-08-23T14:10:43.940502Z",
+  "cutoff_utc": "2026-08-23T14:30:00Z",
+  "eia_eligible": true,
+  "eia_status": "CAPTURED_PRE_CUTOFF",
+  "hrrr_eligible": true,
+  "hrrr_status": "HRRR_AVAILABILITY_GATE_PASS",
+  "issue_date": "2026-08-23",
+  "note": "HRRR is optional for B1 A0/C1 and required only for W1; EIA baseline capture is required for B1 skill scoring. Multiple pre-cutoff attempts may coexist; downstream issue generation must select only attempts whose recorded retrieval times are <= the frozen cutoff.",
+  "protocol_id": "PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "purpose": "transport-only redundant pre-cutoff capture; no model or promotion-gate changes"
+}

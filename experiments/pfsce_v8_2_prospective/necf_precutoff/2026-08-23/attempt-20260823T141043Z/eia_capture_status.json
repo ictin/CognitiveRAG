@@ -1,0 +1,51 @@
+{
+  "credential_redaction": "EIA request metadata api_key removed before persistence",
+  "cutoff_utc": "2026-08-23T14:30:00Z",
+  "earliest_period": "2026-07-19T00",
+  "eligible": true,
+  "history_coverage_ok_for_b1_features": true,
+  "history_days_requested": 35,
+  "history_end": "2026-08-24T23",
+  "history_start": "2026-07-19T00",
+  "latest_period": "2026-08-24T07",
+  "metadata_http_status": 200,
+  "metadata_sha256": "d31ee3baeda012ec778415b425b138d0de1f121f6bcf5f39fd488768ff2c1494",
+  "pages": [
+    {
+      "http_status": 200,
+      "offset": 0,
+      "rows": 5000
+    },
+    {
+      "http_status": 200,
+      "offset": 5000,
+      "rows": 1848
+    }
+  ],
+  "payload_http_status": 200,
+  "payload_sha256": "53ea1d71d9caa2b097bb3b9f0acc9cfc9b70e81b14922822935878cffbe979b7",
+  "respondents": [
+    "CISO",
+    "ERCO",
+    "PJM",
+    "ISNE"
+  ],
+  "retrieval_time_utc": "2026-08-23T14:10:43.940502Z",
+  "row_count": 6848,
+  "seen_respondents": [
+    "CISO",
+    "ERCO",
+    "ISNE",
+    "PJM"
+  ],
+  "seen_types": [
+    "D",
+    "DF"
+  ],
+  "source": "EIA API v2 electricity/rto/region-data",
+  "status": "CAPTURED_PRE_CUTOFF",
+  "types": [
+    "D",
+    "DF"
+  ]
+}

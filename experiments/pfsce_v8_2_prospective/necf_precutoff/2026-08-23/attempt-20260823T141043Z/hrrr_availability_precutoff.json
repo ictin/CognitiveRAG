@@ -1,0 +1,119 @@
+{
+  "all_required_objects_eligible": true,
+  "bucket": "noaa-hrrr-bdp-pds",
+  "cutoff_utc": "2026-08-23T14:30:00Z",
+  "cycle": "2026-08-23 12Z",
+  "objects": [
+    {
+      "content_length": 158974604,
+      "eligible_by_cutoff": true,
+      "etag": "cc2415260ff1b438e25ab192ae979bc7",
+      "exists": true,
+      "key": "hrrr.20260823/conus/hrrr.t12z.wrfsfcf03.grib2",
+      "last_modified_utc": "2026-08-23T12:55:14Z",
+      "lead": 3
+    },
+    {
+      "content_length": 161666915,
+      "eligible_by_cutoff": true,
+      "etag": "b9d8c4e1f44f9b73b18aab824ccab146",
+      "exists": true,
+      "key": "hrrr.20260823/conus/hrrr.t12z.wrfsfcf04.grib2",
+      "last_modified_utc": "2026-08-23T12:57:22Z",
+      "lead": 4
+    },
+    {
+      "content_length": 161715416,
+      "eligible_by_cutoff": true,
+      "etag": "75a8e94abd326ec643608c89ca1f69e9",
+      "exists": true,
+      "key": "hrrr.20260823/conus/hrrr.t12z.wrfsfcf05.grib2",
+      "last_modified_utc": "2026-08-23T12:58:16Z",
+      "lead": 5
+    },
+    {
+      "content_length": 164397486,
+      "eligible_by_cutoff": true,
+      "etag": "ecf69ef2fd18bf3e38b76c2142e8bc34",
+      "exists": true,
+      "key": "hrrr.20260823/conus/hrrr.t12z.wrfsfcf06.grib2",
+      "last_modified_utc": "2026-08-23T12:59:23Z",
+      "lead": 6
+    },
+    {
+      "content_length": 165369991,
+      "eligible_by_cutoff": true,
+      "etag": "fdd88743c371d996dc674788b76f539f",
+      "exists": true,
+      "key": "hrrr.20260823/conus/hrrr.t12z.wrfsfcf07.grib2",
+      "last_modified_utc": "2026-08-23T13:00:23Z",
+      "lead": 7
+    },
+    {
+      "content_length": 167153935,
+      "eligible_by_cutoff": true,
+      "etag": "6e3330b91dd862220cf94cc331d62d2b",
+      "exists": true,
+      "key": "hrrr.20260823/conus/hrrr.t12z.wrfsfcf08.grib2",
+      "last_modified_utc": "2026-08-23T13:01:37Z",
+      "lead": 8
+    },
+    {
+      "content_length": 170645953,
+      "eligible_by_cutoff": true,
+      "etag": "6f0a4b41df76ce0309560fe3fadbb36c",
+      "exists": true,
+      "key": "hrrr.20260823/conus/hrrr.t12z.wrfsfcf09.grib2",
+      "last_modified_utc": "2026-08-23T13:03:26Z",
+      "lead": 9
+    },
+    {
+      "content_length": 172846193,
+      "eligible_by_cutoff": true,
+      "etag": "4a7a277a018d7903ea54456e866540f8",
+      "exists": true,
+      "key": "hrrr.20260823/conus/hrrr.t12z.wrfsfcf10.grib2",
+      "last_modified_utc": "2026-08-23T13:04:32Z",
+      "lead": 10
+    },
+    {
+      "content_length": 172478755,
+      "eligible_by_cutoff": true,
+      "etag": "46dab0673a18848c3ea713ba4adbfd93",
+      "exists": true,
+      "key": "hrrr.20260823/conus/hrrr.t12z.wrfsfcf11.grib2",
+      "last_modified_utc": "2026-08-23T13:05:40Z",
+      "lead": 11
+    },
+    {
+      "content_length": 167610337,
+      "eligible_by_cutoff": true,
+      "etag": "518ef0817876d935b030acdb4ec9e67c",
+      "exists": true,
+      "key": "hrrr.20260823/conus/hrrr.t12z.wrfsfcf12.grib2",
+      "last_modified_utc": "2026-08-23T13:06:48Z",
+      "lead": 12
+    },
+    {
+      "content_length": 163509512,
+      "eligible_by_cutoff": true,
+      "etag": "f0bdf6114fb2be0529e487d08716e282",
+      "exists": true,
+      "key": "hrrr.20260823/conus/hrrr.t12z.wrfsfcf13.grib2",
+      "last_modified_utc": "2026-08-23T13:08:37Z",
+      "lead": 13
+    },
+    {
+      "content_length": 159403205,
+      "eligible_by_cutoff": true,
+      "etag": "0c1b2bb3dd59deb0c6d33536d111a7c5",
+      "exists": true,
+      "key": "hrrr.20260823/conus/hrrr.t12z.wrfsfcf14.grib2",
+      "last_modified_utc": "2026-08-23T13:09:44Z",
+      "lead": 14
+    }
+  ],
+  "retrieval_time_utc": "2026-08-23T14:10:47.871883Z",
+  "source": "NOAA NODD noaa-hrrr-bdp-pds",
+  "status": "HRRR_AVAILABILITY_GATE_PASS"
+}
