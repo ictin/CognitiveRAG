@@ -1,0 +1,121 @@
+{
+  "cycle_id": "PFSCE-V8.2-PROSPECTIVE-20260824-C005",
+  "contract_freeze_commit": "74df9beab2e56b1c67c047014e783d53b02633d9",
+  "update_time": "2026-08-24T06:35:20Z",
+  "methodology": "PFSCE v8.2",
+  "anchor_generation": {"id":"PFSCE-v8.2-A0","provider":"OpenAI","model":"GPT-5.6 Sol","checkpoint":"opaque_product_managed"},
+  "challenger_generation": {"id":"PFSCE-v8.2-C1-DAGCRITIC","provider":"OpenAI","model":"GPT-5.6 Sol","checkpoint":"opaque_product_managed"},
+  "frozen_parent_cohorts": ["PFSCE-GEN-20260820-v1", "PFSCE-GEN-20260820-v1-B"],
+  "immutability_note": "Original first-issue probabilities, baseline snapshots, resolution contracts, cohort membership and prior trajectory entries are unchanged. This artifact appends only post-Cycle-004 evidence and probability trajectories.",
+  "packets": [
+    {
+      "id":"GEN-20260820-001",
+      "original_baseline_probability":0.27,
+      "original_pfsce_probability":0.24,
+      "prior_latest_raw_probability":0.30,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"APPEND_UPDATE",
+      "updated_raw_probability":0.39,
+      "evidence_cutoff":"2026-08-24T06:35:20Z",
+      "new_evidence":[
+        {"lineage_id":"FOMC_MARKET_20260824","origin":"Reuters global-markets report citing current market pricing","availability_time":"2026-08-24","summary":"Markets now assign about a 40% probability to a September Fed rate hike, materially above the frozen 27% baseline and above the prior-cycle mid-20s-to-mid-30s state."}
+      ],
+      "reason":"The contemporaneous market repricing is a material post-cutoff signal. The research trajectory moves near, but not above, the current market level because the September decision remains highly data-dependent and no new FOMC decision has occurred.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-002",
+      "original_baseline_probability":0.91,
+      "original_pfsce_probability":0.89,
+      "prior_latest_raw_probability":0.89,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-24T06:35:20Z",
+      "reason":"No sufficiently material post-Cycle-004 ECB decision or official guidance. The latest hawkish market commentary was already available before the previous cutoff; preserve 0.89 rather than churn.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-003",
+      "original_baseline_probability":0.74,
+      "original_pfsce_probability":0.76,
+      "prior_latest_raw_probability":0.86,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-24T06:35:20Z",
+      "reason":"No new qualifying Anthropic filing, pricing, listing, or public-trading event after the prior cutoff. Existing pre-IPO financing and governance preparation were already incorporated into 0.86.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-004",
+      "original_baseline_probability":0.80,
+      "original_baseline_quality":"WEAK_SCHEDULE_HEURISTIC",
+      "original_pfsce_probability":0.84,
+      "prior_latest_raw_probability":0.84,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-24T06:35:20Z",
+      "new_evidence_reviewed":[{"lineage_id":"NASA_ROMAN_CURRENT_SCHEDULE_20260824","origin":"NASA launch schedule / Roman mission pages","availability_time":"2026-08-24-crawl","summary":"NASA continues to list Roman for August 30, 2026; this confirms rather than materially changes the corrected 0.84 trajectory."}],
+      "reason":"Current NASA scheduling remains consistent with the corrected trajectory. No liftoff has occurred yet, so the frozen outcome is not resolved. Packet remains excluded from strong-baseline promotion.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-005",
+      "original_baseline_probability":0.15,
+      "original_pfsce_probability":0.10,
+      "prior_latest_raw_probability":0.10,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-24T06:35:20Z",
+      "reason":"No sufficiently material, independently verified post-cutoff federal funding development was found that changes the October 1 shutdown risk. Preserve 0.10.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-006",
+      "original_baseline_probability":0.08,
+      "original_pfsce_probability":0.06,
+      "prior_latest_raw_probability":0.05,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"APPEND_UPDATE",
+      "updated_raw_probability":0.03,
+      "evidence_cutoff":"2026-08-24T06:35:20Z",
+      "new_evidence":[
+        {"lineage_id":"RU_UA_FORCE_EXPANSION_20260823","origin":"Reuters reporting on Zelenskiy statement and battlefield conditions","availability_time":"2026-08-23-post-prior-cutoff","summary":"Ukraine says Russia plans a large additional troop draft after September elections while intensifying the Donbas campaign and missile production; the near-term military trajectory is inconsistent with an imminent general ceasefire."}
+      ],
+      "reason":"The post-cutoff force-expansion and intensified-war signal reduces the already-low probability of a qualifying general ceasefire by October 31. It does not resolve the contract because negotiations could still change before the deadline.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-007",
+      "original_baseline_probability":0.22,
+      "original_pfsce_probability":0.18,
+      "prior_latest_raw_probability":0.18,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-24T06:35:20Z",
+      "reason":"No qualifying post-cutoff U.S. federal action removing ordinary public access to another major AI model was identified. Preserve 0.18.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-008",
+      "original_baseline_probability":0.06,
+      "original_pfsce_probability":0.09,
+      "prior_latest_raw_probability":0.09,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"APPEND_UPDATE",
+      "updated_raw_probability":0.13,
+      "evidence_cutoff":"2026-08-24T06:35:20Z",
+      "new_evidence":[
+        {"lineage_id":"WHO_EBOLA_100_DAY_20260824","origin":"WHO Regional Office for Africa","availability_time":"2026-08-24","summary":"WHO reports more than 5,200 Ebola cases at 100 days, with transmission outpacing control efforts and roughly 90 confirmed cases per day during the first three months."},
+        {"lineage_id":"WHO_PANDEMIC_STATUS_20260824","origin":"WHO emergency status pages","availability_time":"2026-08-24-crawl","summary":"The Ebola event remains a PHEIC; WHO has not issued a Pandemic Emergency determination. The earlier emergency committee explicitly found the pandemic-emergency criteria unmet."}
+      ],
+      "reason":"The sharply worsening Ebola trajectory is genuinely new and raises the chance that WHO could issue a new pandemic-level declaration later in 2026, but the current event still has not met the frozen resolution condition. Probability rises modestly rather than dramatically because international spread remains limited and WHO has not changed the legal status to Pandemic Emergency.",
+      "resolution":null
+    }
+  ],
+  "resolved_count":0,
+  "updated_count":3,
+  "correction_count":0,
+  "unchanged_count":5,
+  "integrity_status":"PASS",
+  "promotion_note":"No prospective F2 promotion evidence is created because no immutable cohort outcome resolved this cycle; first-issue scoring remains pending."
+}
