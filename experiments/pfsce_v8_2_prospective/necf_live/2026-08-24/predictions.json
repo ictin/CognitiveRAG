@@ -1,0 +1,17 @@
+{
+  "protocol_id": "PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "issue_date": "2026-08-24",
+  "forecast_origin_utc": "2026-08-24T14:30:35Z",
+  "rows": [
+    {"ba":"CISO","target_count":12,"a0_action":"ABSTAIN","c1_action":"ABSTAIN","w1_action":"ABSTAIN","reason":"NO_VALID_PRE_CUTOFF_EIA_ATTEMPT_AND_RUNTIME_AFTER_CUTOFF"},
+    {"ba":"ERCO","target_count":12,"a0_action":"ABSTAIN","c1_action":"NOT_APPLICABLE","w1_action":"NOT_APPLICABLE","reason":"OPERATOR_FALLBACK_UNAVAILABLE_PRE_CUTOFF"},
+    {"ba":"PJM","target_count":12,"a0_action":"ABSTAIN","c1_action":"ABSTAIN","w1_action":"ABSTAIN","reason":"NO_VALID_PRE_CUTOFF_EIA_ATTEMPT_AND_RUNTIME_AFTER_CUTOFF"},
+    {"ba":"ISNE","target_count":12,"a0_action":"ABSTAIN","c1_action":"NOT_APPLICABLE","w1_action":"NOT_APPLICABLE","reason":"OPERATOR_FALLBACK_UNAVAILABLE_PRE_CUTOFF"}
+  ],
+  "denominator_ba_hours": 48,
+  "numerical_prediction_rows": 0,
+  "baseline_unavailable_rows": 48,
+  "post_cutoff_substitution_used": false,
+  "outcome_data_used": false,
+  "note": "All target rows are retained in the denominator. No numerical value is reconstructed or backfilled after cutoff."
+}
