@@ -1,0 +1,31 @@
+{
+  "cycle_id":"PFSCE-V8.2-PROSPECTIVE-20260824-C005",
+  "contract_freeze_commit":"74df9beab2e56b1c67c047014e783d53b02633d9",
+  "issue_date":"2026-08-24",
+  "methodology":"PFSCE v8.2",
+  "anchor_generation":{"id":"PFSCE-v8.2-A0","provider":"OpenAI","model":"GPT-5.6 Sol","checkpoint":"opaque_product_managed","policy":"production-eligible core with strict baseline fallback outside locally validated authority"},
+  "challenger_generation":{"id":"PFSCE-v8.2-C1-DAGCRITIC","provider":"OpenAI","model":"GPT-5.6 Sol","checkpoint":"opaque_product_managed","policy":"Forecast DAG/decomposition + critic + coherence; research-only unless separately promoted"},
+  "denominator":{
+    "nominal_n":0,
+    "effective_independent_n_ceiling":0.0,
+    "anchor_router_counts":{"baseline_fallback":0,"model_promoted":0,"abstention":0},
+    "raw_research_forecast_coverage":null,
+    "routed_anchor_probability_coverage":null,
+    "selection_exclusion_count":4,
+    "selection_note":"No new ForecastPacket admitted. Two preselected candidates were discovered after contract freeze to have already satisfied their resolution conditions before the freeze and were excluded as retrospective/contaminated; the NECF stream is separately confirmatory; no ForecastBench item with sufficiently auditable frozen-baseline provenance was established for admission."
+  },
+  "packets":[],
+  "selection_exclusions":[
+    {"stream":"external_forecastbench","decision":"NO_NEW_PACKET","reason_code":"PROVENANCE_NOT_ESTABLISHED","reason":"ForecastBench is active and publishes question sets regularly, but this cycle did not establish a fresh unresolved item with independently auditable frozen market/baseline snapshot, due date and resolution contract before issuing a PFSCE forecast. Excluded rather than weaken provenance."},
+    {"stream":"pfsce_general","candidate_id":"C005-GEN-1","decision":"EXCLUDED","reason_code":"RETROSPECTIVE_ALREADY_RESOLVED","reason":"The preselected Artemis II launch-by-2026-09-30 question was discovered after freeze to have resolved YES on 2026-04-01, months before this cycle. NASA's official launch release confirms Artemis II lifted off April 1, 2026. No forecast is issued and it contributes zero denominator N."},
+    {"stream":"necf_dense_material","decision":"NO_NEW_PACKET","reason_code":"SEPARATE_CONFIRMATORY_STREAM_AVOIDS_DUPLICATION","reason":"The dedicated NECF A0/C1/W1 live protocol remains the authoritative dense grid experiment. Adding a correlated grid threshold here would inflate nominal N and complicate episode dependence accounting without sufficient incremental effective N."},
+    {"stream":"aom_directed_scientifically_isolated","candidate_id":"C005-AOM-1","decision":"EXCLUDED","reason_code":"RETROSPECTIVE_ALREADY_RESOLVED","reason":"The preselected NVDA close >=200 by 2026-09-30 question was discovered after freeze to have already resolved YES before issue: public historical price data show NVDA closed at 200.75 on 2026-07-31. No forecast is issued and it contributes zero denominator N."}
+  ],
+  "existing_cohort_update_artifact":"2026-08-24-cycle-005-existing-cohort-updates.json",
+  "existing_cohort_status":{"immutable_questions":8,"resolved_this_cycle":0,"trajectory_updates":3,"trajectory_corrections":0,"no_updates":5},
+  "integrity_events":[
+    {"event":"PRESELECTED_CANDIDATE_RETROSPECTIVE_EXCLUSION","candidate_id":"C005-GEN-1","effect":"No forecast issued; zero denominator contribution."},
+    {"event":"PRESELECTED_CANDIDATE_RETROSPECTIVE_EXCLUSION","candidate_id":"C005-AOM-1","effect":"No forecast issued; zero denominator contribution."}
+  ],
+  "authority_status":{"prospective_f2_claim":false,"reason":"No immutable cohort outcome resolved and no new admitted packet generated proper-score evidence. Prospective F2 gates remain unsatisfied."}
+}
