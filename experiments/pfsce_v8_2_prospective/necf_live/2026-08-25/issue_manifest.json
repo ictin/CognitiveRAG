@@ -1,0 +1,22 @@
+{
+  "protocol_id": "PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "issue_date": "2026-08-25",
+  "forecast_origin_utc": "2026-08-25T14:19:36Z",
+  "forecast_origin_et": "2026-08-25T10:19:36-04:00",
+  "cutoff_utc": "2026-08-25T14:30:00Z",
+  "cutoff_et": "2026-08-25T10:30:00-04:00",
+  "target_hour_ends_utc": [
+    "2026-08-25T15:00:00Z","2026-08-25T16:00:00Z","2026-08-25T17:00:00Z","2026-08-25T18:00:00Z",
+    "2026-08-25T19:00:00Z","2026-08-25T20:00:00Z","2026-08-25T21:00:00Z","2026-08-25T22:00:00Z",
+    "2026-08-25T23:00:00Z","2026-08-26T00:00:00Z","2026-08-26T01:00:00Z","2026-08-26T02:00:00Z"
+  ],
+  "balancing_authorities": ["CISO","ERCO","PJM","ISNE"],
+  "same_day_precutoff_attempts_found": 0,
+  "eia_source_selection": "NO_VALID_PRE_CUTOFF_CAPTURE_AVAILABLE",
+  "direct_canonical_acquisition": "UNAVAILABLE_IN_THIS_RUNTIME_WITHOUT_AUTHENTICATED_EIA_SECRET",
+  "baseline_status": "BASELINE_UNAVAILABLE_ALL_TARGET_ROWS",
+  "denominator_rows": 48,
+  "post_cutoff_substitution_allowed": false,
+  "outcome_data_used": false,
+  "status": "INTEGRITY_ABSTENTION"
+}
