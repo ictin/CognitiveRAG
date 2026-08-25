@@ -1,0 +1,96 @@
+{
+  "cycle_id": "PFSCE-V8.2-PROSPECTIVE-20260825-C006",
+  "contract_freeze_commit": "e8544d35c47f769bf1c50f6493c599206e8a6f87",
+  "issue_date": "2026-08-25",
+  "methodology": "PFSCE v8.2",
+  "anchor_generation": {
+    "id": "PFSCE-v8.2-A0",
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "checkpoint": "opaque_product_managed",
+    "policy": "production-eligible core with strict baseline fallback outside locally validated authority"
+  },
+  "challenger_generation": {
+    "id": "PFSCE-v8.2-C1-DAGCRITIC",
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "checkpoint": "opaque_product_managed",
+    "policy": "Forecast DAG/decomposition + critic + coherence; research-only unless separately promoted"
+  },
+  "denominator": {
+    "nominal_n": 1,
+    "initial_effective_independent_n_ceiling": 1.0,
+    "cluster_note": "C006-GEN-1 occupies a distinct UAP/disclosure cluster and is materially independent of the existing monetary-policy, IPO, shutdown, war, pandemic, grid-heat, and crypto clusters. Dependence adjustment remains subject to later portfolio-level review.",
+    "anchor_router_counts": {
+      "baseline_fallback": 1,
+      "model_promoted": 0,
+      "abstention": 0
+    },
+    "raw_research_forecast_coverage": 1.0,
+    "routed_anchor_probability_coverage": 1.0,
+    "external_forecastbench_new_packet_count": 0,
+    "stream_selection_exclusions": {
+      "external_forecastbench": "No newly discovered ForecastBench item with independently auditable unresolved status plus frozen baseline provenance cleared the standard during this cycle.",
+      "necf_dense_material": "No new broad-cycle NECF packet admitted because the dedicated NECF confirmatory stream should remain scientifically separate and duplicate grid exposure would add little effective N.",
+      "aom_directed_scientifically_isolated": "No sufficiently distinct, contract-matched AOM target with a strong timestamped baseline cleared the admission standard without creating avoidable correlation or weak-proxy scoring."
+    }
+  },
+  "packets": [
+    {
+      "forecast_id": "C006-GEN-1",
+      "stream": "pfsce_general",
+      "question": "Will the United States government definitively confirm that extraterrestrial life or extraterrestrial technology exists by September 30, 2026 23:59:59 ET?",
+      "resolution_contract_ref": "2026-08-25-cycle-006-new-packet-freeze.md#c006-gen-1--broad-pfsce-general-stream",
+      "forecastability_cell": "science_public_policy|official_extraterrestrial_confirmation|~36d|US_federal_government|rare_disclosure_event",
+      "mode": "baseline_residual_judgment",
+      "baseline": {
+        "type": "contract-matched prediction-market snapshot",
+        "probability": 0.015,
+        "availability_time": "2026-08-25T06:29:00Z",
+        "source": "Polymarket September 30, 2026 US extraterrestrial-confirmation contract; approximately 1.5% Yes at candidate freeze, with roughly $4.15M volume"
+      },
+      "anchor_raw_probability": 0.012,
+      "anchor_routed_probability": 0.015,
+      "anchor_router_action": "BASELINE_FALLBACK_EXACT_CELL_NOT_VALIDATED",
+      "challenger_raw_probability": 0.010,
+      "calibrated_probability": null,
+      "probability_provenance": "contract-matched liquid market baseline + current AARO 2026 UAP releases + AARO/DoD historical finding of no verifiable extraterrestrial evidence; uncalibrated residual judgment",
+      "calibration_status": "none_local",
+      "authority_grade": "F0_PROSPECTIVE_RESEARCH",
+      "module_passport": null,
+      "meg": "MEG-0 for this exact rare-disclosure forecastability cell",
+      "epistemic_range_not_ci": [0.003, 0.035],
+      "evidence_lineages": [
+        {
+          "lineage_id": "US_ET_CONFIRM_MARKET_20260825",
+          "origin": "Polymarket contract-matched September 30 market",
+          "availability_time": "2026-08-25T06:29:00Z",
+          "independence_weight": 1.0
+        },
+        {
+          "lineage_id": "AARO_UAP_RELEASES_20260807",
+          "origin": "All-domain Anomaly Resolution Office official 2026 UAP report-document releases",
+          "availability_time": "2026-08-07",
+          "independence_weight": 0.7
+        },
+        {
+          "lineage_id": "AARO_NO_ET_EVIDENCE_RECORD",
+          "origin": "AARO/Department of Defense historical record and declassification information papers stating no verifiable evidence of extraterrestrial beings or technology to date",
+          "availability_time": "2025-or-earlier; reverified 2026-08-25",
+          "independence_weight": 0.5
+        }
+      ],
+      "effective_evidence_n": 2.2,
+      "update_triggers": [
+        "official White House, Cabinet, Joint Chiefs, DoD/AARO, NASA, or other federal statement explicitly asserting extraterrestrial life or technology exists",
+        "new federal release containing verified evidence and an official conclusion materially stronger than unexplained/UAP status",
+        "contract-matched prediction market moves by at least 3 percentage points with a distinct public-information catalyst",
+        "official AARO or federal assessment explicitly strengthening or weakening the probability of extraterrestrial attribution"
+      ],
+      "prior_trajectory": [],
+      "episode_cluster": "UAP_DISCLOSURE_US",
+      "exposure_intervention_status": "broad scientific stream; unexposed/no intervention",
+      "scoring_status": "UNRESOLVED"
+    }
+  ]
+}
