@@ -1,0 +1,26 @@
+{
+  "protocol_id": "PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "issue_date": "2026-08-25",
+  "audit_time_utc": "2026-08-25T14:19:36Z",
+  "checks": [
+    {"name":"protocol_and_source_rules_frozen","status":"PASS"},
+    {"name":"forecast_origin_before_cutoff","status":"PASS"},
+    {"name":"target_hours_timezone_aware","status":"PASS"},
+    {"name":"same_day_precutoff_attempts_inspected","status":"PASS"},
+    {"name":"valid_pre_cutoff_eia_capture_available","status":"FAIL"},
+    {"name":"missing_eia_baselines_retained_in_denominator","status":"PASS"},
+    {"name":"no_post_cutoff_eia_substitution","status":"PASS"},
+    {"name":"hrrr_f03_f14_lastmodified_verified_pre_cutoff","status":"FAIL"},
+    {"name":"w1_abstained_when_hrrr_gate_unverified","status":"PASS"},
+    {"name":"no_alternate_weather_cycle_or_source","status":"PASS"},
+    {"name":"all_48_ba_hour_rows_preserved","status":"PASS"},
+    {"name":"no_outcome_data_used","status":"PASS"},
+    {"name":"no_model_router_or_promotion_rule_changed","status":"PASS"}
+  ],
+  "overall_status": "INTEGRITY_PRESERVED_WITH_SOURCE_ACQUISITION_ABSTENTION",
+  "promotion_eligible_today": false,
+  "daily_skill": {"numeric_n":0,"effective_n":0,"mae":null,"rmse":null},
+  "cumulative_skill_note": "No new numerical skill observation added by this issue day; prior cumulative skill statistics remain unchanged.",
+  "coverage": {"denominator_rows":48,"numeric_rows":0,"numeric_coverage":0.0,"baseline_missing_rate":1.0},
+  "promotion_status": "PENDING_NOT_F2"
+}
