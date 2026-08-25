@@ -1,0 +1,15 @@
+{
+  "protocol_id": "PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "issue_date": "2026-08-25",
+  "canonical_authority": "NOAA NODD S3 noaa-hrrr-bdp-pds",
+  "cycle": "2026-08-25 12Z",
+  "required_leads": [3,4,5,6,7,8,9,10,11,12,13,14],
+  "cutoff_utc": "2026-08-25T14:30:00Z",
+  "same_day_precutoff_attempts_found": 0,
+  "all_last_modified_verified_by_cutoff": false,
+  "eligibility": "INELIGIBLE_NOT_CANONICALLY_VERIFIED",
+  "w1_action": "ABSTAIN",
+  "alternate_cycle_used": false,
+  "alternate_weather_source_used": false,
+  "reason": "No same-day GitHub pre-cutoff transport attempt was committed, and this runtime could not independently prove canonical S3 LastModified metadata for every required F03-F14 object before cutoff."
+}
