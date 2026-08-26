@@ -1,0 +1,9 @@
+{
+  "availability_gate": "UNVERIFIED",
+  "issue_date": "2026-08-26",
+  "post_cutoff_substitution_allowed": false,
+  "reason": "NO_SAME_DAY_PRE_CUTOFF_HRRR_ATTEMPT_AVAILABLE; EIA_BASELINE_GATE_ALSO_FAILED",
+  "required_source": "NOAA noaa-hrrr-bdp-pds 12Z F03-F14",
+  "same_day_precutoff_attempts_found": 0,
+  "w1_status": "ABSTAIN"
+}
