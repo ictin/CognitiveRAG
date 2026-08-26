@@ -1,0 +1,38 @@
+{
+  "balancing_authorities": [
+    "CISO",
+    "ERCO",
+    "PJM",
+    "ISNE"
+  ],
+  "baseline_status": "BASELINE_UNAVAILABLE_ALL_TARGET_ROWS",
+  "cutoff_et": "2026-08-26T10:30:00-04:00",
+  "cutoff_utc": "2026-08-26T14:30:00Z",
+  "direct_canonical_acquisition": "UNAVAILABLE_IN_THIS_RUNTIME_WITHOUT_AUTHENTICATED_EIA_SECRET",
+  "denominator_rows": 48,
+  "eia_source_selection": "NO_VALID_PRE_CUTOFF_CAPTURE_AVAILABLE",
+  "forecast_origin_et": "2026-08-26T10:19:22-04:00",
+  "forecast_origin_utc": "2026-08-26T14:19:22Z",
+  "issue_date": "2026-08-26",
+  "outcome_data_used": false,
+  "post_cutoff_substitution_allowed": false,
+  "protocol_id": "PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "same_day_precutoff_attempts_found": 0,
+  "source_selection_clarification": "NECF_LIVE_SOURCE_SELECTION_CLARIFICATION_20260820.md",
+  "status": "INTEGRITY_ABSTENTION",
+  "target_hour_ends_utc": [
+    "2026-08-26T15:00:00Z",
+    "2026-08-26T16:00:00Z",
+    "2026-08-26T17:00:00Z",
+    "2026-08-26T18:00:00Z",
+    "2026-08-26T19:00:00Z",
+    "2026-08-26T20:00:00Z",
+    "2026-08-26T21:00:00Z",
+    "2026-08-26T22:00:00Z",
+    "2026-08-26T23:00:00Z",
+    "2026-08-27T00:00:00Z",
+    "2026-08-27T01:00:00Z",
+    "2026-08-27T02:00:00Z"
+  ],
+  "transport_hardening": "NECF_TRANSPORT_CAPTURE_HARDENING_20260821.md"
+}
