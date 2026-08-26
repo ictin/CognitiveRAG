@@ -1,0 +1,28 @@
+{
+  "cycle_id":"PFSCE-V8.2-PROSPECTIVE-20260826-C007",
+  "contract_freeze_commit":"99c13de64f560456461f2640ad5c0e39e62a9c80",
+  "issue_date":"2026-08-26",
+  "methodology":"PFSCE v8.2",
+  "anchor_generation":{"id":"PFSCE-v8.2-A0","provider":"OpenAI","model":"GPT-5.6 Sol","checkpoint":"opaque_product_managed","policy":"production-eligible core with strict baseline fallback outside locally validated authority"},
+  "challenger_generation":{"id":"PFSCE-v8.2-C1-DAGCRITIC","provider":"OpenAI","model":"GPT-5.6 Sol","checkpoint":"opaque_product_managed","policy":"Forecast DAG/decomposition + critic + coherence; research-only unless separately promoted"},
+  "denominator":{
+    "nominal_n":0,
+    "effective_independent_n_ceiling":0.0,
+    "anchor_router_counts":{"baseline_fallback":0,"model_promoted":0,"abstention":0},
+    "raw_research_forecast_coverage":null,
+    "routed_anchor_probability_coverage":null,
+    "selection_exclusion_count":4,
+    "selection_note":"No new ForecastPacket admitted. Cycle 007 prioritizes clean resolution/update evidence over nominal-N inflation; ForecastBench provenance was not independently established for a fresh item, NECF remains separately confirmatory, and no broad/AOM candidate with a distinct driver cluster plus strong contract-matched frozen baseline was pre-admitted before answer-directed research."
+  },
+  "packets":[],
+  "selection_exclusions":[
+    {"stream":"external_forecastbench","decision":"NO_NEW_PACKET","reason_code":"PROVENANCE_NOT_ESTABLISHED","reason":"No fresh unresolved ForecastBench item with independently auditable original baseline snapshot, due date, and resolution contract was established before answer-directed research. Excluded rather than weaken provenance."},
+    {"stream":"pfsce_general","decision":"NO_NEW_PACKET","reason_code":"NO_PRE_ADMITTED_DISTINCT_STRONG_BASELINE_TARGET","reason":"No materially independent broad target with a strong timestamped contract-matched comparator was pre-admitted at contract freeze. No post-freeze target was backfilled."},
+    {"stream":"necf_dense_material","decision":"NO_NEW_PACKET","reason_code":"SEPARATE_CONFIRMATORY_STREAM_AVOIDS_DUPLICATION","reason":"The dedicated NECF A0/C1/W1 prospective experiment remains the authoritative dense grid validation stream; duplicating it here would inflate dependence and contaminate portfolio accounting."},
+    {"stream":"aom_directed_scientifically_isolated","decision":"NO_NEW_PACKET","reason_code":"NO_PRE_ADMITTED_CONTRACT_MATCHED_BASELINE","reason":"No sufficiently distinct AOM target with a strong contract-matched frozen baseline was pre-admitted before research. Weak proxy markets are not substituted merely to add nominal N."}
+  ],
+  "existing_cohort_update_artifact":"2026-08-26-cycle-007-existing-cohort-updates.json",
+  "existing_cohort_status":{"immutable_questions":8,"resolved_this_cycle":0,"trajectory_updates":4,"trajectory_corrections":0,"no_updates":4},
+  "authority_status":{"prospective_f2_claim":false,"reason":"No immutable parent-cohort outcome resolved and Cycle 007 admitted no new packet; therefore no new proper-score evidence exists. Prospective F2 gates remain unsatisfied."},
+  "integrity_status":"PASS"
+}
