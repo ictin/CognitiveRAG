@@ -1,0 +1,119 @@
+{
+  "cycle_id": "PFSCE-V8.2-PROSPECTIVE-20260826-C007",
+  "contract_freeze_commit": "99c13de64f560456461f2640ad5c0e39e62a9c80",
+  "update_time": "2026-08-26T06:50:00Z",
+  "methodology": "PFSCE v8.2",
+  "anchor_generation": {"id":"PFSCE-v8.2-A0","provider":"OpenAI","model":"GPT-5.6 Sol","checkpoint":"opaque_product_managed"},
+  "challenger_generation": {"id":"PFSCE-v8.2-C1-DAGCRITIC","provider":"OpenAI","model":"GPT-5.6 Sol","checkpoint":"opaque_product_managed"},
+  "frozen_parent_cohorts": ["PFSCE-GEN-20260820-v1", "PFSCE-GEN-20260820-v1-B"],
+  "immutability_note": "Original first-issue probabilities, baseline snapshots, contracts, membership, and all earlier trajectory entries remain unchanged. Cycle 007 appends only evidence available by its stated cutoff.",
+  "packets": [
+    {
+      "id":"GEN-20260820-001",
+      "original_baseline_probability":0.27,
+      "original_pfsce_probability":0.24,
+      "prior_latest_raw_probability":0.39,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"APPEND_UPDATE",
+      "updated_raw_probability":0.47,
+      "evidence_cutoff":"2026-08-26T06:50:00Z",
+      "new_evidence":[
+        {"lineage_id":"FED_DISCOUNT_RATE_BOARDS_20260825","origin":"Reuters reporting on Federal Reserve discount-rate minutes","availability_time":"Reuters article dated 2026-08-25; verified by 2026-08-26T06:50:00Z","summary":"Directors at four Reserve Banks recommended a 25 bp discount-rate increase ahead of the July FOMC meeting, evidence of broader institutional pressure for tightening than the prior trajectory captured."},
+        {"lineage_id":"FED_COLLINS_HIKE_SOON_20260825","origin":"Reuters interview/reporting on Boston Fed President Susan Collins","availability_time":"Reuters article dated 2026-08-25; verified by 2026-08-26T06:50:00Z","summary":"Collins said rates may need to rise soon absent clearer evidence inflation is continuing to fall, strengthening the near-term hike case while keeping it data-dependent."}
+      ],
+      "reason":"Two independent post-prior-cutoff signals broaden evidence for near-term tightening. The move remains below 50% because the September decision still depends on forthcoming inflation/labor data and the July FOMC itself held 9-3.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-002",
+      "original_baseline_probability":0.91,
+      "original_pfsce_probability":0.89,
+      "prior_latest_raw_probability":0.89,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"APPEND_UPDATE",
+      "updated_raw_probability":0.96,
+      "evidence_cutoff":"2026-08-26T06:50:00Z",
+      "new_evidence":[
+        {"lineage_id":"ECB_SEPTEMBER_HIKE_SOURCES_20260825","origin":"Reuters reporting citing ECB sources","availability_time":"Reuters article dated 2026-08-25; verified by 2026-08-26T06:50:00Z","summary":"Reuters reported the ECB is preparing for a September rate hike, with the remaining decision contingent on August inflation and updated projections."},
+        {"lineage_id":"ECB_SCHNABEL_FURTHER_HIKES_20260826","origin":"Reuters report of ECB Executive Board member Isabel Schnabel interview","availability_time":"2026-08-26","summary":"Schnabel said interest rates need to rise further because persistent inflation risks leave current policy insufficient, independently reinforcing the September-tightening path."}
+      ],
+      "reason":"The combination of sourced institutional reporting and an explicit hawkish Executive Board statement materially strengthens the already-high September-hike probability. Residual uncertainty remains for incoming inflation data and the actual meeting vote.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-003",
+      "original_baseline_probability":0.74,
+      "original_pfsce_probability":0.76,
+      "prior_latest_raw_probability":0.86,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-26T06:50:00Z",
+      "reason":"No new qualifying official Anthropic filing, exchange confirmation, IPO pricing, or listing event was identified after the prior cutoff. Preserve 0.86."},
+    {
+      "id":"GEN-20260820-004",
+      "original_baseline_probability":0.80,
+      "original_baseline_quality":"WEAK_SCHEDULE_HEURISTIC",
+      "original_pfsce_probability":0.84,
+      "prior_latest_raw_probability":0.84,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"APPEND_UPDATE",
+      "updated_raw_probability":0.94,
+      "evidence_cutoff":"2026-08-26T06:50:00Z",
+      "new_evidence":[
+        {"lineage_id":"NASA_ROMAN_LAUNCH_READY_20260824","origin":"NASA Roman mission blog","availability_time":"2026-08-24; newly incorporated 2026-08-26","summary":"NASA reported Roman had been encapsulated in the Falcon Heavy fairing after teams finished spacecraft launch preparation."},
+        {"lineage_id":"NASA_AMES_ROMAN_AUG30_20260826","origin":"NASA Ames official mission article","availability_time":"2026-08-26","summary":"NASA states Roman is set to launch Sunday, August 30, inside the frozen August 31 resolution window."}
+      ],
+      "reason":"The mission is now in final launch configuration with NASA still explicitly targeting August 30. Weather/technical launch slips remain the principal residual risk. GEN-004 remains excluded from strong-baseline promotion because its frozen comparator was weak.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-005",
+      "original_baseline_probability":0.15,
+      "original_pfsce_probability":0.10,
+      "prior_latest_raw_probability":0.10,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-26T06:50:00Z",
+      "reason":"No independently verified post-prior-cutoff federal funding development materially changing the frozen October 1 shutdown contract was established. Preserve 0.10."},
+    {
+      "id":"GEN-20260820-006",
+      "original_baseline_probability":0.08,
+      "original_pfsce_probability":0.06,
+      "prior_latest_raw_probability":0.03,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"APPEND_UPDATE",
+      "updated_raw_probability":0.04,
+      "evidence_cutoff":"2026-08-26T06:50:00Z",
+      "new_evidence":[
+        {"lineage_id":"UA_US_MEDIATION_PROPOSAL_20260825","origin":"Reuters interview/reporting with Ukrainian President Volodymyr Zelenskiy","availability_time":"Reuters article dated 2026-08-25; verified by 2026-08-26T06:50:00Z","summary":"Ukraine and U.S./European officials have developed a concrete one-page proposal including a ceasefire and a proposed neutral-administered economic zone in eastern Donbas, creating a more specific diplomatic pathway than previously recorded."},
+        {"lineage_id":"RU_SKEPTICISM_DONBAS_20260825","origin":"Same Reuters reporting plus Russian stated territorial positions","availability_time":"verified by 2026-08-26T06:50:00Z","summary":"Russia remains skeptical and continues to insist on territorial conditions incompatible with Ukraine's position, sharply limiting the near-term ceasefire probability."}
+      ],
+      "reason":"A concrete mediation proposal is a genuine incremental positive signal, but the bargaining gap remains extreme and Russia rejected even narrower recent ceasefire concepts. Only a one-point increase is justified.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-007",
+      "original_baseline_probability":0.22,
+      "original_pfsce_probability":0.18,
+      "prior_latest_raw_probability":0.18,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-26T06:50:00Z",
+      "reason":"No qualifying new U.S. federal action removing ordinary public access to another major AI model was identified after the prior cutoff. Preserve 0.18."},
+    {
+      "id":"GEN-20260820-008",
+      "original_baseline_probability":0.06,
+      "original_pfsce_probability":0.09,
+      "prior_latest_raw_probability":0.13,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-26T06:50:00Z",
+      "reason":"WHO continues to treat the Ebola event as a PHEIC and no new WHO pandemic-emergency/pandemic declaration satisfying the frozen contract was found after the prior cutoff. Preserve 0.13."}
+  ],
+  "resolved_count": 0,
+  "updated_count": 4,
+  "unchanged_count": 4,
+  "correction_count": 0,
+  "integrity_status": "PASS",
+  "promotion_note": "No existing-cohort prospective F2 evidence is created this cycle because no immutable parent-cohort outcome resolved."
+}
