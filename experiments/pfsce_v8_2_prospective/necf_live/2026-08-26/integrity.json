@@ -1,0 +1,36 @@
+{
+  "blockers": [
+    "NO_VALID_SAME_DAY_PRE_CUTOFF_EIA_CAPTURE",
+    "NO_VALID_SAME_DAY_PRE_CUTOFF_HRRR_AVAILABILITY_PROOF",
+    "DIRECT_EIA_API_ACCESS_NOT_AVAILABLE_IN_AUTOMATION_RUNTIME"
+  ],
+  "checks": {
+    "denominator_preserved_48_rows": true,
+    "forecast_origin_before_cutoff": true,
+    "model_rules_changed": false,
+    "outcome_data_used": false,
+    "post_cutoff_inputs_used": false,
+    "promotion_gates_changed": false,
+    "router_rules_changed": false,
+    "same_day_precutoff_eia_capture_available": false,
+    "same_day_precutoff_hrrr_gate_available": false,
+    "target_window_frozen_before_cutoff": true
+  },
+  "daily_skill": {
+    "baseline_missing_rate": 1.0,
+    "clustered_uncertainty": null,
+    "coverage": 0.0,
+    "heat_slice": null,
+    "issue_day_forecast_bearing": false,
+    "mae": null,
+    "n_eff": 0,
+    "nominal_forecast_n": 0,
+    "non_heat_slice": null,
+    "rmse": null
+  },
+  "f2_status": "NOT_ESTABLISHED",
+  "issue_date": "2026-08-26",
+  "promotion_gate_status": "PENDING",
+  "protocol_id": "PFSCE-V8.2-NECF-PROSPECTIVE-20260820-v1",
+  "status": "INTEGRITY_PRESERVED_WITH_SOURCE_ACQUISITION_ABSTENTION"
+}
