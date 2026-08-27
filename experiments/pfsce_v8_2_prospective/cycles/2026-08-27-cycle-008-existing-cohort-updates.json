@@ -1,0 +1,113 @@
+{
+  "cycle_id": "PFSCE-V8.2-PROSPECTIVE-20260827-C008",
+  "contract_freeze_commit": "db92507c117fa98cb8f25ab2efd68877a4ba7187",
+  "update_time": "2026-08-27T06:57:00Z",
+  "methodology": "PFSCE v8.2",
+  "anchor_generation": {"id":"PFSCE-v8.2-A0","provider":"OpenAI","model":"GPT-5.6 Sol","checkpoint":"opaque_product_managed"},
+  "challenger_generation": {"id":"PFSCE-v8.2-C1-DAGCRITIC","provider":"OpenAI","model":"GPT-5.6 Sol","checkpoint":"opaque_product_managed"},
+  "frozen_parent_cohorts": ["PFSCE-GEN-20260820-v1", "PFSCE-GEN-20260820-v1-B"],
+  "immutability_note": "Original first-issue probabilities, baseline snapshots, contracts, membership, and all earlier trajectory entries remain unchanged. Cycle 008 appends only evidence available after the Cycle-007 cutoff and by this cycle cutoff.",
+  "packets": [
+    {
+      "id":"GEN-20260820-001",
+      "original_baseline_probability":0.27,
+      "original_pfsce_probability":0.24,
+      "prior_latest_raw_probability":0.47,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"APPEND_EVIDENCE_NO_PROBABILITY_CHANGE",
+      "updated_raw_probability":0.47,
+      "evidence_cutoff":"2026-08-27T06:57:00Z",
+      "new_evidence":[
+        {"lineage_id":"US_CORE_PCE_HOTTER_20260826","origin":"U.S. Commerce Department PCE release as reported by Reuters","availability_time":"2026-08-26T13:31:00Z-or-earlier","summary":"July headline PCE inflation rose to 3.7% year over year and core PCE was 3.3%, a touch firmer than expected, increasing the case for a September hike."},
+        {"lineage_id":"FED_FUNDS_MARKET_20260826","origin":"Fed funds futures pricing reported by Reuters","availability_time":"2026-08-26T13:31:00Z","summary":"September +25 bp hike probability rose to about 44% from about 36% immediately before the inflation release."}
+      ],
+      "reason":"The new inflation print is directionally hawkish, but the contemporaneous strong market comparator moved to about 44%, close to the existing 47% raw trajectory. Preserve 0.47 rather than manufacture churn from a small information delta.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-002",
+      "original_baseline_probability":0.91,
+      "original_pfsce_probability":0.89,
+      "prior_latest_raw_probability":0.96,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-27T06:57:00Z",
+      "reason":"The Reuters-sourced September-hike preparation and hawkish ECB communication were already incorporated in Cycle 007. No sufficiently independent post-cutoff ECB evidence was established to justify another move. Preserve 0.96.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-003",
+      "original_baseline_probability":0.74,
+      "original_pfsce_probability":0.76,
+      "prior_latest_raw_probability":0.86,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-27T06:57:00Z",
+      "reason":"No new qualifying SEC filing, exchange confirmation, IPO pricing, or listing event after the Cycle-007 cutoff was established. Preserve 0.86.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-004",
+      "original_baseline_probability":0.80,
+      "original_baseline_quality":"WEAK_SCHEDULE_HEURISTIC",
+      "original_pfsce_probability":0.84,
+      "prior_latest_raw_probability":0.94,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-27T06:57:00Z",
+      "reason":"NASA continues to target the August 30 launch and no new post-cutoff technical or weather event materially changed the already-incorporated final-launch-configuration state. Preserve 0.94. This packet remains excluded from strong-baseline promotion because the frozen comparator was weak.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-005",
+      "original_baseline_probability":0.15,
+      "original_pfsce_probability":0.10,
+      "prior_latest_raw_probability":0.10,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-27T06:57:00Z",
+      "reason":"No independently verified post-cutoff federal funding development materially changing the frozen October 1 shutdown contract was established. Preserve 0.10.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-006",
+      "original_baseline_probability":0.08,
+      "original_pfsce_probability":0.06,
+      "prior_latest_raw_probability":0.04,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-27T06:57:00Z",
+      "reason":"The concrete U.S./European/Ukrainian mediation proposal and Russia's skepticism were already incorporated in Cycle 007. No post-cutoff breakthrough or collapse sufficient to change the 0.04 trajectory was established. Preserve 0.04.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-007",
+      "original_baseline_probability":0.22,
+      "original_pfsce_probability":0.18,
+      "prior_latest_raw_probability":0.18,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-27T06:57:00Z",
+      "reason":"No qualifying new U.S. federal action removing ordinary public access to another major AI model was identified after the prior cutoff. Preserve 0.18.",
+      "resolution":null
+    },
+    {
+      "id":"GEN-20260820-008",
+      "original_baseline_probability":0.06,
+      "original_pfsce_probability":0.09,
+      "prior_latest_raw_probability":0.13,
+      "scoring_status":"UNRESOLVED",
+      "trajectory_action":"NO_UPDATE",
+      "evidence_cutoff":"2026-08-27T06:57:00Z",
+      "reason":"No new WHO pandemic-emergency or pandemic declaration satisfying the frozen contract was established after the prior cutoff. Preserve 0.13.",
+      "resolution":null
+    }
+  ],
+  "resolved_count": 0,
+  "probability_changed_count": 0,
+  "evidence_only_append_count": 1,
+  "unchanged_count": 7,
+  "correction_count": 0,
+  "integrity_status": "PASS",
+  "promotion_note": "No existing-cohort prospective F2 evidence is created this cycle because no immutable parent-cohort outcome resolved."
+}
