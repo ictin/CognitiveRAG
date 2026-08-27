@@ -1,16 +1,8 @@
 name: PFSCE NECF Live Pre-Cutoff Capture
 
+# Manual-only by user request. Do not add schedule/push triggers without
+# the user's explicit approval for the specific GitHub Actions run.
 on:
-  schedule:
-    # Redundant pre-cutoff attempts. The capture script accepts only 09:50-10:24
-    # America/New_York and stores each accepted attempt append-only. Both UTC
-    # families are scheduled so DST/standard-time transitions remain safe.
-    - cron: '55 13 * * *'
-    - cron: '05 14 * * *'
-    - cron: '15 14 * * *'
-    - cron: '55 14 * * *'
-    - cron: '05 15 * * *'
-    - cron: '15 15 * * *'
   workflow_dispatch:
 
 permissions:
